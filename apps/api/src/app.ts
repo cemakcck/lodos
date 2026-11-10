@@ -5,6 +5,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { Server } from "socket.io";
 import { registerAuthRoutes } from "./auth/routes";
 import { CLEANUP_INTERVAL_MS, runCleanup } from "./demo/cleanup";
+import { SIMULATOR_INTERVAL_MS, runSimulatorDue } from "./demo/simulator";
 import { registerDemoRoutes } from "./demo/routes";
 import { systemClock, type Clock } from "./clock";
 import { connectDb } from "./db/connect";
@@ -101,6 +102,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   presence.start();
 
   let cleanupTimer: NodeJS.Timeout | undefined;
+  let simulatorTimer: NodeJS.Timeout | undefined;
   if (opts.startJobs && app.demoMode) {
     cleanupTimer = setInterval(() => {
       runCleanup(models, clock.now(), (id) => app.presence.isConnected(id)).catch((err: unknown) =>
@@ -108,6 +110,24 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
       );
     }, CLEANUP_INTERVAL_MS);
     cleanupTimer.unref();
+    let simulating = false;
+    simulatorTimer = setInterval(() => {
+      if (simulating) return;
+      simulating = true;
+      runSimulatorDue(
+        models,
+        app.realtime,
+        clock.now(),
+        (id) => app.presence.isConnected(id),
+        Math.random,
+        (err, id) => app.log.error({ err, tenantId: id }, "demo simulator tick failed"),
+      )
+        .catch((err: unknown) => app.log.error({ err }, "demo simulator failed"))
+        .finally(() => {
+          simulating = false;
+        });
+    }, SIMULATOR_INTERVAL_MS);
+    simulatorTimer.unref();
   }
 
   let closed = false;
@@ -120,6 +140,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
       if (closed) return;
       closed = true;
       clearInterval(cleanupTimer);
+      clearInterval(simulatorTimer);
       // Closing io disconnects every socket; their final lastSeenAt writes finish before the models go.
       await io.close();
       await presence.stop();
