@@ -14,7 +14,10 @@ import { registerFloorRoutes } from "./floor/routes";
 import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
-import { noopRealtime, type Realtime } from "./realtime/emit";
+import { unscoped } from "./db/tenancy";
+import { socketRealtime, type Realtime } from "./realtime/emit";
+import { attachRealtime } from "./realtime/io";
+import { createPresence, type Presence } from "./realtime/presence";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -22,9 +25,9 @@ declare module "fastify" {
     models: Models;
     io: Server;
     demoMode: boolean;
-    /** Who is connected right now. Task 8 replaces `isConnected` with the real socket presence. */
-    presence: { isConnected(tenantId: string): boolean };
-    /** Post-commit event fan-out. A no-op until Task 8 replaces it with Socket.IO rooms. */
+    /** Open sockets per tenant (in memory); keeps `Sandbox.lastSeenAt` fresh while a sandbox has any. */
+    presence: Presence;
+    /** Post-commit event fan-out to the tenant's Socket.IO rooms (src/realtime/emit.ts). */
     realtime: Realtime;
   }
 }
@@ -60,9 +63,21 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   const app = Fastify({ logger: opts.logger ?? false });
   app.decorate("clock", clock);
   app.decorate("models", models);
-  app.decorate("demoMode", opts.demoMode ?? false);
-  app.decorate("presence", { isConnected: () => false });
-  app.decorate("realtime", noopRealtime());
+  const demoMode = opts.demoMode ?? false;
+  app.decorate("demoMode", demoMode);
+  const presence = createPresence({
+    clock,
+    // Only sandboxes are cleaned up, so only they record when they were last seen. `$max` never moves it back, and
+    // a tenant without a Sandbox record (the real restaurant, a deleted sandbox) matches nothing.
+    persist: (tenantId, at) =>
+      demoMode
+        ? unscoped("sandbox registry is not tenant-scoped", () =>
+            models.Sandbox.updateOne({ _id: tenantId }, { $max: { lastSeenAt: at } }),
+          )
+        : Promise.resolve(),
+    onError: (err) => app.log.error({ err }, "presence write failed"),
+  });
+  app.decorate("presence", presence);
 
   await app.register(helmet);
   await app.register(cors, { origin: opts.webOrigin, credentials: true });
@@ -77,11 +92,13 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerGuestRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
-  // Rooms, auth and events are wired in Task 8.
   const io = new Server(app.server, { cors: { origin: opts.webOrigin, credentials: true } });
   app.decorate("io", io);
+  app.decorate("realtime", socketRealtime(io, clock, (err) => app.log.error({ err }, "realtime emit failed")));
+  attachRealtime(io, { models, clock, presence, parseCookie: (h) => app.parseCookie(h), log: app.log });
 
   await app.ready();
+  presence.start();
 
   let cleanupTimer: NodeJS.Timeout | undefined;
   if (opts.startJobs && app.demoMode) {
@@ -103,8 +120,10 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
       if (closed) return;
       closed = true;
       clearInterval(cleanupTimer);
-      unbind();
+      // Closing io disconnects every socket; their final lastSeenAt writes finish before the models go.
       await io.close();
+      await presence.stop();
+      unbind();
       await app.close();
       await conn.close();
     },
