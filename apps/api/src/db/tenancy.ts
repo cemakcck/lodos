@@ -55,9 +55,30 @@ function stamp(doc: unknown, tenantId: string): void {
   else if (doc.tenantId !== tenantId) throw new Error(TENANT_MISMATCH);
 }
 
-/** Refuses operator updates that would move a doc to another tenant (or strip its tenant). */
+const PIPELINE_UPDATE_STAGES = new Set(["$set", "$addFields", "$unset"]);
+const touchesTenantId = (field: string) => field === "tenantId" || field.startsWith("tenantId.");
+
+/**
+ * Pipeline (array) updates fail closed: only `$set`/`$addFields`/`$unset` stages are allowed, and none may
+ * name `tenantId`. `$replaceWith`, `$replaceRoot`, `$project` etc. could rewrite the tenant, so they throw.
+ */
+function guardPipelineUpdate(stages: unknown[]): void {
+  for (const stage of stages) {
+    if (!isBag(stage)) throw new Error(TENANT_MISMATCH);
+    for (const [op, spec] of Object.entries(stage)) {
+      if (!PIPELINE_UPDATE_STAGES.has(op)) {
+        throw new Error(`pipeline update stage ${op} is not allowed in a tenant context; use $set/$addFields/$unset`);
+      }
+      const fields = op === "$unset" ? [spec].flat() : isBag(spec) ? Object.keys(spec) : [];
+      if (fields.some((f) => typeof f !== "string" || touchesTenantId(f))) throw new Error(TENANT_MISMATCH);
+    }
+  }
+}
+
+/** Refuses updates that would move a doc to another tenant (or strip its tenant). */
 function guardUpdate(update: unknown, tenantId: string): void {
-  if (!isBag(update)) return; // aggregation-pipeline updates are not inspected (documented gap)
+  if (Array.isArray(update)) return guardPipelineUpdate(update);
+  if (!isBag(update)) return;
   for (const bag of [update, update.$set, update.$setOnInsert]) {
     if (isBag(bag) && bag.tenantId !== undefined && bag.tenantId !== tenantId) throw new Error(TENANT_MISMATCH);
   }
@@ -65,6 +86,26 @@ function guardUpdate(update: unknown, tenantId: string): void {
     const bag = update[op];
     if (isBag(bag) && "tenantId" in bag) throw new Error(TENANT_MISMATCH);
   }
+}
+
+/** Stages that touch a collection other than the scoped one. They are rejected at any depth ($facet, sub-pipelines). */
+const CROSS_COLLECTION_STAGES = new Set(["$lookup", "$unionWith", "$graphLookup", "$merge", "$out"]);
+
+function findCrossCollectionStage(node: unknown): string | null {
+  if (Array.isArray(node)) {
+    for (const n of node) {
+      const hit = findCrossCollectionStage(n);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (!isBag(node)) return null;
+  for (const [key, value] of Object.entries(node)) {
+    if (CROSS_COLLECTION_STAGES.has(key)) return key;
+    const hit = findCrossCollectionStage(value);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 const QUERY_OPS: MongooseDefaultQueryMiddleware[] = [
@@ -105,7 +146,15 @@ export function tenantPlugin(schema: Schema): void {
 
   schema.pre("aggregate", function (this: Aggregate<unknown>) {
     const t = scope();
-    if (t !== null) this.pipeline().unshift({ $match: { tenantId: t } });
+    if (t === null) return;
+    const stage = findCrossCollectionStage(this.pipeline());
+    if (stage) {
+      throw new Error(
+        `aggregate stage ${stage} reads or writes another collection and cannot be tenant-scoped; ` +
+          "run it inside unscoped() and match tenantId by hand in every pipeline",
+      );
+    }
+    this.pipeline().unshift({ $match: { tenantId: t } });
   });
 
   // `validate` runs before `save`'s own pre hooks, so the tenant must be stamped here for `required` to pass.

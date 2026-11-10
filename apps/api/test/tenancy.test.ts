@@ -121,6 +121,59 @@ describe("tenant scoping", () => {
   });
 });
 
+describe("fails closed on what a filter can't scope", () => {
+  const lookupMenu = { $lookup: { from: "menuitems", localField: "_id", foreignField: "categoryId", as: "items" } };
+
+  it("a pipeline update setting tenantId throws, and b's data is unchanged", async () => {
+    const { Category } = t.models;
+    const before = await runWithTenant(b, () => Category.find().lean());
+    const aDoc = await runWithTenant(a, () => Category.findOne());
+    await expect(
+      runWithTenant(a, () => Category.updateOne({ _id: aDoc!._id }, [{ $set: { tenantId: b } }], { updatePipeline: true })),
+    ).rejects.toThrow("tenantId does not match tenant context");
+    await expect(
+      runWithTenant(a, () => Category.updateOne({ _id: aDoc!._id }, [{ $replaceWith: { tenantId: b } }], { updatePipeline: true })),
+    ).rejects.toThrow("not allowed in a tenant context");
+    expect(await runWithTenant(b, () => Category.find().lean())).toEqual(before);
+    expect((await runWithTenant(a, () => Category.findById(aDoc!._id)))?.tenantId).toBe(a);
+    // A pipeline update that leaves tenantId alone still works.
+    const bump = [{ $set: { sort: { $add: ["$sort", 1] } } }];
+    await runWithTenant(a, () => Category.updateOne({ _id: aDoc!._id }, bump, { updatePipeline: true }));
+    expect((await runWithTenant(a, () => Category.findById(aDoc!._id)))?.sort).toBe(8);
+  });
+
+  it("an aggregate with $lookup throws", async () => {
+    await expect(runWithTenant(a, () => t.models.Category.aggregate([lookupMenu]))).rejects.toThrow(
+      "aggregate stage $lookup reads or writes another collection",
+    );
+  });
+
+  it("an aggregate with $unionWith throws", async () => {
+    await expect(runWithTenant(a, () => t.models.Category.aggregate([{ $unionWith: "menuitems" }]))).rejects.toThrow(
+      "aggregate stage $unionWith",
+    );
+  });
+
+  it("an aggregate with $out throws", async () => {
+    await expect(runWithTenant(a, () => t.models.Category.aggregate([{ $out: "stolen" }]))).rejects.toThrow(
+      "aggregate stage $out",
+    );
+  });
+
+  it("a $lookup nested in $facet throws", async () => {
+    await expect(
+      runWithTenant(a, () => t.models.Category.aggregate([{ $facet: { withItems: [lookupMenu], n: [{ $count: "n" }] } }])),
+    ).rejects.toThrow("aggregate stage $lookup");
+  });
+
+  it("a plain $match/$group aggregate still works and stays scoped", async () => {
+    const rows = await runWithTenant(a, () =>
+      t.models.Category.aggregate<{ _id: null; n: number }>([{ $match: { active: true } }, { $group: { _id: null, n: { $sum: 1 } } }]),
+    );
+    expect(rows).toEqual([{ _id: null, n: 1 }]);
+  });
+});
+
 describe("open-check partial unique index", () => {
   it("rejects a second open check for a table, and allows it once the first is paid", async () => {
     const { Check } = t.models;
