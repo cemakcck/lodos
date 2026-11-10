@@ -7,6 +7,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "node scripts/build.mjs",
     "start": "node dist/main.js",
+    "setup": "tsx src/scripts/setup.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
