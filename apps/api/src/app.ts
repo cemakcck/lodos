@@ -15,6 +15,7 @@ import { registerFloorRoutes } from "./floor/routes";
 import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
+import { registerMenuRoutes } from "./menu/routes";
 import { unscoped } from "./db/tenancy";
 import { socketRealtime, type Realtime } from "./realtime/emit";
 import { attachRealtime } from "./realtime/io";
@@ -90,6 +91,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerKdsRoutes(app);
   registerFloorRoutes(app);
   registerManagerRoutes(app);
+  registerMenuRoutes(app);
   registerGuestRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 

@@ -1,9 +1,10 @@
-import { OrderRequest, serviceDayOf as serviceDay } from "@lodos/shared";
+import { OrderRequest } from "@lodos/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { claim, hit } from "../auth/rate-limit";
 import { CALL_REASONS } from "../db/models/call";
 import { ApiError } from "../errors";
+import { menuView } from "../menu/view";
 import { emitOrderPlaced, placeOrder } from "../orders/place";
 import { guestRoute } from "./guard";
 import { guestOrdersView, openVisit } from "./orders";
@@ -32,38 +33,7 @@ export function registerGuestRoutes(app: FastifyInstance): void {
 
   app.get(
     "/api/guest/menu",
-    guestRoute(async () => {
-      const { Availability, Category, MenuItem } = app.models;
-      const [categories, items, avails] = await Promise.all([
-        Category.find({ active: true }).sort({ sort: 1, _id: 1 }).lean(),
-        MenuItem.find({ active: true }).sort({ sort: 1, _id: 1 }).lean(),
-        Availability.find({ serviceDay: serviceDay(app.clock.now()) }).lean(),
-      ]);
-      const availOf = new Map(avails.map((a) => [String(a.itemId), a]));
-      const shown = new Set(categories.map((c) => String(c._id)));
-      return {
-        categories: categories.map((c) => ({ id: String(c._id), name: c.name })),
-        items: items
-          .filter((i) => shown.has(String(i.categoryId)))
-          .map((i) => {
-            const a = availOf.get(String(i._id));
-            return {
-              id: String(i._id),
-              categoryId: String(i.categoryId),
-              name: i.name,
-              description: i.description,
-              story: i.story,
-              price: i.price,
-              station: i.station,
-              dietary: i.dietary,
-              allergens: i.allergens,
-              photo: i.photo,
-              optionGroups: i.optionGroups,
-              availability: { soldOut: a?.soldOut ?? false, remaining: a?.remaining ?? null },
-            };
-          }),
-      };
-    }),
+    guestRoute(async () => menuView(app.models, app.clock.now())),
   );
 
   app.post(
