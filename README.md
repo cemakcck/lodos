@@ -4,7 +4,7 @@ A restaurant system for a **fictional** bistro and cocktail bar in Karaköy, Ist
 
 The point of the project is the part you can't see: **an order is never lost and never doubled**, whether the guest's phone drops mid-order, two guests race for the last portion, or a waiter closes the check while an order is in flight. See [How no order is ever missed](#how-no-order-is-ever-missed).
 
-Deployment is coming; for now it runs locally (see [Running locally](#running-locally)).
+Deployment is coming; for now it runs locally (see [Running locally](#running-locally), and [Deploying](#deploying) for what a host needs).
 
 <p>
   <img src="docs/screenshots/kitchen.png" alt="The kitchen display: tickets with timers (two late ones in red), a new QR order from T7, the All day counts and the 86 list" width="640">
@@ -58,7 +58,7 @@ The records are naturally documents:
 
 ### 1. Snapshot on every reconnect
 
-Every screen fetches a full snapshot of what it shows on connect and on every reconnect, then applies events. A kitchen tablet that drops off the wifi shows "Offline / Reconnecting…" at once (the socket follows the browser's offline and online events instead of waiting for a heartbeat), and the moment it is back it refetches and the missed tickets appear, with the chime. The `kds-reconnect` end-to-end test takes the kitchen offline, places an order, checks it is absent while offline, and expects it on the board within 5 seconds of reconnecting, without a page reload.
+Every screen fetches a full snapshot of what it shows on connect and on every reconnect, then applies events. A kitchen tablet that drops off the wifi shows "Offline / Reconnecting…" within a second (the socket follows the browser's offline and online events instead of waiting for a heartbeat), and the moment it is back it refetches and the missed tickets appear, with the chime. A browser that never fires "online" still reconnects: the socket retries within 10 seconds, and at once when the screen is shown or focused. As a last backstop, the kitchen board refetches every 30 seconds while its socket is down, and "Last updated" moves with every snapshot. The `kds-reconnect` end-to-end test takes the kitchen offline, places an order, checks it is absent while offline, and expects it on the board within 5 seconds of reconnecting, without a page reload.
 
 ### 2. Idempotency keys
 
@@ -114,12 +114,29 @@ npm run setup -w @lodos/api -- --tenant main --seed-menu \
 | `WEB_ORIGIN` | no | The web app's origin, for CORS (default `http://localhost:5180`) |
 | `PORT`, `HOST` | no | Where the API listens (default `4100` on `0.0.0.0`) |
 | `DEMO_SANDBOXES_PER_IP_HOUR` | no | New sandboxes allowed per IP per hour (default 5) |
+| `TRUST_PROXY` | no | Behind a reverse proxy: `false` (default), `true`, a hop count, or a comma-separated list of proxy IPs / CIDRs. Per-IP limits then see the client's address |
+| `COOKIE_SECURE` | no | `1` / `0`: session and sandbox cookies are HTTPS-only. Defaults to on when `NODE_ENV=production` |
+
+**Storage caps.** Every restaurant (and every demo sandbox) holds at most 120 dishes and 20 MB of uploaded photos; past that, creating a dish or uploading a photo answers `409 limit_exceeded`. Replacing a photo frees the old one first. The caps are always on, not only in demo mode: a public demo visitor must not be able to fill the database, and a real menu never comes near them.
+
+## Deploying
+
+The supported setup is **one origin**: the web host serves the built app and reverse-proxies `/api` and `/socket.io` to the API. The client uses relative URLs, so the browser only ever talks to the web origin, and the staff session cookie is first-party everywhere (iPad Safari included). The spec's alternative of an `api.lodos.<domain>` subdomain is not supported: the client has no setting for a separate API origin.
+
+- **Proxy both paths**, and pass the WebSocket upgrade for `/socket.io` (`Upgrade` and `Connection` headers). In nginx that is a `location /socket.io/` block with `proxy_http_version 1.1`, `proxy_set_header Upgrade $http_upgrade` and `proxy_set_header Connection "upgrade"`.
+- **`TRUST_PROXY`**: set it to the hops in front of the API (often `1`, or the proxy's address), so `X-Forwarded-For` gives the client's address to the per-IP limits. Leave it `false` when nothing sits in front: then the header is ignored and cannot be spoofed.
+- **`NODE_ENV=production`** turns on `COOKIE_SECURE`, so cookies are sent over HTTPS only. Serve the site over HTTPS; set `COOKIE_SECURE=0` only for a local production build on plain HTTP.
+- **`SESSION_SECRET`**: a fresh random string of 32 characters or more (`openssl rand -base64 48`). Changing it signs everyone out.
+- **`WEB_ORIGIN`**: the public origin of the web app, for example `https://lodos.example.com`.
+- **`DEMO_MODE`**: `1` for the public portfolio demo, unset for a real restaurant (then run `npm run setup`, above).
+- **MongoDB**: Atlas works, but it must be a replica set (every Atlas cluster is), because orders use multi-document transactions.
+- **The API must be always on.** It holds the Socket.IO connections and runs the demo's sandbox cleanup and order simulator on timers, so a host that sleeps idle processes or runs functions per request will drop live updates. Use a long-running Node 22 process (a VM, a container, or a platform's always-on tier).
 
 ## Tests
 
 ```bash
 npm run lint && npm run typecheck
-npm test            # unit and integration: shared 28, API 222 (real MongoDB replica set), web 187
+npm test            # unit and integration: shared 28, API 232 (real MongoDB replica set), web 197
 npm run test:e2e    # Playwright: starts MongoDB (:27019), the built API (:4200) and the built web app (:5280)
 ```
 
@@ -131,6 +148,7 @@ npm run test:e2e    # Playwright: starts MongoDB (:27019), the built API (:4200)
   - a waiter order sending food to the kitchen and drinks to the bar, and the check grouped as Food and Drinks with the right subtotals
   - closing a check: the table turns free, the guest's page says the visit ended, and the next order opens a new visit
   - the kitchen catching up after going offline
+  - the kitchen ticket headers reading on one line at 1280 px with four columns (the screenshot above)
 - **Accessibility:** axe checks the guest menu, the dish sheet, "Your table", the staff login, the kitchen, the floor with a table selected, order entry, the menu editor and the demo landing against WCAG 2.2 A and AA, and allows zero serious or critical violations, with no rule disabled. What it found and we fixed: buttons whose spoken name left out their visible text (the EN/TR toggle said "English" but showed "EN"), an amber that was 4.35:1 instead of 4.5:1, and a scrolling check panel a keyboard couldn't reach.
 - **Wall-clock independence:** tests pass at any hour. The integration tests inject "now"; the end-to-end seed is relative to the moment each sandbox is created and no test asserts a clock time.
 
