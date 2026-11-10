@@ -12,6 +12,11 @@ export const checkSchema = new Schema({
   covers: { type: Number, default: null },
   openedAt: { type: Date, required: true },
   closedAt: { type: Date, default: null },
+  /**
+   * Orders placed on this check. `placeOrder` increments it conditionally in its transaction, which both enforces the
+   * 30-order limit strictly and makes a concurrent close of the check a write conflict (no order on a paid check).
+   */
+  orderCount: { type: Number, required: true, default: 0, min: 0 },
   serverStaffId: { type: Schema.Types.ObjectId, ref: "Staff", default: null },
   billRequestedAt: { type: Date, default: null },
   billMethod: { type: String, enum: [...PAY_METHODS, null], default: null },

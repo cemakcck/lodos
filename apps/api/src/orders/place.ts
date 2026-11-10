@@ -30,6 +30,13 @@ export type PlaceOrderResult = {
 const MAX_ATTEMPTS = 5;
 const isDuplicateKey = (err: unknown) => typeof err === "object" && err !== null && (err as { code?: unknown }).code === 11000;
 
+/** The check read in this transaction stopped being open before we could touch it: re-run on a fresh snapshot. */
+class CheckChangedError extends Error {
+  constructor() {
+    super("check changed during order placement");
+  }
+}
+
 /**
  * Places an order atomically (one transaction): idempotency, the table's open check (opened by a first QR order),
  * the per-check limit, item / option / availability checks with "N left" decrements, the price snapshot, the order
@@ -40,6 +47,10 @@ const isDuplicateKey = (err: unknown) => typeof err === "object" && err !== null
  * Concurrency:
  * - Two orders for the last portion: both conditionally decrement the same availability doc; the second writer gets a
  *   write conflict, `withTransaction` retries it on a fresh snapshot, and it then sees `soldOut` → `sold_out`.
+ * - An order racing a close of its check: the order writes the check (`$inc orderCount`, conditional on `open`), so
+ *   the close and the order write-conflict and one is retried. A retried order then finds no open check: a QR order
+ *   opens the next party's check (or, with a stale `expectedCheckId`, gets `check_closed`); a staff order gets `conflict`.
+ *   The same conditional `$inc` enforces at most 30 orders per check, strictly.
  * - Two first orders at a free table, or two requests with one idempotency key: the loser either write-conflicts
  *   (retried by `withTransaction`) or hits the unique index (E11000, retried here). On the retry it reads the winner's
  *   committed check, or the winner's order, which it returns as a replay.
@@ -49,7 +60,8 @@ export async function placeOrder(models: Models, input: PlaceOrderInput): Promis
     try {
       return await placeInTransaction(models, input);
     } catch (err) {
-      if (!isDuplicateKey(err) || attempt >= MAX_ATTEMPTS) throw err;
+      const retryable = isDuplicateKey(err) || err instanceof CheckChangedError;
+      if (!retryable || attempt >= MAX_ATTEMPTS) throw err;
     }
   }
 }
@@ -114,13 +126,29 @@ async function place(models: Models, input: PlaceOrderInput, session: ClientSess
 
   // 3. The table's open check. Staff seat the table first; a first QR order opens it.
   let check = await Check.findOne({ tableId, status: "open" }).session(session);
+  if (req.expectedCheckId !== undefined && (!check || String(check._id) !== req.expectedCheckId)) {
+    throw new ApiError(409, "check_closed", "This table's visit has ended");
+  }
   const checkOpened = !check;
   if (!check) {
     if (source === "staff") throw new ApiError(409, "conflict", "Seat the table before ordering");
-    check = new Check({ tableId, status: "open", covers: null, openedAt: now, serverStaffId: table.sectionStaffId });
+    check = new Check({ tableId, status: "open", covers: null, openedAt: now, orderCount: 1, serverStaffId: table.sectionStaffId });
     await check.save({ session });
-  } else if ((await Order.countDocuments({ checkId: check._id }).session(session)) >= MAX_ORDERS_PER_CHECK) {
-    throw new ApiError(409, "limit_exceeded", `A check takes at most ${MAX_ORDERS_PER_CHECK} orders; please call your waiter`);
+  } else {
+    // Write the check we read: a close committed after our snapshot now write-conflicts, and `withTransaction` retries
+    // on a fresh snapshot (where the check is no longer open). The filter also makes the per-check limit strict.
+    const touched = await Check.updateOne(
+      { _id: check._id, status: "open", orderCount: { $not: { $gte: MAX_ORDERS_PER_CHECK } } }, // a missing count is 0
+      { $inc: { orderCount: 1 } },
+      { session },
+    );
+    if (touched.modifiedCount !== 1) {
+      const current = await Check.findById(check._id).session(session);
+      if (current?.status === "open") {
+        throw new ApiError(409, "limit_exceeded", `A check takes at most ${MAX_ORDERS_PER_CHECK} orders; please call your waiter`);
+      }
+      throw new CheckChangedError();
+    }
   }
 
   // 4. Availability for today's service day. No doc = available, unlimited.

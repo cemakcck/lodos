@@ -33,6 +33,7 @@ describe("guest abuse limits", () => {
       const first = (await t.models.Order.findOne({ tableId: seed.tables.T7!.id }).lean())!;
       const copy = (i: number) => ({ ...first, _id: undefined, idempotencyKey: `fill-${i}` });
       await t.models.Order.insertMany(Array.from({ length: 29 }, (_, i) => copy(i)));
+      await t.models.Check.updateOne({ _id: first.checkId }, { orderCount: 30 });
     });
     const res = await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
     expect(res.statusCode).toBe(409);

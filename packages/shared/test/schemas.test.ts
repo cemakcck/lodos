@@ -16,6 +16,13 @@ describe("schemas", () => {
     expect(OrderRequest.safeParse({ idempotencyKey: key, items: [] }).success).toBe(false);
     expect(OrderRequest.safeParse({ idempotencyKey: "x", items: [item(1)] }).success).toBe(false);
   });
+  it("accepts an optional expectedCheckId (the visit the guest page belongs to)", () => {
+    expect(OrderRequest.parse({ idempotencyKey: key, items: [item(1)], expectedCheckId: "665f0c0c0c0c0c0c0c0c0c0c" }).expectedCheckId).toBe(
+      "665f0c0c0c0c0c0c0c0c0c0c",
+    );
+    expect(OrderRequest.parse({ idempotencyKey: key, items: [item(1)] }).expectedCheckId).toBeUndefined();
+    expect(OrderRequest.safeParse({ idempotencyKey: key, items: [item(1)], expectedCheckId: 7 }).success).toBe(false);
+  });
   it("validates item fields", () => {
     expect(OrderItemRequest.safeParse({ ...item(1), note: "a".repeat(140) }).success).toBe(true);
     expect(OrderItemRequest.safeParse({ ...item(1), note: "a".repeat(141) }).success).toBe(false);

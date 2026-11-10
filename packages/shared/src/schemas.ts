@@ -13,6 +13,11 @@ export type OrderItemRequest = z.infer<typeof OrderItemRequest>;
 
 export const OrderRequest = z.object({
   idempotencyKey: z.uuid(),
+  /**
+   * The check (visit) the guest page was showing. When present and it is no longer the table's open check, the
+   * order is refused with `check_closed`, so a stale page never orders onto the next party's check.
+   */
+  expectedCheckId: z.string().max(64).optional(),
   items: z
     .array(OrderItemRequest)
     .min(1)

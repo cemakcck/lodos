@@ -148,6 +148,7 @@ export async function seedRestaurant(
       tableId: tableIds[s.table],
       covers: s.covers,
       openedAt: ago(s.openedMinAgo),
+      orderCount: 0,
       serverStaffId: sectionOf(s.table),
       billRequestedAt: s.billRequestedMinAgo ? ago(s.billRequestedMinAgo) : null,
       billMethod: s.billRequestedMinAgo ? ("card" as const) : null,
@@ -234,6 +235,8 @@ export async function seedRestaurant(
         });
       }
     });
+
+    for (const c of checks) c.orderCount = orders.filter((o) => o.checkId === c._id).length;
 
     const t2 = checkOf("T2").check;
     const day = serviceDayOf(now);

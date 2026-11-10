@@ -173,6 +173,9 @@ describe("liveService: true", () => {
         expect(o?.placedBy).toBeNull();
       }
     }
+    for (const c of checks) {
+      expect(c.orderCount).toBe(orders.filter((o) => String(o.checkId) === String(c._id)).length);
+    }
     for (const o of orders) {
       const split = splitByStation(o.items);
       expect((split.kitchen?.length ?? 0) + (split.bar?.length ?? 0)).toBe(o.items.length);

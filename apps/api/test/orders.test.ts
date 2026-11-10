@@ -48,6 +48,7 @@ describe("POST /api/guest/orders", () => {
       expect(check.covers).toBeNull();
       expect(String(check.serverStaffId)).toBe(seed.staff.waiter);
       expect(check.openedAt).toEqual(NOW);
+      expect(check.orderCount).toBe(1);
 
       const order = (await t.models.Order.findById(orderId))!;
       expect(String(order.checkId)).toBe(String(check._id));
@@ -153,6 +154,80 @@ describe("POST /api/guest/orders", () => {
     expect((await guest(t, "not-a-token").post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(404);
     const none = await t.inject({ method: "POST", url: "/api/guest/orders", payload: orderBody([{ itemId: fries.id }]) });
     expect(none.statusCode).toBe(404);
+  });
+});
+
+describe("expectedCheckId: a stale guest page cannot order onto the next party's check", () => {
+  it("a stale id after close → 409 check_closed, no order, no new check", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const tableId = seed.tables.T7!.id;
+    const g = guest(t, seed.tables.T7!.token);
+    expect((await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
+    const visit = (await g.get("/api/guest/table")).json().visit as { checkId: string };
+    await runWithTenant(tenantId, () => t.models.Check.updateOne({ _id: visit.checkId }, { status: "paid", closedAt: NOW }));
+    emit.mockClear();
+
+    const res = await g.post("/api/guest/orders", { ...orderBody([{ itemId: fries.id }]), expectedCheckId: visit.checkId });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("check_closed");
+    expect(emit).not.toHaveBeenCalled();
+    await runWithTenant(tenantId, async () => {
+      expect(await t.models.Check.countDocuments({ tableId })).toBe(1);
+      expect(await t.models.Order.countDocuments({ tableId })).toBe(1);
+    });
+  });
+
+  it("a stale id while another party's check is open → check_closed", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const g = guest(t, seed.tables.T7!.token);
+    await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
+    const old = (await g.get("/api/guest/table")).json().visit.checkId as string;
+    await runWithTenant(tenantId, () => t.models.Check.updateOne({ _id: old }, { status: "paid", closedAt: NOW }));
+    await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }])); // the next party
+    const res = await g.post("/api/guest/orders", { ...orderBody([{ itemId: fries.id }]), expectedCheckId: old });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("check_closed");
+  });
+
+  it("the matching id is accepted; absent at a free table opens a check", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const g = guest(t, seed.tables.T7!.token);
+    expect((await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
+    const visit = (await g.get("/api/guest/table")).json().visit as { checkId: string };
+    const res = await g.post("/api/guest/orders", { ...orderBody([{ itemId: fries.id }]), expectedCheckId: visit.checkId });
+    expect(res.statusCode).toBe(201);
+    const order = await runWithTenant(tenantId, () => t.models.Order.findById(res.json().orderId));
+    expect(String(order!.checkId)).toBe(visit.checkId);
+    const check = await runWithTenant(tenantId, () => t.models.Check.findById(visit.checkId));
+    expect(check!.orderCount).toBe(2);
+  });
+
+  it("an expectedCheckId at a free table → check_closed (the page belongs to an ended visit)", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", {
+      ...orderBody([{ itemId: fries.id }]),
+      expectedCheckId: "665f0c0c0c0c0c0c0c0c0c0c",
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("check_closed");
+    expect(await runWithTenant(tenantId, () => t.models.Check.countDocuments({ tableId: seed.tables.T7!.id }))).toBe(0);
+  });
+
+  it("an idempotent replay returns the old order even after its check closed", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const g = guest(t, seed.tables.T7!.token);
+    const body = orderBody([{ itemId: fries.id }]);
+    const first = await g.post("/api/guest/orders", body);
+    const checkId = (await g.get("/api/guest/table")).json().visit.checkId as string;
+    await runWithTenant(tenantId, () => t.models.Check.updateOne({ _id: checkId }, { status: "paid", closedAt: NOW }));
+    const again = await g.post("/api/guest/orders", { ...body, expectedCheckId: checkId });
+    expect(again.statusCode).toBe(200);
+    expect(again.json().orderId).toBe(first.json().orderId);
   });
 });
 
