@@ -1,32 +1,19 @@
-import { createBrowserRouter, useParams, Outlet, type RouteObject } from "react-router";
+import { createBrowserRouter, Outlet, type RouteObject } from "react-router";
 import { useTranslation } from "react-i18next";
 import { guestRoutes } from "./guest/routes";
 import { GuestFrame, StaffFrame } from "./frames";
 import { DemoLanding } from "./demo/DemoLanding";
 import { Login } from "./staff/Login";
 import { RequireStaff, StaffHome } from "./staff/RequireStaff";
-import { Shell } from "./staff/Shell";
 import { Kds } from "./staff/kds/Kds";
 import { Floor } from "./staff/floor/Floor";
 import { PrintCheck } from "./staff/PrintCheck";
 import { OrderEntry } from "./staff/order/OrderEntry";
+import { MenuEditor } from "./staff/manager/MenuEditor";
+import { Tables } from "./staff/manager/Tables";
+import { QrSheet } from "./staff/manager/QrSheet";
+import { Tonight } from "./staff/manager/Tonight";
 import type { StaffRole } from "./staff/auth";
-
-/** A staff screen still to be built: the real Shell around a quiet note. Later tasks replace these. */
-function StaffPlaceholder({ titleKey }: { titleKey: string }) {
-  const { t } = useTranslation();
-  const params = useParams();
-  return (
-    <Shell title={t(titleKey)} stats={null}>
-      <div className="p-4">
-        <p data-testid="placeholder" className="text-[13px] text-staff-fg-3">
-          {t("staff.placeholder")}
-          {Object.keys(params).length > 0 && <code className="ml-2 font-mono text-xs">{JSON.stringify(params)}</code>}
-        </p>
-      </div>
-    </Shell>
-  );
-}
 
 function NotFound() {
   const { t } = useTranslation();
@@ -41,7 +28,6 @@ const guarded = (roles: readonly StaffRole[], children: RouteObject[]): RouteObj
   element: <RequireStaff roles={roles} />,
   children,
 });
-const ph = (path: string, titleKey: string): RouteObject => ({ path, element: <StaffPlaceholder titleKey={titleKey} /> });
 
 export const routes: RouteObject[] = [
   {
@@ -62,10 +48,10 @@ export const routes: RouteObject[] = [
             { path: "/staff/check/:id/print", element: <PrintCheck /> },
           ]),
           guarded(["manager"], [
-            ph("/staff/menu", "staff.nav.menu"),
-            ph("/staff/tables", "staff.nav.tables"),
-            ph("/staff/tables/qr", "staff.nav.tables"),
-            ph("/staff/tonight", "staff.nav.tonight"),
+            { path: "/staff/menu", element: <MenuEditor /> },
+            { path: "/staff/tables", element: <Tables /> },
+            { path: "/staff/tables/qr", element: <QrSheet /> },
+            { path: "/staff/tonight", element: <Tonight /> },
           ]),
         ],
       },

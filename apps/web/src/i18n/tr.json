@@ -196,7 +196,7 @@
       "waiter": "Garson",
       "kitchen": "Mutfak",
       "bar": "Bar",
-      "manager": "Müdür"
+      "manager": "Yönetici"
     },
     "account": {
       "open": "{{name}}, hesap menüsü",
@@ -229,8 +229,7 @@
       "demoTitle": "Ya da bir rolü hemen deneyin",
       "demoHint": "Demoda PIN gerekmez.",
       "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin."
-    },
-    "placeholder": "Bu ekran sonraki bir adımda gelecek."
+    }
   },
   "demo": {
     "banner": "Demo restoran, gerçek değil",
@@ -241,7 +240,7 @@
       "waiter": "Garson",
       "kitchen": "Mutfak",
       "bar": "Bar",
-      "manager": "Müdür"
+      "manager": "Yönetici"
     },
     "simulator": "Diğer masalardan canlı siparişler",
     "on": "açık",
@@ -639,5 +638,216 @@
     "tableError": "Bu masa yüklenemedi.",
     "retry": "Tekrar dene",
     "limitExceeded": "Bu hesap sipariş sınırına ulaştı. Bir yöneticiye danışın."
+  },
+  "manager": {
+    "menu": {
+      "title": "Menü",
+      "categories": "Kategoriler",
+      "all": "Tüm ürünler",
+      "addCategory": "Kategori ekle",
+      "rename": "{{name}} adını değiştir",
+      "moveUp": "{{name}} yukarı taşı",
+      "moveDown": "{{name}} aşağı taşı",
+      "moveFailed": "Kategoriler sıralanamadı. Yenileniyor…",
+      "newItem": "Yeni ürün",
+      "items": "Ürünler",
+      "itemsIn": "{{name}} ürünleri",
+      "search": "Ürün ara",
+      "noMatch": "“{{q}}” ile eşleşen ürün yok.",
+      "empty": "Bu kategoride henüz ürün yok.",
+      "loadError": "Menü yüklenemedi.",
+      "col": {
+        "photo": "Fotoğraf",
+        "name": "Ad",
+        "price": "Fiyat",
+        "station": "İstasyon",
+        "status": "Durum",
+        "eightySix": "86 · Kalan"
+      },
+      "edit": "{{name}} düzenle",
+      "noPhoto": "Fotoğraf yok",
+      "options_one": "{{count}} seçenek grubu",
+      "options_other": "{{count}} seçenek grubu",
+      "stats": {
+        "items": "ürün",
+        "soldOut": "tükendi",
+        "low": "sınırlı",
+        "hidden": "gizli"
+      },
+      "status": {
+        "available": "Satışta",
+        "soldOut": "Tükendi",
+        "left": "{{count}} kaldı",
+        "hidden": "Gizli"
+      },
+      "station": {
+        "kitchen": "Mutfak",
+        "bar": "Bar"
+      }
+    },
+    "category": {
+      "addTitle": "Yeni kategori",
+      "editTitle": "Kategoriyi düzenle",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "shown": "Menüde görünür",
+      "create": "Kategori ekle",
+      "save": "Kaydet",
+      "delete": "Kategoriyi sil",
+      "deleteConflict": "Bu kategoride hâlâ ürün var. Önce ürünleri taşıyın ya da gizleyin.",
+      "hiddenTag": "Gizli"
+    },
+    "avail": {
+      "switch": "Bu akşam tükendi, {{name}}",
+      "on": "Tükendi",
+      "off": "Satışta",
+      "left": "Kalan porsiyon, {{name}}",
+      "leftShort": "kaldı",
+      "leftHint": "Boş bırakırsanız sınır yok. Her sipariş bir düşer; 0'da ürün tükenir.",
+      "failed": "{{name}} güncellenemedi. Hiçbir şey değişmedi; tekrar deneyin."
+    },
+    "item": {
+      "newTitle": "Yeni ürün",
+      "editTitle": "{{name}} düzenle",
+      "details": "Bilgiler",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "descEn": "Açıklama (İngilizce)",
+      "descTr": "Açıklama (Türkçe)",
+      "category": "Kategori",
+      "price": "Fiyat",
+      "priceHint": "Lira olarak; ör. 640 ya da 640,50",
+      "station": "İstasyon",
+      "stationHint": "İçecekler bara gider.",
+      "dietary": "Beslenme",
+      "dietaryNames": {
+        "vegetarian": "Vejetaryen",
+        "vegan": "Vegan",
+        "gluten-free": "Glutensiz"
+      },
+      "allergens": "Alerjenler",
+      "allergensHint": "Misafire gösterilir, mutfak fişinde kırmızıyla işaretlenir.",
+      "photo": "Fotoğraf",
+      "photoHint": "JPEG, PNG ya da WebP, en fazla 2 MB",
+      "photoChoose": "Fotoğraf seç",
+      "photoReplace": "Fotoğrafı değiştir",
+      "photoCurrent": "Mevcut fotoğraf",
+      "photoNew": "Yeni fotoğraf, ürünle birlikte kaydedilir",
+      "photoDiscard": "Mevcut fotoğrafı koru",
+      "photoNone": "Henüz fotoğraf yok",
+      "photoTooBig": "Bu fotoğraf 2 MB'tan büyük. Daha küçük bir dosya seçin.",
+      "photoType": "JPEG, PNG ya da WebP bir fotoğraf kullanın.",
+      "photoFailed": "Ürün kaydedildi ama fotoğraf kabul edilmedi: {{reason}}",
+      "visibility": "Menüde görünür",
+      "visOn": "Görünür",
+      "visOff": "Gizli",
+      "visHint": "Gizli ürünler burada kalır ama misafir ve garson görmez.",
+      "create": "Ürünü oluştur",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor…",
+      "cancel": "Vazgeç",
+      "saved": "{{name}} kaydedildi.",
+      "created": "{{name}} menüye eklendi.",
+      "errors": {
+        "required": "Zorunlu",
+        "tooLong": "Çok uzun",
+        "price": "Fiyatı 640 ya da 640,50 gibi yazın",
+        "delta": "Tutarı 50 ya da -10 gibi yazın",
+        "noOptions": "En az bir seçenek ekleyin",
+        "invalid": "Bu alanı kontrol edin",
+        "summary": "İşaretli alanları düzeltip yeniden kaydedin."
+      }
+    },
+    "groups": {
+      "title": "Seçenek grupları",
+      "hint": "Misafir sipariş verirken seçer; ör. pişirme derecesi ya da ekstralar.",
+      "empty": "Seçenek grubu yok. Çoğu yemekte gerekmez.",
+      "add": "Seçenek grubu ekle",
+      "group": "Seçenek grubu {{n}}",
+      "nameEn": "Grup adı (İngilizce)",
+      "nameTr": "Grup adı (Türkçe)",
+      "type": "Seçim",
+      "single": "Tek seçim",
+      "multi": "Çoklu seçim",
+      "required": "Zorunlu",
+      "remove": "Seçenek grubu {{n}} kaldır",
+      "addOption": "Seçenek ekle",
+      "option": "Seçenek {{n}}",
+      "optNameEn": "Seçenek adı (İngilizce)",
+      "optNameTr": "Seçenek adı (Türkçe)",
+      "delta": "Fiyat farkı (₺)",
+      "removeOption": "Seçenek {{n}} kaldır"
+    },
+    "tables": {
+      "title": "Masalar",
+      "printSheet": "QR sayfasını yazdır",
+      "caption": "Masalar ve QR kodları",
+      "col": {
+        "name": "Masa",
+        "room": "Alan",
+        "capacity": "Kapasite",
+        "section": "Bölge",
+        "code": "QR kod",
+        "actions": "İşlemler"
+      },
+      "noSection": "Atanmamış",
+      "codeEnding": "Kodun sonu {{tail}}",
+      "edit": "{{name}} düzenle",
+      "editShort": "Düzenle",
+      "regenerate": "{{name}} için QR'ı yenile",
+      "regenerateShort": "QR'ı yenile",
+      "regenerating": "Yenileniyor…",
+      "confirmTitle": "QR'ı yenile · {{name}}",
+      "confirmBody": "{{name}} yeni bir kod alır. Eski basılı kod hemen çalışmaz olur; onu kullanan misafirler menüye erişemez.",
+      "confirmNext": "Yeni sayfayı yazdırıp masadaki kartı değiştirin.",
+      "regenerated": "{{name}} için yeni QR kod hazır. Yazdırıp eski kartın yerine koyun.",
+      "editTitle": "{{name}} düzenle",
+      "name": "Ad",
+      "nameHint": "T ya da B ve bir sayı; ör. T12, B2",
+      "capacity": "Kapasite",
+      "capacityHint": "1 ile 50 kişi arası",
+      "nameError": "T ya da B ve bir sayı kullanın; ör. T12.",
+      "capacityError": "1 ile 50 arasında bir sayı girin.",
+      "duplicate": "Bu ad başka bir masada kullanılıyor.",
+      "save": "Kaydet",
+      "saved": "{{name}} kaydedildi.",
+      "loadError": "Masalar yüklenemedi.",
+      "stats": {
+        "tables": "masa",
+        "seats": "kişilik kapasite",
+        "rooms": "alan"
+      }
+    },
+    "qr": {
+      "title": "QR sayfası",
+      "back": "Masalara dön",
+      "print": "Yazdır",
+      "allRooms": "Tüm alanlar",
+      "rooms": "Alanlar",
+      "summary": "{{cards}} kart · {{pages}} A4 sayfa, sayfa başına 6",
+      "localhost": "Bu kodlar {{origin}} adresine gider; yalnızca yayındaki adreste çalışır. Gerçek masalar için yayındaki siteden yazdırın.",
+      "qrLabel": "{{name}} masasının QR kodu",
+      "sheet": "A4 sayfa {{n}}",
+      "loading": "Masalar yükleniyor…",
+      "loadError": "Masalar yüklenemedi."
+    },
+    "tonight": {
+      "title": "Bu akşam",
+      "covers": "Kişi",
+      "coversHint": "Bu serviste oturan misafir",
+      "revenue": "Ciro",
+      "revenueHint": "Kapanan hesaplar, KDV dahil",
+      "open": "Açık hesaplar",
+      "openTotal": "hâlâ masalarda",
+      "avg": "Ortalama fiş süresi",
+      "avgHint": "Gönderimden hazıra, mutfak ve bar",
+      "none": "Henüz fiş yok",
+      "top": "Bu akşam en çok satanlar",
+      "topEmpty": "Bu akşam henüz sipariş yok.",
+      "sold": "adet",
+      "serviceDay": "Servis günü 06:00'da başlar",
+      "loadError": "Bu akşamın rakamları yüklenemedi."
+    },
+    "retry": "Tekrar dene"
   }
 }

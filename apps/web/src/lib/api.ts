@@ -22,7 +22,8 @@ export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
   const { tableToken, headers, body, ...rest } = init;
   const h = new Headers(headers);
   if (tableToken) h.set("X-Table-Token", tableToken);
-  if (body !== undefined && body !== null && !h.has("Content-Type")) h.set("Content-Type", "application/json");
+  // FormData and Blobs carry their own type (multipart needs the browser-made boundary).
+  if (body !== undefined && body !== null && !isRawBody(body) && !h.has("Content-Type")) h.set("Content-Type", "application/json");
   if (!h.has("Accept")) h.set("Accept", "application/json");
   const res = await fetch(path.startsWith("/") ? path : `/api/${path}`, {
     credentials: "include",
