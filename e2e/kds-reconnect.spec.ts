@@ -2,10 +2,12 @@
  * Review Focus 5: a kitchen screen that lost its connection catches up on its own.
  * The kitchen goes offline, a guest orders meanwhile, the kitchen comes back online, and the new ticket
  * shows up within 5 s with no page reload (the socket reconnect refetches the snapshot).
- * Self-contained: it opens its own demo sandbox through the demo session API. Runs in Task 20's suite.
+ * Self-contained: it opens its own demo sandbox through the demo session API, with the simulator off. The note is
+ * unique per run, so the assertions can only match this run's ticket.
  */
 import { randomUUID } from "node:crypto";
 import { test, expect, request as playwrightRequest } from "@playwright/test";
+import { simulatorOff } from "./helpers";
 
 type Loc = { en: string; tr: string };
 type MenuItem = {
@@ -23,6 +25,7 @@ test("the kitchen display shows an order placed while it was offline, without a 
   // 1. Sign in as kitchen through the demo (the cookie lands in this context).
   const session = await page.request.post("/api/demo/session", { data: { role: "kitchen" } });
   expect(session.ok()).toBeTruthy();
+  await simulatorOff(page);
   const info = await page.request.get("/api/demo/info");
   expect(info.ok()).toBeTruthy();
   const { guestUrl } = (await info.json()) as { guestUrl: string };
@@ -36,8 +39,9 @@ test("the kitchen display shows an order placed while it was offline, without a 
     if (f === page.mainFrame()) navigations += 1;
   });
 
-  // 2. Drop the kitchen's network.
+  // 2. Drop the kitchen's network; the Shell reports it.
   await kitchen.setOffline(true);
+  await expect(page.getByText("Offline", { exact: true })).toBeVisible();
 
   // 3. A guest at T7 orders from a second, independent context.
   const guest = await playwrightRequest.newContext({ baseURL, extraHTTPHeaders: { "X-Table-Token": tableToken } });
@@ -48,17 +52,22 @@ test("the kitchen display shows an order placed while it was offline, without a 
     (i) => i.station === "kitchen" && !i.availability.soldOut && i.availability.remaining !== 0 && i.optionGroups.every((g) => !g.required),
   );
   expect(dish, "a kitchen dish without required options").toBeTruthy();
+  const note = `e2e reconnect ${randomUUID().slice(0, 8)}`;
   const order = await guest.post("/api/guest/orders", {
-    data: { idempotencyKey: randomUUID(), items: [{ itemId: dish!.id, qty: 1, options: [], note: "e2e reconnect" }] },
+    data: { idempotencyKey: randomUUID(), items: [{ itemId: dish!.id, qty: 1, options: [], note }] },
   });
   expect(order.status()).toBe(201);
   await guest.dispose();
+
+  // While offline the board cannot have it: the order was committed, but the event had nowhere to go.
+  const ticket = page.getByRole("article", { name: /T7/ }).filter({ hasText: note });
+  await expect(ticket).toHaveCount(0);
+  await expect(page.getByText("Offline", { exact: true })).toBeVisible();
 
   // 4. Back online.
   await kitchen.setOffline(false);
 
   // 5. The new ticket (T7, carrying our note) is on the board within 5 s, and the page never reloaded.
-  const ticket = page.getByRole("article", { name: /T7/ }).filter({ hasText: "e2e reconnect" });
   await expect(ticket).toBeVisible({ timeout: 5_000 });
   await expect(ticket.getByText(dish!.name.en)).toBeVisible();
   expect(navigations).toBe(0);

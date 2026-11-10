@@ -26,7 +26,10 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: E2E
+        # Playwright starts an in-memory MongoDB (27019), builds and starts the API (4200) and serves the web build (5280).
         run: npm run test:e2e
+        env:
+          MONGOMS_VERSION: 8.0.4
       - name: Build
         run: npm run build
       - name: Upload Playwright report
@@ -34,5 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report
+          path: |
+            playwright-report
+            test-results
           if-no-files-found: ignore

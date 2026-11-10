@@ -3,7 +3,14 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-const api = "http://localhost:4100";
+/// <reference types="node" />
+
+// Where /api and /socket.io are proxied: the dev API (4100) by default; the e2e run points `vite preview` at 4200.
+const api = process.env.LODOS_API_URL ?? "http://localhost:4100";
+const proxy = {
+  "/api": { target: api, changeOrigin: false },
+  "/socket.io": { target: api, ws: true },
+};
 
 export default defineConfig({
   plugins: [
@@ -32,9 +39,9 @@ export default defineConfig({
   server: {
     port: 5180,
     strictPort: true,
-    proxy: {
-      "/api": { target: api, changeOrigin: false },
-      "/socket.io": { target: api, ws: true },
-    },
+    proxy,
+  },
+  preview: {
+    proxy,
   },
 });
