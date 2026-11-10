@@ -43,6 +43,7 @@ const EnvSchema = z.object({
   TRUST_PROXY: trustProxy,
   NODE_ENV: z.string().optional(),
   COOKIE_SECURE: z.enum(["1", "0", "true", "false", ""]).optional(),
+  WEB_DIST: z.string().optional(),
 });
 
 export type Config = {
@@ -57,6 +58,8 @@ export type Config = {
   trustProxy: TrustProxy;
   /** Session and sandbox cookies carry `Secure` (HTTPS only). */
   cookieSecure: boolean;
+  /** Absolute path of the built web app to serve (single-container deploy); unset in dev. */
+  webDist?: string;
 };
 
 /** Validates the environment; throws a readable error listing every bad variable. */
@@ -77,5 +80,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     sandboxesPerIpHour: e.DEMO_SANDBOXES_PER_IP_HOUR,
     trustProxy: e.TRUST_PROXY,
     cookieSecure: e.COOKIE_SECURE ? e.COOKIE_SECURE === "1" || e.COOKIE_SECURE === "true" : e.NODE_ENV === "production",
+    webDist: e.WEB_DIST || undefined,
   };
 }

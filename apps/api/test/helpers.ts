@@ -23,7 +23,7 @@ function mongoUri(): string {
 }
 
 export async function makeTestApp(
-  opts: { now?: Date; demoMode?: boolean; sandboxesPerIpHour?: number; maxSandboxes?: number; trustProxy?: TrustProxy; cookieSecure?: boolean } = {},
+  opts: { now?: Date; demoMode?: boolean; sandboxesPerIpHour?: number; maxSandboxes?: number; trustProxy?: TrustProxy; cookieSecure?: boolean; webDist?: string } = {},
 ) {
   const clock = fixedClock(opts.now ?? new Date("2026-11-10T17:00:00Z"));
   const built = await buildApp({
@@ -38,6 +38,7 @@ export async function makeTestApp(
     maxSandboxes: opts.maxSandboxes,
     trustProxy: opts.trustProxy,
     cookieSecure: opts.cookieSecure,
+    webDist: opts.webDist,
   });
   return {
     app: built.app,

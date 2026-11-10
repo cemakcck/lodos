@@ -121,7 +121,18 @@ npm run setup -w @lodos/api -- --tenant main --seed-menu \
 
 ## Deploying
 
-The supported setup is **one origin**: the web host serves the built app and reverse-proxies `/api` and `/socket.io` to the API. The client uses relative URLs, so the browser only ever talks to the web origin, and the staff session cookie is first-party everywhere (iPad Safari included). The spec's alternative of an `api.lodos.<domain>` subdomain is not supported: the client has no setting for a separate API origin.
+### Railway (one container)
+
+The `Dockerfile` builds the web app and the API into one image, and the API serves the built app itself (`WEB_DIST`, set in the image), so `/api`, `/socket.io` and the pages share one origin with no proxy to configure. `railway.json` points Railway at the Dockerfile and health-checks `/api/health`.
+
+1. Create a free MongoDB Atlas cluster (M0). Under Network Access allow `0.0.0.0/0` (Railway has no fixed outbound IP), create a database user, and copy the connection string with a database name, e.g. `mongodb+srv://lodos:<password>@cluster0.xxxxx.mongodb.net/lodos?retryWrites=true&w=majority`.
+2. In Railway: New Project → Deploy from GitHub repo → this repo. Then Settings → Networking → Generate Domain.
+3. Variables: `MONGODB_URI` (from step 1), `SESSION_SECRET` (`openssl rand -base64 48`), `DEMO_MODE=1`, `WEB_ORIGIN=https://<the generated domain>`, `TRUST_PROXY=1`. Railway sets `PORT`; the image sets `NODE_ENV=production`, which makes cookies Secure.
+4. Keep one replica (Socket.IO rooms and the demo timers live in one process, see below).
+
+### Other hosts
+
+The supported setup is **one origin**: either run the image above, or have the web host serve the built app and reverse-proxy `/api` and `/socket.io` to the API. The client uses relative URLs, so the browser only ever talks to the web origin, and the staff session cookie is first-party everywhere (iPad Safari included). The spec's alternative of an `api.lodos.<domain>` subdomain is not supported: the client has no setting for a separate API origin.
 
 - **Proxy both paths**, and pass the WebSocket upgrade for `/socket.io` (`Upgrade` and `Connection` headers). In nginx that is a `location /socket.io/` block with `proxy_http_version 1.1`, `proxy_set_header Upgrade $http_upgrade` and `proxy_set_header Connection "upgrade"`.
 - **`TRUST_PROXY`**: set it to the hops in front of the API (often `1`, or the proxy's address), so `X-Forwarded-For` gives the client's address to the per-IP limits. Leave it `false` when nothing sits in front: then the header is ignored and cannot be spoofed.

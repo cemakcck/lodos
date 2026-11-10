@@ -1,5 +1,6 @@
 import type { FastifyError, FastifyInstance } from "fastify";
 import { ZodError } from "zod";
+import { wantsAppShell } from "./web";
 
 export type ErrorCode =
   | "validation"
@@ -50,8 +51,12 @@ function codeForStatus(status: number): ErrorCode {
   }
 }
 
-export function registerErrorHandling(app: FastifyInstance): void {
+export function registerErrorHandling(app: FastifyInstance, opts: { appShell?: boolean } = {}): void {
   app.setNotFoundHandler((req, reply) => {
+    if (opts.appShell && wantsAppShell(req.method, req.url)) {
+      void reply.header("cache-control", "no-cache").sendFile("index.html");
+      return;
+    }
     void reply.status(404).send(body("not_found", `Route ${req.method} ${req.url} not found`));
   });
 

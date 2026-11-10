@@ -17,6 +17,7 @@ import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
 import { registerMenuRoutes } from "./menu/routes";
+import { registerWeb } from "./web";
 import { unscoped } from "./db/tenancy";
 import { socketRealtime, type Realtime } from "./realtime/emit";
 import { attachRealtime } from "./realtime/io";
@@ -56,6 +57,8 @@ export type BuildAppOptions = {
   trustProxy?: TrustProxy;
   /** Default false (config COOKIE_SECURE defaults it to NODE_ENV === "production"). */
   cookieSecure?: boolean;
+  /** Built web app to serve on the same origin (config WEB_DIST); unset in dev, where Vite serves it. */
+  webDist?: string;
 };
 
 /** A hop count becomes "trust the nearest n hops" (Fastify's types take no number). */
@@ -95,7 +98,8 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   await app.register(helmet);
   await app.register(cors, { origin: opts.webOrigin, credentials: true });
   await app.register(cookie, { secret: opts.sessionSecret });
-  registerErrorHandling(app);
+  registerErrorHandling(app, { appShell: opts.webDist !== undefined });
+  if (opts.webDist) await registerWeb(app, opts.webDist);
 
   app.get("/api/health", async () => ({ ok: true }));
   registerAuthRoutes(app);

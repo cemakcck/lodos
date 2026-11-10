@@ -18,6 +18,7 @@ const { app, close } = await buildApp({
   sandboxesPerIpHour: config.sandboxesPerIpHour,
   trustProxy: config.trustProxy,
   cookieSecure: config.cookieSecure,
+  webDist: config.webDist ? resolve(config.webDist) : undefined,
   startJobs: true,
   logger: true,
 });
