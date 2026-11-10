@@ -159,6 +159,36 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     }
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
-  it.todo("T10: A's session gets 404 on B's check and table ids (GET and POST); B unchanged");
+  it("T10: A's session gets 404 on B's check, table, ticket and call ids (GET and POST); B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    expect(before.checks.length).toBeGreaterThan(0);
+    expect(before.calls.length).toBeGreaterThan(0);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const req = (method: "GET" | "POST", url: string, payload?: object) =>
+      t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
+    const expect404 = async (method: "GET" | "POST", url: string, payload?: object) => {
+      const res = await req(method, url, payload);
+      expect(res.statusCode, `${method} ${url}`).toBe(404);
+    };
+    const item = String(before.items[0]!._id);
+    for (const tb of before.tables) {
+      const id = String(tb._id);
+      await expect404("GET", `/api/tables/${id}/check`);
+      await expect404("POST", `/api/tables/${id}/seat`, { covers: 2 });
+      await expect404("POST", `/api/tables/${id}/orders`, { idempotencyKey: randomUUID(), items: [{ itemId: item, qty: 1, options: [] }] });
+    }
+    for (const c of before.checks) {
+      await expect404("GET", `/api/checks/${String(c._id)}/print`);
+      await expect404("POST", `/api/checks/${String(c._id)}/close`, { method: "card" });
+    }
+    for (const tk of before.tickets) await expect404("POST", `/api/tickets/${String(tk._id)}/served`);
+    for (const c of before.calls) await expect404("POST", `/api/calls/${String(c._id)}/answer`);
+
+    const floor = await req("GET", "/api/floor");
+    expect(floor.statusCode).toBe(200);
+    const text = JSON.stringify(floor.json());
+    for (const tb of before.tables) expect(text).not.toContain(String(tb._id));
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
   it.todo("T11: A's manager session gets 404 on B's menu item ids (GET, PATCH, DELETE); B unchanged");
 });
