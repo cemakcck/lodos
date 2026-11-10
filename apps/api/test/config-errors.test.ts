@@ -15,6 +15,7 @@ describe("loadConfig", () => {
       webOrigin: "http://localhost:5180",
       port: 4100,
       host: "0.0.0.0",
+      sandboxesPerIpHour: 5,
     });
   });
 

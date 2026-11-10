@@ -4,6 +4,8 @@ import helmet from "@fastify/helmet";
 import Fastify, { type FastifyInstance } from "fastify";
 import { Server } from "socket.io";
 import { registerAuthRoutes } from "./auth/routes";
+import { CLEANUP_INTERVAL_MS, runCleanup } from "./demo/cleanup";
+import { registerDemoRoutes } from "./demo/routes";
 import { systemClock, type Clock } from "./clock";
 import { connectDb } from "./db/connect";
 import { bindModels, type Models } from "./db/models/index";
@@ -18,6 +20,8 @@ declare module "fastify" {
     models: Models;
     io: Server;
     demoMode: boolean;
+    /** Who is connected right now. Task 8 replaces `isConnected` with the real socket presence. */
+    presence: { isConnected(tenantId: string): boolean };
   }
 }
 
@@ -31,6 +35,10 @@ export type BuildAppOptions = {
   webOrigin: string;
   /** Background jobs (sandbox cleanup, simulator) arrive in later tasks. */
   startJobs?: boolean;
+  /** Sandbox creations allowed per IP per hour (default 5). */
+  sandboxesPerIpHour?: number;
+  /** Maximum concurrent sandboxes (default 200). */
+  maxSandboxes?: number;
   logger?: boolean;
 };
 
@@ -49,6 +57,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   app.decorate("clock", clock);
   app.decorate("models", models);
   app.decorate("demoMode", opts.demoMode ?? false);
+  app.decorate("presence", { isConnected: () => false });
 
   await app.register(helmet);
   await app.register(cors, { origin: opts.webOrigin, credentials: true });
@@ -60,12 +69,23 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerKdsRoutes(app);
   registerFloorRoutes(app);
   registerManagerRoutes(app);
+  if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
   // Rooms, auth and events are wired in Task 8.
   const io = new Server(app.server, { cors: { origin: opts.webOrigin, credentials: true } });
   app.decorate("io", io);
 
   await app.ready();
+
+  let cleanupTimer: NodeJS.Timeout | undefined;
+  if (opts.startJobs && app.demoMode) {
+    cleanupTimer = setInterval(() => {
+      runCleanup(models, clock.now(), (id) => app.presence.isConnected(id)).catch((err: unknown) =>
+        app.log.error({ err }, "sandbox cleanup failed"),
+      );
+    }, CLEANUP_INTERVAL_MS);
+    cleanupTimer.unref();
+  }
 
   let closed = false;
   return {
@@ -76,6 +96,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
     async close() {
       if (closed) return;
       closed = true;
+      clearInterval(cleanupTimer);
       unbind();
       await io.close();
       await app.close();

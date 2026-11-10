@@ -11,6 +11,7 @@ const EnvSchema = z.object({
   DEMO_MODE: bool,
   WEB_ORIGIN: z.url().default("http://localhost:5180"),
   PORT: z.coerce.number().int().min(1).max(65535).default(4100),
+  DEMO_SANDBOXES_PER_IP_HOUR: z.coerce.number().int().min(1).default(5),
   HOST: z.string().default("0.0.0.0"),
 });
 
@@ -21,6 +22,7 @@ export type Config = {
   webOrigin: string;
   port: number;
   host: string;
+  sandboxesPerIpHour: number;
 };
 
 /** Validates the environment; throws a readable error listing every bad variable. */
@@ -38,5 +40,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     webOrigin: e.WEB_ORIGIN,
     port: e.PORT,
     host: e.HOST,
+    sandboxesPerIpHour: e.DEMO_SANDBOXES_PER_IP_HOUR,
   };
 }

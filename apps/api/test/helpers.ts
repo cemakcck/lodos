@@ -19,7 +19,7 @@ function mongoUri(): string {
   return uri;
 }
 
-export async function makeTestApp(opts: { now?: Date; demoMode?: boolean } = {}) {
+export async function makeTestApp(opts: { now?: Date; demoMode?: boolean; sandboxesPerIpHour?: number; maxSandboxes?: number } = {}) {
   const clock = fixedClock(opts.now ?? new Date("2026-11-10T17:00:00Z"));
   const built = await buildApp({
     mongoUri: mongoUri(),
@@ -29,6 +29,8 @@ export async function makeTestApp(opts: { now?: Date; demoMode?: boolean } = {})
     sessionSecret: TEST_SECRET,
     webOrigin: TEST_WEB_ORIGIN,
     startJobs: false,
+    sandboxesPerIpHour: opts.sandboxesPerIpHour,
+    maxSandboxes: opts.maxSandboxes,
   });
   return {
     app: built.app,

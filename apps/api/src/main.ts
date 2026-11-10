@@ -15,6 +15,7 @@ const { app, close } = await buildApp({
   sessionSecret: config.sessionSecret,
   webOrigin: config.webOrigin,
   demoMode: config.demoMode,
+  sandboxesPerIpHour: config.sandboxesPerIpHour,
   startJobs: true,
   logger: true,
 });
