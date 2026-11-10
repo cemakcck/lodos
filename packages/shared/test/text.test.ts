@@ -11,6 +11,10 @@ describe("text", () => {
     expect(noteMentionsAllergy("fıstık alerjim var")).toBe(true);
     expect(noteMentionsAllergy("Gluten free please")).toBe(true);
     expect(noteMentionsAllergy("extra lemon")).toBe(false);
+    for (const t of ["FISTIK var", "ALERJİ", "COLYAK", "fistik", "findik", "nuts please", "peanut"]) {
+      expect(noteMentionsAllergy(t), t).toBe(true);
+    }
+    for (const t of ["5 minutes", "donut"]) expect(noteMentionsAllergy(t), t).toBe(false);
   });
   it("masks profanity", () => {
     expect(maskProfanity("what the fuck")).toBe("what the •••");

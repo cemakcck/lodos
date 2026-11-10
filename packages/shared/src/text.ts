@@ -25,8 +25,10 @@ export function maskProfanity(s: string): string {
   return s.replace(/[\p{L}\p{M}]+/gu, (w) => (PROFANITY.has(fold(w)) ? "•••" : w));
 }
 
-const ALLERGY_RE = /allerg|alerji|gluten|nut|fıstık|fındık|laktoz|lactose|vegan|celiac|çölyak/i;
+// Matched against fold(note), so patterns are folded (ASCII, lowercase).
+const ALLERGY_RE =
+  /allerg|alerj|gluten|\bnuts?\b|peanut|walnut|hazelnut|pistachio|fistik|findik|laktoz|lactose|vegan|celiac|colyak/;
 
 export function noteMentionsAllergy(note: string): boolean {
-  return ALLERGY_RE.test(note);
+  return ALLERGY_RE.test(fold(note));
 }
