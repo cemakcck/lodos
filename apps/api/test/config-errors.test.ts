@@ -16,7 +16,27 @@ describe("loadConfig", () => {
       port: 4100,
       host: "0.0.0.0",
       sandboxesPerIpHour: 5,
+      trustProxy: false,
+      cookieSecure: false,
     });
+  });
+
+  it("TRUST_PROXY: false by default; true, a hop count, or a list of IPs / CIDRs; anything else is refused", () => {
+    expect(loadConfig(env).trustProxy).toBe(false);
+    expect(loadConfig({ ...env, TRUST_PROXY: "false" }).trustProxy).toBe(false);
+    expect(loadConfig({ ...env, TRUST_PROXY: "true" }).trustProxy).toBe(true);
+    expect(loadConfig({ ...env, TRUST_PROXY: "1" }).trustProxy).toBe(1);
+    expect(loadConfig({ ...env, TRUST_PROXY: "10.0.0.0/8, 127.0.0.1, ::1/128" }).trustProxy).toEqual(["10.0.0.0/8", "127.0.0.1", "::1/128"]);
+    for (const bad of ["yes", "10.0.0.0/33", "300.1.1.1", "-1", "10.0.0.0/8,"]) {
+      expect(() => loadConfig({ ...env, TRUST_PROXY: bad }), bad).toThrow("TRUST_PROXY");
+    }
+  });
+
+  it("COOKIE_SECURE defaults to NODE_ENV === production and can be set either way", () => {
+    expect(loadConfig({ ...env, NODE_ENV: "production" }).cookieSecure).toBe(true);
+    expect(loadConfig({ ...env, NODE_ENV: "development" }).cookieSecure).toBe(false);
+    expect(loadConfig({ ...env, NODE_ENV: "production", COOKIE_SECURE: "0" }).cookieSecure).toBe(false);
+    expect(loadConfig({ ...env, COOKIE_SECURE: "1" }).cookieSecure).toBe(true);
   });
 
   it("refuses a SESSION_SECRET shorter than 32 chars", () => {

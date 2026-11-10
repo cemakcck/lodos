@@ -47,7 +47,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
 
     await clearHits(models, failKey);
     const token = await createSession(models, staff._id, tenantId, sessionKindFor(staff.role), now);
-    void reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(SESSION_TTL_MS));
+    void reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(SESSION_TTL_MS, app.cookieSecure));
     return { staff: { id: staff.id as string, name: staff.name, role: staff.role } };
   });
 

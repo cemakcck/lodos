@@ -45,7 +45,7 @@ export function registerGuestRoutes(app: FastifyInstance): void {
 
       // A retry of a placed order is answered without counting against the limits.
       const done = await models.Order.findOne({ idempotencyKey: body.idempotencyKey, tableId: table.id }).lean();
-      if (done) return reply.status(200).send({ orderId: String(done._id) });
+      if (done) return reply.status(200).send({ orderId: String(done._id), checkId: String(done.checkId) });
 
       const now = app.clock.now();
       const { ordersPerIp, ordersPerToken } = GUEST_LIMITS;
@@ -58,7 +58,7 @@ export function registerGuestRoutes(app: FastifyInstance): void {
 
       const result = await placeOrder(models, { tableId: table.id, source: "qr", placedBy: null, req: body, now });
       emitOrderPlaced(app.realtime, table.tenantId, result);
-      return reply.status(result.replayed ? 200 : 201).send({ orderId: String(result.order._id) });
+      return reply.status(result.replayed ? 200 : 201).send({ orderId: String(result.order._id), checkId: String(result.order.checkId) });
     }),
   );
 
@@ -93,7 +93,7 @@ export function registerGuestRoutes(app: FastifyInstance): void {
       const check = await app.models.Check.findOneAndUpdate(
         { tableId: table.id, status: "open" },
         { $set: { billRequestedAt: now, billMethod: method } },
-        { new: true },
+        { returnDocument: "after" },
       );
       if (!check) throw new ApiError(409, "conflict", "There is no open check at this table");
       app.realtime.emit(table.tenantId, "check.updated", { ids: [String(check._id)], tableId: table.id }, ["floor", "manager", "table"]);

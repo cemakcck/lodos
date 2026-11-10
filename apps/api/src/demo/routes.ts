@@ -48,7 +48,7 @@ export function registerDemoRoutes(app: FastifyInstance, routeOpts: DemoRouteOpt
     );
     if (!staff) throw new ApiError(404, "not_found");
     const token = await createSession(models, staff._id, tenantId, sessionKindFor(staff.role), now);
-    void reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(SESSION_TTL_MS));
+    void reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(SESSION_TTL_MS, app.cookieSecure));
     return { redirect: REDIRECT[role] };
   });
 

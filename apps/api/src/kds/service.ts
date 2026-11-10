@@ -90,7 +90,7 @@ function view(t: Lean, now: Date, th: { warnMin: number; lateMin: number }): Tic
       options: i.options.map((o) => ({ en: o.en, tr: o.tr })),
       note: i.note ? maskProfanity(i.note) : null,
       allergens: [...i.allergens],
-      allergyFlag: i.allergens.length > 0 || (!!i.note && noteMentionsAllergy(i.note)),
+      allergyFlag: !!i.note && noteMentionsAllergy(i.note), // Task 16 ruling: only the guest's note raises the red flag
       checked: i.checked,
     })),
   };
@@ -213,7 +213,7 @@ export async function toggleItem(models: Models, id: string, scope: Station | nu
 export const RECALL_WINDOW_MS = 3000;
 
 /**
- * Recall the latest bumped, unserved ticket. Double-tap safe in two layers:
+ * Recall the latest bumped, unserved ticket of this service day on an open check. Double-tap safe in two layers:
  * 1. `claimFirst()` on a per-(tenant, station) marker admits exactly one recall per 3 s window (insert, then win only
  *    if ours is the earliest event, `_id` breaking ties), so parallel taps cannot both pass and cannot both be refused.
  *    Refused taps return the ticket recalled inside the window (changed:false), waiting briefly for the winner's write.
@@ -240,7 +240,17 @@ export async function recall(models: Models, station: Station, now: Date, tenant
   const release = () => clearHits(models, key);
   try {
     for (let attempt = 0; attempt < 5; attempt++) {
-      const last = await models.Ticket.findOne({ station, status: "ready", servedAt: null }).sort({ readyAt: -1 }).lean();
+      // Only this service day's tickets on still-open checks: a paid table or yesterday's ticket is never recalled.
+      const openChecks = await models.Check.find({ status: "open" }, { _id: 1 }).lean();
+      const last = await models.Ticket.findOne({
+        station,
+        status: "ready",
+        servedAt: null,
+        readyAt: { $gte: serviceDayStart(now) },
+        checkId: { $in: openChecks.map((c) => c._id) },
+      })
+        .sort({ readyAt: -1 })
+        .lean();
       if (!last) throw notFound();
       const won = await models.Ticket.findOneAndUpdate(
         { _id: last._id, status: "ready", servedAt: null },

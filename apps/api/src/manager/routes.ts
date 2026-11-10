@@ -161,7 +161,8 @@ export function registerManagerRoutes(app: FastifyInstance): void {
     );
   });
 
-  // Public: <img> tags cannot send credentials. The id is an unguessable ObjectId; looked up across tenants.
+  // Public: <img> tags cannot send credentials. Looked up by id across tenants. The id is an ObjectId, which is NOT
+  // unguessable (timestamp + counter), so this is only fine because dish photos are public menu content anyway.
   app.get<IdParams>("/api/photos/:id", async (req, reply) => {
     if (!isOid(req.params.id)) throw notFound();
     const p = await unscoped("public photo by id", () => models.Photo.findById(req.params.id));

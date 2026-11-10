@@ -310,6 +310,45 @@ describe("photos", () => {
   });
 });
 
+describe("demo storage caps (always on)", () => {
+  it("a tenant holds at most 120 menu items: the 121st create → 409 limit_exceeded", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const cat = await anyCategory(s);
+    const have = await runWithTenant(s.tenantId, () => t.models.MenuItem.countDocuments({}));
+    const base = await runWithTenant(s.tenantId, () => t.models.MenuItem.findOne({}).lean().orFail());
+    const { _id: _drop, ...rest } = base;
+    void _drop;
+    await runWithTenant(s.tenantId, () =>
+      t.models.MenuItem.insertMany(Array.from({ length: 119 - have }, (_, i) => ({ ...rest, name: { en: `Filler ${i}`, tr: `Dolgu ${i}` } }))),
+    );
+    const last = await m("POST", "/api/manager/items", validItem(String(cat._id)));
+    expect(last.statusCode).toBe(201);
+    const over = await m("POST", "/api/manager/items", validItem(String(cat._id), { name: { en: "One too many", tr: "Fazla" } }));
+    expect(over.statusCode).toBe(409);
+    expect(over.json().error.code).toBe("limit_exceeded");
+    expect(await runWithTenant(s.tenantId, () => t.models.MenuItem.countDocuments({}))).toBe(120);
+  });
+
+  it("uploaded photos total at most 20 MB per tenant; replacing a photo frees the old one first", async () => {
+    const s = await seedTenant(t);
+    const fries = await itemNamed(t, s.tenantId, "Truffle fries");
+    const burrata = await itemNamed(t, s.tenantId, "Burrata");
+    const tenMb = Buffer.concat([PNG, Buffer.alloc(10 * 1024 * 1024 - PNG.length)]);
+    const [a] = await runWithTenant(s.tenantId, () =>
+      t.models.Photo.create([{ data: tenMb, contentType: "image/png" }, { data: tenMb, contentType: "image/png" }]),
+    );
+    await runWithTenant(s.tenantId, () => t.models.MenuItem.updateOne({ _id: fries.id }, { photo: `/api/photos/${String(a!._id)}` }));
+    const full = await upload(s, burrata.id, "b.png", "image/png", PNG);
+    expect(full.statusCode).toBe(409);
+    expect(full.json().error.code).toBe("limit_exceeded");
+    // Fries' 10 MB photo is freed by its replacement, so this fits.
+    const replaced = await upload(s, fries.id, "f.png", "image/png", PNG);
+    expect(replaced.statusCode).toBe(200);
+    expect(await runWithTenant(s.tenantId, () => t.models.Photo.countDocuments({ _id: a!._id }))).toBe(0);
+  });
+});
+
 describe("tonight", () => {
   it("covers, revenue (paid today only), open checks and total, ticket time, top items", async () => {
     const s = await seedTenant(t);

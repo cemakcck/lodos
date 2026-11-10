@@ -249,7 +249,7 @@ describe("the 30-orders-per-check limit is strict under concurrency", () => {
     const { tenantId, seed } = await seedTenant(t);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.B1!.id;
-    const check = await runWithTenant(tenantId, () => t.models.Check.findOneAndUpdate({ tableId, status: "open" }, { orderCount: 29 }, { new: true }));
+    const check = await runWithTenant(tenantId, () => t.models.Check.findOneAndUpdate({ tableId, status: "open" }, { orderCount: 29 }, { returnDocument: "after" }));
     const results = await Promise.allSettled(
       [1, 2, 3].map(() =>
         runWithTenant(tenantId, () =>

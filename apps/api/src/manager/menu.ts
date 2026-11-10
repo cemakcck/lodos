@@ -1,5 +1,6 @@
 import { serviceDayOf, type AvailabilityInput, type CategoryInput, type MenuItemInput } from "@lodos/shared";
 import { randomBytes } from "node:crypto";
+import { Types } from "mongoose";
 import type { Models } from "../db/models/index";
 import { ApiError } from "../errors";
 import { isOid, notFound } from "../kds/service";
@@ -101,8 +102,20 @@ export async function deleteCategory(models: Models, id: string): Promise<void> 
   await models.Category.deleteOne({ _id: id });
 }
 
+/**
+ * Storage caps per tenant, applied always (not only in demo mode): a public demo visitor must not be able to fill the
+ * database, and a real restaurant never comes near them. They are soft under concurrency (two racing requests can
+ * both pass the check), which is fine for their purpose.
+ */
+export const MAX_ITEMS_PER_TENANT = 120;
+export const MAX_PHOTO_BYTES_PER_TENANT = 20 * 1024 * 1024;
+const limitExceeded = (message: string) => new ApiError(409, "limit_exceeded", message);
+
 export async function createItem(models: Models, body: MenuItemInput & { dietary: string[]; allergens: string[]; optionGroups: unknown[]; active: boolean }): Promise<ItemView> {
   await requireCategory(models, body.categoryId);
+  if ((await models.MenuItem.countDocuments({})) >= MAX_ITEMS_PER_TENANT) {
+    throw limitExceeded(`A menu holds at most ${MAX_ITEMS_PER_TENANT} dishes`);
+  }
   const sort = body.sort ?? ((await models.MenuItem.findOne({ categoryId: body.categoryId }).sort({ sort: -1 }).lean())?.sort ?? -1) + 1;
   const doc = await models.MenuItem.create({ ...body, optionGroups: withIds(body.optionGroups as GroupIn[]), story: body.story ?? { en: "", tr: "" }, sort });
   return itemView(doc as never);
@@ -158,10 +171,19 @@ export async function setItemPhoto(models: Models, itemId: string, data: Buffer)
   const contentType = sniffImage(data);
   if (!contentType) throw new ApiError(400, "validation", "Photo must be a jpeg, png or webp image");
   if (data.length > MAX_PHOTO_BYTES) throw new ApiError(400, "validation", "Photo must be at most 2 MB");
+  // The photo being replaced is freed first: it does not count against the cap. (It is deleted only after the swap,
+  // so a failed upload never leaves the item pointing at a missing photo.)
+  const prev = item.photo ? PHOTO_URL.exec(item.photo) : null;
+  const [used] = await models.Photo.aggregate<{ bytes: number }>([
+    ...(prev ? [{ $match: { _id: { $ne: new Types.ObjectId(prev[1]) } } }] : []),
+    { $group: { _id: null, bytes: { $sum: { $binarySize: "$data" } } } },
+  ]);
+  if ((used?.bytes ?? 0) + data.length > MAX_PHOTO_BYTES_PER_TENANT) {
+    throw limitExceeded("Photo storage is full (20 MB); replace or remove a photo first");
+  }
   const photo = await models.Photo.create({ data, contentType });
   const url = `/api/photos/${String(photo._id)}`;
   await models.MenuItem.updateOne({ _id: itemId }, { $set: { photo: url } });
-  const prev = item.photo ? PHOTO_URL.exec(item.photo) : null;
   if (prev) await models.Photo.deleteOne({ _id: prev[1] });
   return url;
 }

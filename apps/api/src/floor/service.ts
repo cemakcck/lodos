@@ -1,4 +1,4 @@
-import { checkTotals, deriveTableState, type TableState } from "@lodos/shared";
+import { checkTotals, deriveTableState, maskProfanity, type TableState } from "@lodos/shared";
 import type { Types } from "mongoose";
 import type { Models } from "../db/models";
 import { ApiError } from "../errors";
@@ -11,6 +11,12 @@ type Id = string | Types.ObjectId;
 const idOf = (v: Id | null | undefined): string | null => (v == null ? null : String(v));
 const conflict = (message: string) => new ApiError(409, "conflict", message);
 const isDuplicateKey = (err: unknown) => typeof err === "object" && err !== null && (err as { code?: unknown }).code === 11000;
+
+/** Staff views of guest notes are masked (the guest's own "Your table" view keeps their words). */
+function maskedLines(lines: CheckLines): CheckLines {
+  const mask = (l: CheckLine): CheckLine => (l.note ? { ...l, note: maskProfanity(l.note) } : l);
+  return { ...lines, food: lines.food.map(mask), drinks: lines.drinks.map(mask) };
+}
 
 /** "Deniz" → "D", "Ayşe Nur" → "AN". */
 export function initials(name: string): string {
@@ -177,7 +183,7 @@ export async function tableCheck(models: Models, tableId: string): Promise<Table
     calls: calls.map((c) => ({ id: String(c._id), reason: c.reason, openedAt: c.openedAt })),
   };
   if (!check) return { ...base, check: null };
-  const [lines, serverName] = await Promise.all([checkLines(models, check._id), staffName(models, check.serverStaffId)]);
+  const [lines, serverName] = await Promise.all([checkLines(models, check._id).then(maskedLines), staffName(models, check.serverStaffId)]);
   return {
     ...base,
     check: {
@@ -215,7 +221,7 @@ export async function checkPrint(models: Models, checkId: string): Promise<Check
   if (!check) throw notFound();
   const [table, lines, serverName] = await Promise.all([
     models.Table.findOne({ _id: check.tableId }, { name: 1 }).lean(),
-    checkLines(models, check._id),
+    checkLines(models, check._id).then(maskedLines),
     staffName(models, check.serverStaffId),
   ]);
   return {

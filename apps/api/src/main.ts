@@ -16,6 +16,8 @@ const { app, close } = await buildApp({
   webOrigin: config.webOrigin,
   demoMode: config.demoMode,
   sandboxesPerIpHour: config.sandboxesPerIpHour,
+  trustProxy: config.trustProxy,
+  cookieSecure: config.cookieSecure,
   startJobs: true,
   logger: true,
 });

@@ -13,12 +13,13 @@ declare module "fastify" {
 
 export const ALL_ROLES: readonly StaffRole[] = ["waiter", "kitchen", "bar", "manager"];
 
-export const sessionCookieOptions = (maxAgeMs: number) =>
+/** `secure` comes from config (COOKIE_SECURE, via `app.cookieSecure`). */
+export const sessionCookieOptions = (maxAgeMs: number, secure: boolean) =>
   ({
     httpOnly: true,
     sameSite: "lax",
     path: "/",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     maxAge: Math.floor(maxAgeMs / 1000),
   }) as const;
 
@@ -45,7 +46,7 @@ export function staffRoute<R extends RouteGenericInterface = RouteGenericInterfa
 
     req.staff = session.staff;
     // Station sessions slid forward in the database; keep the browser cookie in step.
-    if (session.kind === "station") void reply.setCookie(SESSION_COOKIE, raw!, sessionCookieOptions(SESSION_TTL_MS));
+    if (session.kind === "station") void reply.setCookie(SESSION_COOKIE, raw!, sessionCookieOptions(SESSION_TTL_MS, req.server.cookieSecure));
     return runWithTenant(session.staff.tenantId, () => handler(req as StaffRequest<R>, reply));
   };
 }

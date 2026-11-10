@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { InjectOptions, LightMyRequestResponse } from "fastify";
 import { buildApp } from "../src/app";
 import { fixedClock } from "../src/clock";
+import type { TrustProxy } from "../src/config";
 import { runWithTenant } from "../src/db/tenancy";
 import { seedRestaurant } from "../src/seed/seed";
 
@@ -21,7 +22,9 @@ function mongoUri(): string {
   return uri;
 }
 
-export async function makeTestApp(opts: { now?: Date; demoMode?: boolean; sandboxesPerIpHour?: number; maxSandboxes?: number } = {}) {
+export async function makeTestApp(
+  opts: { now?: Date; demoMode?: boolean; sandboxesPerIpHour?: number; maxSandboxes?: number; trustProxy?: TrustProxy; cookieSecure?: boolean } = {},
+) {
   const clock = fixedClock(opts.now ?? new Date("2026-11-10T17:00:00Z"));
   const built = await buildApp({
     mongoUri: mongoUri(),
@@ -33,6 +36,8 @@ export async function makeTestApp(opts: { now?: Date; demoMode?: boolean; sandbo
     startJobs: false,
     sandboxesPerIpHour: opts.sandboxesPerIpHour,
     maxSandboxes: opts.maxSandboxes,
+    trustProxy: opts.trustProxy,
+    cookieSecure: opts.cookieSecure,
   });
   return {
     app: built.app,

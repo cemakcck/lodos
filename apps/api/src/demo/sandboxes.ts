@@ -84,7 +84,7 @@ export async function ensureSandbox(
   );
   await seedRestaurant(models, tenantId, now, { liveService: true });
   void reply.setCookie(SANDBOX_COOKIE, tenantId, {
-    ...sessionCookieOptions(SANDBOX_TTL_MS),
+    ...sessionCookieOptions(SANDBOX_TTL_MS, req.server.cookieSecure),
     signed: true,
   });
   return { tenantId, created: true };

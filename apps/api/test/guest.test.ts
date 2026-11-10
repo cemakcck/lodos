@@ -91,10 +91,8 @@ describe("GET /api/guest/orders", () => {
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const negroni = await itemNamed(t, tenantId, "Lodos Negroni");
     const g = guest(t, seed.tables.T7!.token);
-    const placed = await g.post(
-      "/api/guest/orders",
-      orderBody([{ itemId: fries.id, qty: 2, note: "Crispy" }, { itemId: negroni.id, options: [{ groupId: "gin", optionIds: ["mastic"] }] }]),
-    );
+    const sent = orderBody([{ itemId: fries.id, qty: 2, note: "Crispy" }, { itemId: negroni.id, options: [{ groupId: "gin", optionIds: ["mastic"] }] }]);
+    const placed = await g.post("/api/guest/orders", sent);
     const orderId = placed.json().orderId as string;
 
     const res = await g.get("/api/guest/orders");
@@ -102,6 +100,9 @@ describe("GET /api/guest/orders", () => {
     const body = res.json() as { visit: { checkId: string; openedAt: string }; food: Line[]; drinks: Line[]; totals: { food: number; drinks: number; total: number } };
     const check = await runWithTenant(tenantId, () => t.models.Check.findOne({ tableId: seed.tables.T7!.id }));
     expect(body.visit).toEqual({ checkId: String(check!._id), openedAt: NOW.toISOString() });
+    // The order reply names the check it landed on (also on a replay), so the guest's cart adopts it at once.
+    expect(placed.json()).toEqual({ orderId, checkId: String(check!._id) });
+    expect((await g.post("/api/guest/orders", sent)).json()).toEqual({ orderId, checkId: String(check!._id) });
     expect(body.food).toEqual([
       { orderId, qty: 2, name: { en: "Truffle fries, aged parmesan", tr: "Trüflü patates, olgun parmesan" }, options: [], note: "Crispy", status: "sent", lineTotal: fries.price * 2 },
     ]);

@@ -84,7 +84,7 @@ const unavailable = (itemId: string) => new ApiError(409, "item_unavailable", "T
 const soldOut = (itemId: string) => new ApiError(409, "sold_out", "Just sold out", { itemId });
 
 async function place(models: Models, input: PlaceOrderInput, session: ClientSession): Promise<PlaceOrderResult> {
-  const { Availability, Check, MenuItem, Order, Staff, Table, Ticket } = models;
+  const { Availability, Category, Check, MenuItem, Order, Staff, Table, Ticket } = models;
   const { tableId, source, placedBy, req, now } = input;
 
   // 1. Idempotency: a retried request gets its order back, unchanged.
@@ -102,9 +102,12 @@ async function place(models: Models, input: PlaceOrderInput, session: ClientSess
   for (const line of req.items) if (!isValidObjectId(line.itemId)) throw unavailable(line.itemId);
   const ids = [...new Set(req.items.map((l) => l.itemId))];
   const items = new Map((await MenuItem.find({ _id: { $in: ids } }).session(session)).map((i) => [String(i._id), i]));
+  // A dish whose category is hidden or deleted is off the menu too.
+  const catIds = [...new Set([...items.values()].map((i) => String(i.categoryId)))];
+  const liveCats = new Set((await Category.find({ _id: { $in: catIds }, active: true }, { _id: 1 }).session(session)).map((c) => String(c._id)));
   const lines = req.items.map((line) => {
     const item = items.get(line.itemId);
-    if (!item || !item.active) throw unavailable(line.itemId);
+    if (!item || !item.active || !liveCats.has(String(item.categoryId))) throw unavailable(line.itemId);
     const resolved = resolveOptions(item.optionGroups as OptionGroup[], line.options);
     if (!resolved.ok) {
       throw new ApiError(400, "validation", resolved.errors.join("; "), { itemId: line.itemId, errors: resolved.errors });

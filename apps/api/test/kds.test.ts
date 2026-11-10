@@ -87,6 +87,13 @@ describe("GET /api/kds/:station", () => {
     expect(line.allergyFlag).toBe(true);
     expect(line.note).toBe("no peanut, •••");
     await runWithTenant("main", () => t.models.Ticket.updateOne({ _id: target._id }, { $pop: { items: 1 } }));
+    // Task 16 ruling: dish allergens alone are a quiet line, not the red flag; only the guest's note raises it.
+    await runWithTenant("main", () =>
+      t.models.Ticket.updateOne({ _id: target._id }, { $push: { items: { orderItemIndex: 9, name: { en: "Y", tr: "Y" }, qty: 1, options: [], note: null, allergens: ["sesame"], checked: false } } }),
+    );
+    const again = (await tickets("kitchen", "active")).json().tickets.find((x: { id: string }) => x.id === String(target._id));
+    expect(again.items[again.items.length - 1]).toMatchObject({ allergens: ["sesame"], allergyFlag: false });
+    await runWithTenant("main", () => t.models.Ticket.updateOne({ _id: target._id }, { $pop: { items: 1 } }));
   });
 
   it("done tab lists today's ready tickets newest first; eightySix lists seeded sold-out items", async () => {

@@ -34,6 +34,25 @@ describe("stale carts", () => {
     expect(junk.json().error).toMatchObject({ code: "item_unavailable", details: { itemId: "not-an-id" } });
   });
 
+  it("an item in an inactive or deleted category → item_unavailable with its id; nothing written", async () => {
+    const { tenantId, seed } = await seedTenant(t);
+    const burrata = await itemNamed(t, tenantId, "Burrata");
+    const fries = await itemNamed(t, tenantId, "Truffle fries");
+    const catOf = async (id: string) => (await runWithTenant(tenantId, () => t.models.MenuItem.findById(id).lean().orFail())).categoryId;
+    const g = guest(t, seed.tables.T7!.token);
+    await runWithTenant(tenantId, async () => t.models.Category.updateOne({ _id: await catOf(burrata.id) }, { active: false }));
+    const hidden = await g.post("/api/guest/orders", orderBody([{ itemId: burrata.id }]));
+    expect(hidden.statusCode).toBe(409);
+    expect(hidden.json().error).toMatchObject({ code: "item_unavailable", details: { itemId: burrata.id } });
+    expect(await runWithTenant(tenantId, () => t.models.Check.countDocuments({ tableId: seed.tables.T7!.id }))).toBe(0);
+
+    const friesCat = await catOf(fries.id);
+    await runWithTenant(tenantId, () => t.models.Category.deleteOne({ _id: friesCat }));
+    const gone = await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
+    expect(gone.statusCode).toBe(409);
+    expect(gone.json().error).toMatchObject({ code: "item_unavailable", details: { itemId: fries.id } });
+  });
+
   it("an item repriced after the cart was built is charged at the new price", async () => {
     const { tenantId, seed } = await seedTenant(t);
     const burrata = await itemNamed(t, tenantId, "Burrata");

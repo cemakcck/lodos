@@ -8,6 +8,7 @@ import { CLEANUP_INTERVAL_MS, runCleanup } from "./demo/cleanup";
 import { SIMULATOR_INTERVAL_MS, runSimulatorDue } from "./demo/simulator";
 import { registerDemoRoutes } from "./demo/routes";
 import { systemClock, type Clock } from "./clock";
+import type { TrustProxy } from "./config";
 import { connectDb } from "./db/connect";
 import { bindModels, type Models } from "./db/models/index";
 import { registerErrorHandling } from "./errors";
@@ -27,6 +28,8 @@ declare module "fastify" {
     models: Models;
     io: Server;
     demoMode: boolean;
+    /** Session and sandbox cookies are `Secure` (config COOKIE_SECURE). */
+    cookieSecure: boolean;
     /** Open sockets per tenant (in memory); keeps `Sandbox.lastSeenAt` fresh while a sandbox has any. */
     presence: Presence;
     /** Post-commit event fan-out to the tenant's Socket.IO rooms (src/realtime/emit.ts). */
@@ -49,7 +52,14 @@ export type BuildAppOptions = {
   /** Maximum concurrent sandboxes (default 200). */
   maxSandboxes?: number;
   logger?: boolean;
+  /** Fastify `trustProxy` (config TRUST_PROXY); default false. */
+  trustProxy?: TrustProxy;
+  /** Default false (config COOKIE_SECURE defaults it to NODE_ENV === "production"). */
+  cookieSecure?: boolean;
 };
+
+/** A hop count becomes "trust the nearest n hops" (Fastify's types take no number). */
+const fastifyTrustProxy = (v: TrustProxy) => (typeof v === "number" ? (_addr: string, hop: number) => hop < v : v);
 
 export async function buildApp(opts: BuildAppOptions): Promise<{
   app: FastifyInstance;
@@ -62,11 +72,12 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   const { conn, models } = await connectDb(opts.mongoUri, { dbName: opts.dbName });
   const unbind = bindModels(models);
 
-  const app = Fastify({ logger: opts.logger ?? false });
+  const app = Fastify({ logger: opts.logger ?? false, trustProxy: fastifyTrustProxy(opts.trustProxy ?? false) });
   app.decorate("clock", clock);
   app.decorate("models", models);
   const demoMode = opts.demoMode ?? false;
   app.decorate("demoMode", demoMode);
+  app.decorate("cookieSecure", opts.cookieSecure ?? false);
   const presence = createPresence({
     clock,
     // Only sandboxes are cleaned up, so only they record when they were last seen. `$max` never moves it back, and

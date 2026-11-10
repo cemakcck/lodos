@@ -266,3 +266,20 @@ describe("an order racing the close (deterministic interleavings)", () => {
     expect(check.payment!.amount).toBe(orders.flatMap((o) => o.items).reduce((n, i) => n + i.lineTotal, 0));
   });
 });
+
+describe("profanity in guest notes", () => {
+  it("staff check detail and print mask a listed word; the guest's own view keeps their words", async () => {
+    const s = await seedTenant(t);
+    const T7 = s.seed.tables.T7!;
+    const burrata = await itemNamed(t, s.tenantId, "Burrata");
+    const g = guest(t, T7.token, "10.6.0.1");
+    const placed = await g.post("/api/guest/orders", orderBody([{ itemId: burrata.id, note: "no basil, shit" }]));
+    expect(placed.statusCode).toBe(201);
+    const w = await staff(s);
+    const detail = (await w("GET", `/api/tables/${T7.id}/check`)).json();
+    expect(detail.food[0].note).toBe("no basil, •••");
+    const print = (await w("GET", `/api/checks/${detail.check.id}/print`)).json();
+    expect(print.food[0].note).toBe("no basil, •••");
+    expect((await g.get("/api/guest/orders")).json().food[0].note).toBe("no basil, shit");
+  });
+});
