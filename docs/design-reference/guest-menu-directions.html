@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lodos: three directions, blood red</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..800;1,6..96,400..800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Italiana&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#c8102e; --plum:#4b1d3f; --plum-d:#24101e; --white:#f8f4ee; --beige:#e7d7c2; --black:#0e0c0d;
+    --leo: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><rect width='72' height='72' fill='%23c79f6e'/><g fill='%232a1810'><path d='M10 8c4-3 9-1 9 3-2-1-5-2-9-3z'/><path d='M20 12c2 3 1 7-2 8 0-3 1-5 2-8z'/><path d='M8 20c-3-2-3-7 0-9 0 3 0 6 0 9z'/><path d='M13 22c3 1 6 0 7-2-2 0-5 1-7 2z'/><path d='M44 6c4-2 8 0 8 4-3-2-5-3-8-4z'/><path d='M54 12c1 4-1 7-4 7 1-3 2-5 4-7z'/><path d='M41 15c-2-2-1-6 2-8-1 3-1 5-2 8z'/><path d='M30 38c4-3 9-1 10 3-3-1-6-2-10-3z'/><path d='M41 43c1 4-1 7-4 8 1-3 2-5 4-8z'/><path d='M28 47c-3-2-3-6-1-9 0 3 0 6 1 9z'/><path d='M33 51c3 1 6 0 7-2-2 0-5 1-7 2z'/><path d='M58 40c3-2 7 0 8 3-3-1-5-2-8-3z'/><path d='M64 47c-1 3-3 5-6 4 2-1 4-2 6-4z'/><path d='M57 50c-2-1-3-4-1-7 0 2 0 5 1 7z'/><path d='M8 52c3-2 7-1 8 2-3 0-5-1-8-2z'/><path d='M14 60c-2 2-6 2-8-1 3 0 5 1 8 1z'/><circle cx='26' cy='28' r='2'/><circle cx='50' cy='28' r='1.6'/><circle cx='66' cy='22' r='1.8'/><circle cx='22' cy='66' r='1.6'/><circle cx='46' cy='64' r='2'/><circle cx='4' cy='36' r='1.5'/></g><g fill='%23a77c4c'><ellipse cx='14' cy='15' rx='4' ry='3'/><ellipse cx='47' cy='12' rx='3.5' ry='3'/><ellipse cx='34' cy='45' rx='4' ry='3'/><ellipse cx='61' cy='45' rx='3' ry='2.5'/><ellipse cx='11' cy='57' rx='3' ry='2'/></g></svg>");
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#1a1718;color:#eee;font-family:Manrope,system-ui,sans-serif;padding:32px 20px 60px}
+  .intro{max-width:1180px;margin:0 auto 28px}
+  .intro h1{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:34px;letter-spacing:.01em}
+  .intro p{color:#b9b0aa;margin-top:6px;font-size:15px;max-width:760px;line-height:1.55}
+  .swatches{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .sw{display:flex;align-items:center;gap:6px;font-size:12px;color:#c9c0b8}
+  .sw i{width:18px;height:18px;border-radius:50%;border:1px solid #444;display:inline-block}
+  .row{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:28px}
+  .col{display:flex;flex-direction:column;align-items:center;gap:14px;cursor:pointer;border-radius:22px;padding:14px 10px 18px;border:2px solid transparent;transition:border-color .2s}
+  .col.selected{border-color:#e7d7c2}
+  .col h2{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:26px}
+  .col .d{font-size:13.5px;color:#b9b0aa;text-align:center;max-width:320px;line-height:1.5}
+  .phone{width:320px;height:660px;border-radius:44px;padding:10px;background:#050505;box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 0 0 2px #2c2c2c}
+  .screen{width:100%;height:100%;border-radius:35px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:26px;border-radius:20px;background:#000;z-index:5}
+  .scroll{flex:1;overflow:hidden}
+  .leo{background-image:var(--leo);background-size:72px}
+  .chip{font-size:11.5px;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .tabs{display:flex;gap:6px;padding:0 16px;overflow:hidden}
+  .dish{display:flex;gap:12px;align-items:center;padding:12px 16px}
+  .pic{width:66px;height:66px;flex:none}
+  .dish h4{font-size:15px;font-weight:500}
+  .dish p{font-size:11.5px;line-height:1.4;margin-top:2px;opacity:.75}
+  .tags{display:flex;gap:5px;margin-top:5px}
+  .tag{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px}
+  .price{font-size:13px;font-weight:600;margin-left:auto;align-self:flex-start;padding-top:2px}
+  .cart{margin:0 12px 14px;border-radius:16px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:600}
+  .cart small{font-weight:500;opacity:.8}
+  .label{font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+  /* food stand-ins */
+  .f1{background:radial-gradient(circle at 40% 40%,#f2d7c7 0 22%,#e7a68f 23% 30%,transparent 31%),radial-gradient(circle at 62% 60%,#7d9a5b 0 7%,transparent 8%),radial-gradient(circle,#f1ece4 0 62%,#d9d2c8 63%)}
+  .f2{background:radial-gradient(circle at 45% 50%,#3b2a2a 0 18%,#6e3a2a 19% 28%,transparent 29%),radial-gradient(circle at 60% 40%,#d9b44a 0 6%,transparent 7%),radial-gradient(circle,#24201f 0 62%,#3a3533 63%)}
+  .f3{background:radial-gradient(circle at 50% 45%,#b5121b 0 20%,#7a0d14 21% 26%,transparent 27%),radial-gradient(ellipse at 50% 70%,#e9e2d6 0 14%,transparent 15%),linear-gradient(#0000,#0000),radial-gradient(circle,#2a2224 0 62%,#151012 63%)}
+  .chair{display:block}
+  .rp{background:var(--c);color:#fff;border:2px solid transparent;border-radius:999px;padding:8px 14px;font:600 12.5px Manrope,sans-serif;cursor:pointer}
+  .rp.on{border-color:#f8f4ee;box-shadow:0 0 0 3px rgba(248,244,238,.25)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- Tolix-style industrial chair -->
+    <symbol id="chair" viewBox="0 0 60 90">
+      <path d="M14 6h32l-2 34H16z" fill="currentColor" opacity=".9"/>
+      <path d="M19 12h22M19 18h22" stroke="#000" stroke-opacity=".25" stroke-width="1.5"/>
+      <rect x="10" y="40" width="40" height="6" rx="1.5" fill="currentColor"/>
+      <path d="M12 46l-5 42M48 46l5 42M18 46l-2 40M42 46l2 40" stroke="currentColor" stroke-width="3" fill="none"/>
+      <path d="M9 72h42" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+    <!-- Bentwood / designer chair -->
+    <symbol id="chair2" viewBox="0 0 60 90">
+      <path d="M16 44C10 20 16 4 30 4s20 16 14 40" fill="none" stroke="currentColor" stroke-width="4"/>
+      <path d="M22 40c-2-14 2-26 8-26s10 12 8 26" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <ellipse cx="30" cy="46" rx="20" ry="5" fill="currentColor"/>
+      <path d="M14 48l-4 40M46 48l4 40M24 50l-1 36M36 50l1 36" stroke="currentColor" stroke-width="3"/>
+      <ellipse cx="30" cy="70" rx="16" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+    <linearGradient id="mirror" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+      <stop offset=".35" stop-color="#fff" stop-opacity=".08"/>
+      <stop offset=".6" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".02"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="intro">
+  <h1>Lodos: the guest menu, now in blood red</h1>
+  <p>Same palette (red, plum, white, beige, black), same interior cues (animal print, industrial and designer chairs, arched mirrors), three different balances. This is the screen a guest sees after scanning the QR code at the table. Click the one closest to the vibe; mix-and-match notes are welcome.</p>
+  <div class="swatches">
+    <span class="sw"><i style="background:var(--red)"></i>red</span>
+    <span class="sw"><i style="background:#4b1d3f"></i>plum</span>
+    <span class="sw"><i style="background:#f8f4ee"></i>white</span>
+    <span class="sw"><i style="background:#e7d7c2"></i>beige</span>
+    <span class="sw"><i style="background:#0e0c0d"></i>black</span>
+    <span class="sw"><i class="leo" style="background-size:36px"></i>leopard</span>
+  </div>
+  <div style="margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+    <span style="font-size:13px;color:#c9c0b8">Try a red:</span>
+    <button class="rp" data-red="#c8102e" onclick="setRed(this)" style="--c:#c8102e">Blood · #C8102E</button>
+    <button class="rp" data-red="#d50b1e" onclick="setRed(this)" style="--c:#d50b1e">Fresh blood · #D50B1E</button>
+    <button class="rp" data-red="#e00b16" onclick="setRed(this)" style="--c:#e00b16">Bright · #E00B16</button>
+    <button class="rp" data-red="#b8001f" onclick="setRed(this)" style="--c:#b8001f">Arterial · #B8001F</button>
+    <button class="rp" data-red="#a3161c" onclick="setRed(this)" style="--c:#a3161c;opacity:.7">old · #A3161C</button>
+  </div>
+</div>
+
+<div class="row">
+
+  <!-- A: Plum Salon -->
+  <div class="col" data-choice="a" onclick="pick(this)">
+    <div class="phone"><div class="screen" style="background:var(--plum-d);color:var(--beige)">
+      <div class="notch"></div>
+      <div class="scroll">
+        <div style="position:relative;height:250px;background:linear-gradient(180deg,#3a1630,#24101e)">
+          <svg viewBox="0 0 300 250" width="100%" height="250" style="position:absolute;inset:0">
+            <path d="M95 230V95a55 55 0 0 1 110 0v135z" fill="#1a0b15" stroke="#c9a46a" stroke-width="2.5"/>
+            <path d="M95 230V95a55 55 0 0 1 110 0v135z" fill="url(#mirror)"/>
+            <ellipse cx="150" cy="238" rx="120" ry="12" style="fill:var(--red)" opacity=".35"/>
+          </svg>
+          <svg class="chair" style="position:absolute;left:40px;bottom:14px;color:#0e0c0d" width="52" height="78"><use href="#chair"/></svg>
+          <svg class="chair" style="position:absolute;right:40px;bottom:14px;color:var(--red)" width="52" height="78"><use href="#chair2"/></svg>
+          <div style="position:absolute;top:58px;left:0;right:0;text-align:center">
+            <div class="label" style="color:#c9a46a">Karaköy · since 2026</div>
+            <div style="font-family:'Bodoni Moda',serif;font-size:46px;font-style:italic;color:var(--white);margin-top:8px;letter-spacing:.02em">Lodos</div>
+            <div style="font-size:11px;color:#d9c3c8;margin-top:2px">Table 7 · welcome</div>
+          </div>
+        </div>
+        <div class="leo" style="height:10px"></div>
+        <div class="tabs" style="margin:14px 0 6px">
+          <span class="chip" style="background:var(--red);color:var(--white)">To share</span>
+          <span class="chip" style="border:1px solid #5d3150">Raw bar</span>
+          <span class="chip" style="border:1px solid #5d3150">Fire</span>
+          <span class="chip" style="border:1px solid #5d3150">Cocktails</span>
+        </div>
+        <div class="dish"><div class="pic f1" style="border-radius:50% 50% 10px 10px"></div><div><h4 style="font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--white)">Levrek crudo</h4><p>Blood orange, sumac oil, crispy capers</p><div class="tags"><span class="tag" style="background:#3a1630;color:#d9c3c8">GF</span><span class="tag" style="background:#3a1630;color:#d9c3c8">Fish</span></div></div><span class="price">₺640</span></div>
+        <div class="dish"><div class="pic f2" style="border-radius:50% 50% 10px 10px"></div><div><h4 style="font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--white)">Köz patlıcan, miso</h4><p>Charred over oak, tahini, pul biber</p><div class="tags"><span class="tag" style="background:#3a1630;color:#d9c3c8">Vegan</span><span class="tag" style="background:#3a1630;color:#d9c3c8">Sesame</span></div></div><span class="price">₺480</span></div>
+        <div class="dish"><div class="pic f3" style="border-radius:50% 50% 10px 10px"></div><div><h4 style="font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--white)">Lodos Negroni</h4><p>Gin, vişne vermouth, smoked bitters</p><div class="tags"><span class="tag" style="background:#3a1630;color:#d9c3c8">Signature</span></div></div><span class="price">₺520</span></div>
+      </div>
+      <div class="cart" style="background:var(--red);color:var(--white)"><span>View order · 3</span><small>₺1,640</small></div>
+    </div></div>
+    <h2>A · Plum Salon</h2>
+    <p class="d">Deep plum walls, a brass-edged arched mirror, a leopard band like a velvet rope. Moody, warm, a dinner-at-10pm feel.</p>
+  </div>
+
+  <!-- B: Cream Gallery -->
+  <div class="col" data-choice="b" onclick="pick(this)">
+    <div class="phone"><div class="screen" style="background:var(--white);color:var(--black)">
+      <div class="notch"></div>
+      <div class="scroll">
+        <div style="padding:52px 18px 0;display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div class="label" style="color:var(--red)">Table 7</div>
+            <div style="font-family:'Italiana',serif;font-size:50px;line-height:1;margin-top:6px">LODOS</div>
+          </div>
+          <div class="leo" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--black)"></div>
+        </div>
+        <div style="margin:16px 18px 0;height:150px;border-radius:120px 120px 8px 8px;background:linear-gradient(160deg,#4b1d3f,#0e0c0d);position:relative;overflow:hidden">
+          <svg viewBox="0 0 280 150" width="100%" height="150" style="position:absolute;inset:0"><rect width="280" height="150" fill="url(#mirror)"/></svg>
+          <svg class="chair" style="position:absolute;left:46px;bottom:6px;color:#e7d7c2" width="48" height="72"><use href="#chair"/></svg>
+          <svg class="chair" style="position:absolute;left:116px;bottom:6px;color:var(--red)" width="48" height="72"><use href="#chair2"/></svg>
+          <svg class="chair" style="position:absolute;left:186px;bottom:6px;color:#e7d7c2" width="48" height="72"><use href="#chair"/></svg>
+          <div class="leo" style="position:absolute;left:30px;right:30px;bottom:0;height:8px;border-radius:50%"></div>
+        </div>
+        <div class="tabs" style="margin:16px 0 4px">
+          <span class="chip" style="background:var(--black);color:var(--white)">To share</span>
+          <span class="chip" style="border:1px solid #cdbfae">Raw bar</span>
+          <span class="chip" style="border:1px solid #cdbfae">Fire</span>
+          <span class="chip" style="border:1px solid #cdbfae">Cocktails</span>
+        </div>
+        <div class="dish" style="border-bottom:1px solid #e7ddd0"><div class="pic f1" style="border-radius:6px"></div><div><h4 style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600">Levrek crudo</h4><p>Blood orange, sumac oil, crispy capers</p><div class="tags"><span class="tag" style="background:var(--beige)">GF</span><span class="tag" style="background:var(--beige)">Fish</span></div></div><span class="price" style="color:var(--red)">₺640</span></div>
+        <div class="dish" style="border-bottom:1px solid #e7ddd0"><div class="pic f2" style="border-radius:6px"></div><div><h4 style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600">Köz patlıcan, miso</h4><p>Charred over oak, tahini, pul biber</p><div class="tags"><span class="tag" style="background:var(--beige)">Vegan</span><span class="tag" style="background:var(--beige)">Sesame</span></div></div><span class="price" style="color:var(--red)">₺480</span></div>
+      </div>
+      <div class="cart" style="background:var(--black);color:var(--white)"><span>View order · 3</span><small style="color:#e7d7c2">₺1,640</small></div>
+    </div></div>
+    <h2>B · Cream Gallery</h2>
+    <p class="d">A light, editorial page: cream and black like a fashion magazine, with plum, red and leopard as statement pieces. Daytime-to-dinner chic.</p>
+  </div>
+
+  <!-- C: Noir Mirror -->
+  <div class="col" data-choice="c" onclick="pick(this)">
+    <div class="phone"><div class="screen" style="background:var(--black);color:var(--beige)">
+      <div class="notch"></div>
+      <div class="scroll">
+        <div style="position:relative;height:260px;overflow:hidden">
+          <div class="leo" style="position:absolute;inset:0;opacity:.18"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,color-mix(in srgb,var(--red) 50%,transparent),transparent 60%)"></div>
+          <svg viewBox="0 0 300 260" width="100%" height="260" style="position:absolute;inset:0">
+            <g fill="none" stroke="#e7d7c2" stroke-opacity=".7" stroke-width="1.5">
+              <path d="M40 250V120a40 40 0 0 1 80 0v130"/>
+              <path d="M180 250V120a40 40 0 0 1 80 0v130"/>
+            </g>
+            <path d="M40 250V120a40 40 0 0 1 80 0v130z" fill="url(#mirror)" opacity=".7"/>
+            <path d="M180 250V120a40 40 0 0 1 80 0v130z" fill="url(#mirror)" opacity=".7"/>
+          </svg>
+          <svg class="chair" style="position:absolute;left:54px;bottom:8px;color:var(--red)" width="52" height="78"><use href="#chair"/></svg>
+          <svg class="chair" style="position:absolute;right:54px;bottom:8px;color:var(--red)" width="52" height="78"><use href="#chair"/></svg>
+          <div style="position:absolute;top:56px;left:0;right:0;text-align:center">
+            <div style="font-family:'Bodoni Moda',serif;font-weight:700;font-size:44px;letter-spacing:.32em;color:var(--white);padding-left:.32em">LODOS</div>
+            <div class="label" style="color:var(--red);margin-top:6px">Bar · Grill · Late</div>
+          </div>
+        </div>
+        <div class="tabs" style="margin:12px 0 4px">
+          <span class="chip" style="background:var(--white);color:var(--black)">To share</span>
+          <span class="chip" style="border:1px solid #3a3335">Raw bar</span>
+          <span class="chip" style="border:1px solid #3a3335">Fire</span>
+          <span class="chip" style="border:1px solid #3a3335">Cocktails</span>
+        </div>
+        <div class="dish"><div class="pic f1" style="border-radius:50%;outline:1px solid #e7d7c2;outline-offset:3px"></div><div><h4 style="font-family:'Bodoni Moda',serif;font-size:16px;color:var(--white)">Levrek crudo</h4><p>Blood orange, sumac oil, crispy capers</p><div class="tags"><span class="tag" style="border:1px solid #4b1d3f;color:#d6a9c6">GF</span><span class="tag" style="border:1px solid #4b1d3f;color:#d6a9c6">Fish</span></div></div><span class="price">₺640</span></div>
+        <div class="dish"><div class="pic f3" style="border-radius:50%;outline:1px solid #e7d7c2;outline-offset:3px"></div><div><h4 style="font-family:'Bodoni Moda',serif;font-size:16px;color:var(--white)">Lodos Negroni</h4><p>Gin, vişne vermouth, smoked bitters</p><div class="tags"><span class="tag" style="border:1px solid #4b1d3f;color:#d6a9c6">Signature</span></div></div><span class="price">₺520</span></div>
+      </div>
+      <div class="cart" style="background:var(--white);color:var(--black)"><span>View order · 3</span><small style="color:var(--red)">₺1,640</small></div>
+    </div></div>
+    <h2>C · Noir Mirror</h2>
+    <p class="d">Black room, red glow, twin arched mirrors, a leopard texture under everything. Loud, late-night, the most "Pinterest dark house".</p>
+  </div>
+
+</div>
+<script>
+  function setRed(b){
+    document.documentElement.style.setProperty('--red', b.dataset.red);
+    document.querySelectorAll('.rp').forEach(x=>x.classList.toggle('on', x===b));
+    if (window.brainstorm) window.brainstorm.send({type:'click',choice:'red:'+b.dataset.red,text:b.textContent});
+  }
+  document.addEventListener('DOMContentLoaded',()=>document.querySelector('.rp').classList.add('on'));
+  function pick(el){
+    document.querySelectorAll('.col').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    if (window.brainstorm && typeof window.brainstorm.send === 'function') {
+      window.brainstorm.send({type:'click',choice:el.dataset.choice,text:el.querySelector('h2').textContent});
+    } else if (typeof toggleSelect === 'function') { /* fallback no-op */ }
+  }
+</script>
+</body>
+</html>

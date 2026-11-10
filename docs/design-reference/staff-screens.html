@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lodos: staff screens v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,500..700&family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f6f4; --panel:#ffffff; --sunk:#f1efec; --line:#e7e4df; --line-2:#d9d5ce;
+    --fg:#18161a; --fg-2:#4a4549; --fg-3:#8a8388;
+    --plum:#4b1d3f; --plum-50:#f5eef3; --plum-100:#eadbe6;
+    --red:#c8102e; --red-50:#fdf0f2; --red-100:#f8d5db;
+    --amber:#9a6a14; --amber-50:#fbf5e9;
+    --ok:#2f6b4f; --ok-50:#eef5f1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#1a1718;color:#eee;font-family:Inter,system-ui,sans-serif;padding:32px 20px 60px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1320px;margin:0 auto}
+  .intro h1{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:34px}
+  .intro p{color:#b9b0aa;margin:6px 0 24px;font-size:15px;max-width:900px;line-height:1.55}
+  .intro h2{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:26px;margin:36px 0 12px}
+
+  .device{border-radius:22px;padding:10px;background:#0b0b0b;box-shadow:0 30px 70px rgba(0,0,0,.55),inset 0 0 0 1px #2a2a2a}
+  .app{border-radius:13px;overflow:hidden;background:var(--bg);color:var(--fg);display:grid;grid-template-columns:56px 1fr;height:640px;font-size:13px;font-feature-settings:"cv11","ss01","tnum"}
+  svg.i{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+  /* rail */
+  .rail{background:var(--plum);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px}
+  .logo{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:600;color:#fff;font-size:22px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;border-radius:9px;background:rgba(255,255,255,.08)}
+  .rail a{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);position:relative}
+  .rail a.on{background:rgba(255,255,255,.14);color:#fff}
+  .rail a .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--plum)}
+  .rail .sp{flex:1}
+  .av{width:28px;height:28px;border-radius:50%;background:#e8d9c4;color:var(--plum);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+  /* main */
+  .main{display:flex;flex-direction:column;min-width:0}
+  .bar{height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+  .title .sub{color:var(--fg-3);font-weight:500}
+  .seg{display:flex;background:var(--sunk);border-radius:8px;padding:2px;margin-left:8px}
+  .seg span{padding:5px 10px;border-radius:6px;color:var(--fg-2);font-weight:500;display:flex;gap:6px;align-items:center}
+  .seg span.on{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--line)}
+  .seg em{font-style:normal;color:var(--fg-3);font-size:12px}
+  .grow{flex:1}
+  .search{display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line);color:var(--fg-3);width:200px;background:var(--panel)}
+  .kbd{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:10.5px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--fg-3)}
+  .btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:6px;font-weight:500;color:var(--fg)}
+  .btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .clock{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:13px;color:var(--fg-2)}
+  .stats{display:flex;gap:18px;padding:0 16px;height:40px;align-items:center;border-bottom:1px solid var(--line);background:var(--panel);color:var(--fg-3);font-size:12px}
+  .stats b{color:var(--fg);font-weight:600;margin-right:3px}
+  .stats .warn b{color:var(--red)}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px;box-shadow:0 0 0 3px var(--ok-50)}
+
+  /* KDS */
+  .kbody{flex:1;display:grid;grid-template-columns:1fr 232px;min-height:0}
+  .tickets{padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-content:start;overflow:hidden}
+  .tk{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(24,22,26,.04)}
+  .tk-h{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .tno{font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1}
+  .tmeta{color:var(--fg-3);font-size:11.5px;line-height:1.35}
+  .tmeta b{color:var(--fg-2);font-weight:600}
+  .timer{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:13px;padding:3px 7px;border-radius:6px;background:var(--sunk);color:var(--fg-2)}
+  .course{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:var(--sunk);color:var(--fg-3);font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .course b{color:var(--plum)}
+  .it{display:grid;grid-template-columns:22px 1fr 18px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);align-items:start}
+  .it:last-of-type{border-bottom:0}
+  .it .q{font-weight:700;font-size:14px}
+  .it .n{font-weight:500;font-size:14px;line-height:1.3}
+  .it .mod{display:block;color:var(--fg-3);font-size:12px;margin-top:2px}
+  .it .mod::before{content:"– "}
+  .it .alg{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;font-weight:600;color:var(--red);background:var(--red-50);border:1px solid var(--red-100);padding:1px 6px;border-radius:5px}
+  .it .cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line-2);margin-top:2px}
+  .it.done .n,.it.done .q{color:var(--fg-3);text-decoration:line-through}
+  .it.done .cb{background:var(--fg-2);border-color:var(--fg-2);display:flex;align-items:center;justify-content:center;color:#fff}
+  .tk-f{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 12px;border-top:1px solid var(--line);margin-top:auto}
+  .bump{height:38px;border-radius:8px;background:var(--fg);color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+  .ghost{height:38px;width:38px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--fg-2)}
+  .tk.warn .timer{background:var(--amber-50);color:var(--amber)}
+  .tk.late{border-color:var(--red-100);box-shadow:0 0 0 1px var(--red-100),0 1px 2px rgba(200,16,46,.08)}
+  .tk.late .tk-h{background:var(--red-50)}
+  .tk.late .timer{background:var(--red);color:#fff}
+  .tk.late .bump{background:var(--red)}
+  .tk.fresh .tk-h{box-shadow:inset 3px 0 0 var(--plum)}
+  .tag{font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--plum-50);color:var(--plum);border:1px solid var(--plum-100);margin-left:6px;vertical-align:2px}
+  .side{border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .side h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);padding:14px 14px 8px;display:flex;justify-content:space-between}
+  .ad{display:flex;justify-content:space-between;padding:7px 14px;font-size:13px;border-bottom:1px solid var(--line)}
+  .ad b{font-family:"JetBrains Mono",monospace;font-weight:600}
+  .ad.hot b{color:var(--red)}
+  .eighty{margin:12px 14px;padding:10px;border-radius:8px;background:var(--sunk);font-size:12px;color:var(--fg-2);line-height:1.45}
+  .eighty b{display:block;color:var(--fg);margin-bottom:2px}
+
+  /* Floor */
+  .fbody{flex:1;display:grid;grid-template-columns:1fr 300px;min-height:0}
+  .canvas{position:relative;margin:14px;border-radius:10px;border:1px solid var(--line);background:radial-gradient(circle at 1px 1px,#dcd7d0 1px,transparent 1.2px) 0 0/16px 16px,var(--panel);overflow:hidden}
+  .zone{position:absolute;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+  .wallm{position:absolute;left:16px;right:96px;top:14px;height:6px;border-radius:3px;background:linear-gradient(90deg,#e9e2d6,#fff,#e9e2d6,#fff,#e9e2d6);box-shadow:0 0 0 1px var(--line-2)}
+  .tbl{position:absolute;background:var(--panel);border:1px solid var(--line-2);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;box-shadow:0 1px 2px rgba(24,22,26,.05)}
+  .tbl.r{border-radius:50%}
+  .tbl.s{border-radius:8px}
+  .tbl .no{font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .tbl .m{font-size:10.5px;color:var(--fg-3);font-family:"JetBrains Mono",monospace}
+  .tbl .st{position:absolute;top:-1px;right:-1px;width:10px;height:10px;border-radius:50%;border:2px solid var(--panel)}
+  .tbl.free{background:transparent;border-style:dashed}
+  .tbl.free .no{color:var(--fg-3)}
+  .tbl.seat{background:var(--plum-50);border-color:var(--plum-100)}
+  .tbl.ready{background:var(--fg);border-color:var(--fg);color:#fff}
+  .tbl.ready .m{color:rgba(255,255,255,.7)}
+  .tbl.call{border-color:var(--red);box-shadow:0 0 0 3px var(--red-50)}
+  .tbl.bill{background:var(--amber-50);border-color:#e8d3a6}
+  .tbl.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--plum)}
+  .seatdot{position:absolute;width:8px;height:8px;border-radius:2px;background:var(--line-2)}
+  .barcounter{position:absolute;right:16px;top:14px;bottom:16px;width:64px;border-radius:8px;background:var(--sunk);border:1px solid var(--line-2)}
+  .legend{position:absolute;left:16px;bottom:12px;display:flex;gap:12px;font-size:11.5px;color:var(--fg-3);background:rgba(255,255,255,.9);padding:6px 10px;border-radius:8px;border:1px solid var(--line)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-.5px}
+  .zoom{position:absolute;right:92px;bottom:12px;display:flex;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+  .zoom span{width:30px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--fg-2);border-right:1px solid var(--line)}
+  .zoom span:last-child{border-right:0}
+  .det{border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .det-h{padding:14px;border-bottom:1px solid var(--line)}
+  .det-h .r1{display:flex;align-items:center;gap:8px}
+  .det-h .big{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+  .pill.ready{background:var(--fg);color:#fff}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .kv div{background:var(--sunk);border-radius:8px;padding:7px 9px}
+  .kv span{display:block;font-size:10.5px;color:var(--fg-3);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .kv b{font-size:13px;font-weight:600}
+  .crs{padding:10px 14px 0}
+  .crs h4{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:6px;display:flex;justify-content:space-between}
+  .line{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+  .line span:last-child{font-family:"JetBrains Mono",monospace;color:var(--fg-2);font-size:12px}
+  .line.muted{color:var(--fg-3)}
+  .stepper{display:flex;gap:4px;margin:4px 0 10px}
+  .stepper i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+  .stepper i.d{background:var(--plum)}
+  .stepper i.c{background:var(--fg)}
+  .det-f{margin-top:auto;padding:12px 14px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .det-f .btn{justify-content:center;height:36px}
+  .det-f .btn.primary{grid-column:1/-1}
+  .total{display:flex;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);font-weight:600}
+  .total span:last-child{font-family:"JetBrains Mono",monospace}
+  .needs{display:flex;gap:6px;align-items:center}
+  .chip{display:flex;gap:6px;align-items:center;height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--line);background:var(--panel)}
+  .chip.r{border-color:var(--red-100);background:var(--red-50);color:var(--red)}
+  .chip.k{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .chip.a{background:var(--amber-50);border-color:#ecdcb8;color:var(--amber)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="i-wine" viewBox="0 0 24 24"><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></symbol>
+</svg>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Lodos staff screens, v4: built like a real product</h1>
+    <p>Same brand, different discipline: one type family at 12–14px, a real icon set, 1px hairlines, an 8px grid, monospaced timers, and the details professional kitchens and floors actually use (course firing, all-day counts, 86'd items, covers, check totals). Brand lives in the plum navigation rail and the Bodoni mark; blood red is reserved for "late" and allergens.</p>
+  </div>
+
+  <div class="intro"><h2>Kitchen display</h2></div>
+  <div class="device"><div class="app">
+    <nav class="rail">
+      <div class="logo">L</div>
+      <a class="on" title="Kitchen"><svg class="i"><use href="#i-flame"/></svg></a>
+      <a title="Bar"><svg class="i"><use href="#i-wine"/></svg><span class="dot"></span></a>
+      <a title="Floor"><svg class="i"><use href="#i-grid"/></svg></a>
+      <a title="Orders"><svg class="i"><use href="#i-receipt"/></svg></a>
+      <a title="Menu"><svg class="i"><use href="#i-book"/></svg></a>
+      <a title="Reports"><svg class="i"><use href="#i-chart"/></svg></a>
+      <div class="sp"></div>
+      <a title="Settings"><svg class="i"><use href="#i-settings"/></svg></a>
+      <div class="av">MK</div>
+    </nav>
+    <div class="main">
+      <div class="bar">
+        <div class="title">Kitchen <span class="sub">· Hot line</span></div>
+        <div class="seg"><span class="on">Active <em>9</em></span><span>Held <em>2</em></span><span>Done <em>41</em></span></div>
+        <div class="grow"></div>
+        <div class="search"><svg class="i"><use href="#i-search"/></svg>Find table or dish<span class="kbd">/</span></div>
+        <div class="btn"><svg class="i"><use href="#i-undo"/></svg>Recall</div>
+        <div class="clock">21:42:08</div>
+      </div>
+      <div class="stats">
+        <span><span class="pulse"></span>Live</span>
+        <span><b>9</b>open tickets</span>
+        <span><b>27</b>items</span>
+        <span><b>11:40</b>avg ticket time</span>
+        <span class="warn"><b>2</b>over 15 min</span>
+      </div>
+      <div class="kbody">
+        <div class="tickets">
+          <div class="tk late">
+            <div class="tk-h"><span class="tno">12</span><span class="tmeta"><b>Deniz</b> · 4 covers<br>Fired 21:25</span><span class="timer">17:20</span></div>
+            <div class="course"><span>Course 2 · <b>Mains</b></span><span>3 of 5</span></div>
+            <div class="it done"><span class="q">2</span><span class="n">Levrek crudo</span><span class="cb"><svg class="i" style="width:11px;height:11px;stroke-width:3"><use href="#i-check"/></svg></span></div>
+            <div class="it"><span class="q">1</span><span class="n">Dry-aged ribeye<span class="mod">Medium rare</span><span class="mod">Sauce on the side</span></span><span class="cb"></span></div>
+            <div class="it"><span class="q">2</span><span class="n">Köz patlıcan, miso</span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+          <div class="tk late">
+            <div class="tk-h"><span class="tno">B2</span><span class="tmeta"><b>Ece</b> · 2 covers<br>Fired 21:26</span><span class="timer">15:48</span></div>
+            <div class="course"><span>Course 1 · <b>Raw bar</b></span><span>1 of 1</span></div>
+            <div class="it"><span class="q">1</span><span class="n">Raw bar selection<span class="mod">No oysters</span></span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+          <div class="tk warn">
+            <div class="tk-h"><span class="tno">7</span><span class="tmeta"><b>QR order</b> · 2 covers<br>Placed 21:33</span><span class="timer">09:05</span></div>
+            <div class="course"><span>Course 1 · <b>To share</b></span><span>2 items</span></div>
+            <div class="it"><span class="q">1</span><span class="n">Levrek crudo</span><span class="cb"></span></div>
+            <div class="it"><span class="q">1</span><span class="n">Köz patlıcan, miso<span class="mod">No tahini</span><span class="alg"><svg class="i" style="width:12px;height:12px"><use href="#i-alert"/></svg>Sesame allergy</span></span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+          <div class="tk fresh">
+            <div class="tk-h"><span class="tno">9</span><span class="tmeta"><b>QR order</b><span class="tag">New</span><br>3 covers · 21:41</span><span class="timer">00:24</span></div>
+            <div class="course"><span>Course 1 · <b>To share</b></span><span>2 items</span></div>
+            <div class="it"><span class="q">3</span><span class="n">Raw bar selection</span><span class="cb"></span></div>
+            <div class="it"><span class="q">1</span><span class="n">Burnt cheesecake<span class="mod">Hold for dessert</span></span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+          <div class="tk">
+            <div class="tk-h"><span class="tno">3</span><span class="tmeta"><b>Mert</b> · 2 covers<br>Fired 21:38</span><span class="timer">04:12</span></div>
+            <div class="course"><span>Course 2 · <b>Mains</b></span><span>2 items</span></div>
+            <div class="it"><span class="q">1</span><span class="n">Octopus, smoked paprika</span><span class="cb"></span></div>
+            <div class="it"><span class="q">1</span><span class="n">Lamb shoulder for two</span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+          <div class="tk">
+            <div class="tk-h"><span class="tno">11</span><span class="tmeta"><b>Deniz</b> · 6 covers<br>Fired 21:40</span><span class="timer">02:31</span></div>
+            <div class="course"><span>Course 3 · <b>Dessert</b></span><span>3 items</span></div>
+            <div class="it"><span class="q">3</span><span class="n">Burnt cheesecake</span><span class="cb"></span></div>
+            <div class="it"><span class="q">2</span><span class="n">Dondurma, tahini caramel<span class="alg"><svg class="i" style="width:12px;height:12px"><use href="#i-alert"/></svg>Sesame</span></span><span class="cb"></span></div>
+            <div class="tk-f"><div class="bump"><svg class="i"><use href="#i-check"/></svg>Bump</div><div class="ghost"><svg class="i"><use href="#i-pause"/></svg></div></div>
+          </div>
+        </div>
+        <aside class="side">
+          <h3><span>All day</span><span>items to fire</span></h3>
+          <div class="ad hot"><span>Raw bar selection</span><b>4</b></div>
+          <div class="ad"><span>Burnt cheesecake</span><b>4</b></div>
+          <div class="ad"><span>Köz patlıcan, miso</span><b>3</b></div>
+          <div class="ad"><span>Dondurma</span><b>2</b></div>
+          <div class="ad"><span>Levrek crudo</span><b>1</b></div>
+          <div class="ad"><span>Dry-aged ribeye</span><b>1</b></div>
+          <div class="ad"><span>Octopus</span><b>1</b></div>
+          <div class="ad"><span>Lamb for two</span><b>1</b></div>
+          <div class="eighty"><b>86'd tonight</b>Lamb shoulder: 2 left · Oysters: out since 20:10</div>
+        </aside>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="intro"><h2>Floor</h2></div>
+  <div class="device"><div class="app">
+    <nav class="rail">
+      <div class="logo">L</div>
+      <a title="Kitchen"><svg class="i"><use href="#i-flame"/></svg></a>
+      <a title="Bar"><svg class="i"><use href="#i-wine"/></svg></a>
+      <a class="on" title="Floor"><svg class="i"><use href="#i-grid"/></svg><span class="dot"></span></a>
+      <a title="Orders"><svg class="i"><use href="#i-receipt"/></svg></a>
+      <a title="Menu"><svg class="i"><use href="#i-book"/></svg></a>
+      <a title="Reports"><svg class="i"><use href="#i-chart"/></svg></a>
+      <div class="sp"></div>
+      <a title="Settings"><svg class="i"><use href="#i-settings"/></svg></a>
+      <div class="av">DK</div>
+    </nav>
+    <div class="main">
+      <div class="bar">
+        <div class="title">Floor</div>
+        <div class="seg"><span class="on">Salon</span><span>Bar</span><span>Terrace</span></div>
+        <div class="grow"></div>
+        <div class="needs">
+          <span class="chip r"><svg class="i" style="width:14px;height:14px"><use href="#i-bell"/></svg>T7 calling · 1m</span>
+          <span class="chip k">2 ready to run</span>
+          <span class="chip a">B4 wants the bill</span>
+        </div>
+        <div class="btn primary"><svg class="i"><use href="#i-plus"/></svg>New order</div>
+      </div>
+      <div class="stats">
+        <span><b>9</b>of 13 tables seated</span>
+        <span><b>31</b>covers</span>
+        <span><b>1h 04m</b>avg turn</span>
+        <span><b>₺48,920</b>open checks</span>
+        <span class="grow"></span>
+        <span>My section: <b>Deniz</b> · 5 tables</span>
+      </div>
+      <div class="fbody">
+        <div class="canvas">
+          <div class="wallm"></div>
+          <span class="zone" style="left:16px;top:26px">Mirror wall · booths</span>
+          <div class="tbl s seat" style="left:30px;top:51px;width:92px;height:52px"><span class="st" style="background:var(--plum)"></span><span class="no">B1</span><span class="m">4 · 52m</span></div>
+          <div class="tbl s ready" style="left:176px;top:51px;width:92px;height:52px"><span class="no">B2</span><span class="m">2 · 18m</span></div>
+          <div class="tbl s free" style="left:321px;top:51px;width:92px;height:52px"><span class="no">B3</span><span class="m">4</span></div>
+          <div class="tbl s bill" style="left:467px;top:51px;width:92px;height:52px"><span class="st" style="background:var(--amber)"></span><span class="no">B4</span><span class="m">3 · 1h 41m</span></div>
+          <div class="tbl s seat" style="left:612px;top:51px;width:92px;height:52px"><span class="st" style="background:var(--plum)"></span><span class="no">B5</span><span class="m">2 · 06m</span></div>
+
+          <div class="tbl r seat" style="left:69px;top:162px;width:76px;height:76px"><span class="st" style="background:var(--plum)"></span><span class="no">3</span><span class="m">2 · 38m</span></div>
+          <div class="tbl r call" style="left:243px;top:162px;width:76px;height:76px"><span class="st" style="background:var(--red)"></span><span class="no">7</span><span class="m">2 · 12m</span></div>
+          <div class="tbl r ready sel" style="left:416px;top:162px;width:88px;height:88px"><span class="no">12</span><span class="m">4 · 1h 12m</span></div>
+          <div class="tbl r free" style="left:607px;top:162px;width:76px;height:76px"><span class="no">5</span><span class="m">2</span></div>
+
+          <div class="tbl r seat" style="left:142px;top:298px;width:68px;height:68px"><span class="st" style="background:var(--plum)"></span><span class="no">9</span><span class="m">3 · 01m</span></div>
+          <div class="tbl r free" style="left:310px;top:298px;width:68px;height:68px"><span class="no">10</span><span class="m">2</span></div>
+          <div class="tbl s seat" style="left:469px;top:291px;width:120px;height:72px"><span class="st" style="background:var(--plum)"></span><span class="no">11</span><span class="m">6 · 1h 28m</span></div>
+          <div class="tbl r free" style="left:142px;top:410px;width:68px;height:68px"><span class="no">14</span><span class="m">2</span></div>
+
+          <div class="barcounter"></div>
+          <span class="zone" style="right:24px;top:22px;writing-mode:vertical-rl">Bar · 8 seats</span>
+
+          <div class="legend"><span><i style="border:1.5px dashed var(--line-2)"></i>Free</span><span><i style="background:var(--plum)"></i>Seated</span><span><i style="background:var(--fg)"></i>Food ready</span><span><i style="background:var(--red)"></i>Calling</span><span><i style="background:var(--amber)"></i>Bill</span></div>
+          <div class="zoom"><span><svg class="i" style="width:14px;height:14px"><use href="#i-minus"/></svg></span><span style="font-size:11.5px;width:44px">100%</span><span><svg class="i" style="width:14px;height:14px"><use href="#i-plus"/></svg></span></div>
+        </div>
+        <aside class="det">
+          <div class="det-h">
+            <div class="r1"><span class="big">Table 12</span><span class="pill ready">Food ready</span><span class="grow"></span><span class="av" style="width:24px;height:24px;font-size:10px">DK</span></div>
+            <div class="kv"><div><span>Covers</span><b>4</b></div><div><span>Seated</span><b>1h 12m</b></div><div><span>Check</span><b>₺6,840</b></div></div>
+          </div>
+          <div class="crs">
+            <h4><span>Courses</span><span>2 of 3</span></h4>
+            <div class="stepper"><i class="d"></i><i class="c"></i><i></i></div>
+            <div class="line muted"><span>✓ Starters · served 20:58</span><span></span></div>
+            <div class="line"><span><b>Mains · ready at pass</b></span><span>21:42</span></div>
+            <div class="line"><span>1 Dry-aged ribeye</span><span>₺2,450</span></div>
+            <div class="line"><span>2 Köz patlıcan, miso</span><span>₺960</span></div>
+            <div class="line muted"><span>Dessert · not fired</span><span></span></div>
+          </div>
+          <div class="total"><span>Open check</span><span>₺6,840</span></div>
+          <div class="det-f">
+            <div class="btn primary"><svg class="i"><use href="#i-check"/></svg>Mark mains served</div>
+            <div class="btn"><svg class="i"><use href="#i-flame"/></svg>Fire dessert</div>
+            <div class="btn"><svg class="i"><use href="#i-printer"/></svg>Print check</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div></div>
+</div>
+</body>
+</html>
