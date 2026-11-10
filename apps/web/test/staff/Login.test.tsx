@@ -38,7 +38,10 @@ describe("Login", () => {
     const { router } = renderApp("/staff/login");
 
     await user.click(await screen.findByRole("button", { name: /Deniz/ }));
-    expect(await screen.findByRole("heading", { name: /Enter your PIN/ })).toBeTruthy();
+    const heading = await screen.findByRole("heading", { name: /Enter your PIN/ });
+    // The step heading takes focus for screen readers. tabindex=-1 is what staff.css keys on to hide its ring.
+    expect(document.activeElement).toBe(heading);
+    expect(heading.getAttribute("tabindex")).toBe("-1");
 
     // A typo, corrected with Backspace, then Enter.
     await user.keyboard("12{Backspace}{Backspace}1111{Enter}");
