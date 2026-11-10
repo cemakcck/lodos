@@ -1,5 +1,6 @@
 import { createBrowserRouter, useParams, Outlet } from "react-router";
 import { useTranslation } from "react-i18next";
+import { guestRoutes } from "./guest/routes";
 
 function Placeholder({ name, surface }: { name: string; surface: "guest" | "staff" }) {
   const { t } = useTranslation();
@@ -20,8 +21,7 @@ export const routes = [
     element: <Outlet />,
     children: [
       { path: "/", element: ph("landing", "guest") },
-      { path: "/t/:token", element: ph("guest menu", "guest") },
-      { path: "/t/:token/table", element: ph("guest table", "guest") },
+      ...guestRoutes,
       { path: "/staff/login", element: ph("login") },
       { path: "/staff/kitchen", element: ph("kitchen") },
       { path: "/staff/bar", element: ph("bar") },

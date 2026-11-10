@@ -1,7 +1,19 @@
 {
-  "app": { "name": "Lodos", "loading": "Loading…", "notFound": "Page not found", "comingSoon": "Coming soon" },
-  "conn": { "reconnecting": "Reconnecting…", "lastUpdated": "Last updated {{time}}" },
-  "lang": { "label": "Language", "en": "English", "tr": "Türkçe" },
+  "app": {
+    "name": "Lodos",
+    "loading": "Loading…",
+    "notFound": "Page not found",
+    "comingSoon": "Coming soon"
+  },
+  "conn": {
+    "reconnecting": "Reconnecting…",
+    "lastUpdated": "Last updated {{time}}"
+  },
+  "lang": {
+    "label": "Language",
+    "en": "English",
+    "tr": "Türkçe"
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "network": "Can't reach the server. Check your connection.",
@@ -17,5 +29,155 @@
     "conflict": "That changed while you were working. Please refresh and try again.",
     "demo_busy": "The demo is busy right now. Please try again shortly.",
     "internal": "Something went wrong on our side. Please try again."
+  },
+  "guest": {
+    "hero": {
+      "since": "Karaköy · since 2026",
+      "welcome": "{{table}} · welcome",
+      "welcomeGeneric": "Welcome"
+    },
+    "nav": {
+      "menu": "Menu",
+      "yourTable": "Your table",
+      "menuSections": "Menu sections",
+      "language": "Language"
+    },
+    "menu": {
+      "loading": "Setting your table…",
+      "loadFailed": "We couldn't load the menu.",
+      "retry": "Try again",
+      "soldOut": "Sold out tonight",
+      "remaining": "Only {{count}} left",
+      "add": "Add {{name}}",
+      "addUnavailable": "{{name}} is sold out tonight",
+      "details": "{{name}}, {{price}}. See details",
+      "added": "{{name}} added to your order",
+      "signature": "Signature"
+    },
+    "dietary": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "gluten-free": "GF"
+    },
+    "dietaryLong": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "gluten-free": "Gluten-free"
+    },
+    "allergens": {
+      "gluten": "Gluten",
+      "crustaceans": "Crustaceans",
+      "eggs": "Eggs",
+      "fish": "Fish",
+      "peanuts": "Peanuts",
+      "soybeans": "Soy",
+      "milk": "Milk",
+      "nuts": "Tree nuts",
+      "celery": "Celery",
+      "mustard": "Mustard",
+      "sesame": "Sesame",
+      "sulphites": "Sulphites",
+      "lupin": "Lupin",
+      "molluscs": "Molluscs"
+    },
+    "sheet": {
+      "close": "Close",
+      "story": "The story",
+      "allergens": "Allergens",
+      "noAllergens": "None of the 14 major allergens",
+      "allergenHint": "Tell your waiter about any allergy. Our kitchen handles all 14 major allergens.",
+      "required": "Required",
+      "optional": "Optional",
+      "chooseOne": "Choose one",
+      "chooseAny": "Choose any",
+      "choose": "Please choose: {{group}}",
+      "note": "Note for the kitchen",
+      "notePlaceholder": "e.g. sauce on the side",
+      "noteCount": "{{count}}/{{max}}",
+      "quantity": "Quantity",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "addToOrder": "Add to order",
+      "soldOut": "Sold out tonight"
+    },
+    "cart": {
+      "view": "View order · {{count}}",
+      "viewLabel": "View your order: {{count}} items, {{total}}",
+      "title": "Your order",
+      "empty": "Your order is empty.",
+      "remove": "Remove {{name}}",
+      "decrease": "One less {{name}}",
+      "increase": "One more {{name}}",
+      "lineQty": "Quantity of {{name}}",
+      "soldOut": "Sold out tonight",
+      "unavailable": "No longer available",
+      "removeToContinue": "Remove the unavailable items to continue.",
+      "tooMany": "Up to {{max}} items per order. Place this one, then order more.",
+      "place": "Place order",
+      "placing": "Sending…",
+      "straightTo": "Your order goes straight to the kitchen and the bar.",
+      "rateLimited": "You've ordered a lot in a short time. Please wait a few minutes, or call your waiter.",
+      "failed": "We couldn't send your order. Please try again.",
+      "sent": "Your order is on its way."
+    },
+    "table": {
+      "title": "Your table",
+      "subtitle": "Everything ordered at {{table}} tonight, live.",
+      "nothingYet": "Nothing ordered yet.",
+      "browse": "Browse the menu",
+      "food": "Food",
+      "drinks": "Drinks",
+      "total": "Total",
+      "foodTotal": "Food",
+      "drinksTotal": "Drinks",
+      "noCancel": "To change or cancel an order, please call your waiter.",
+      "status": {
+        "sent": "Sent",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "served": "Served"
+      }
+    },
+    "call": {
+      "title": "Call the waiter",
+      "reason": "Reason (optional)",
+      "reasons": {
+        "wine": "Wine advice",
+        "problem": "Something's wrong",
+        "other": "Other"
+      },
+      "send": "Call the waiter",
+      "sending": "Calling…",
+      "onTheWay": "Your waiter is on the way.",
+      "alreadyCalled": "Your waiter has already been called and is on the way."
+    },
+    "bill": {
+      "title": "Request the bill",
+      "method": "How would you like to pay?",
+      "card": "Card",
+      "cash": "Cash",
+      "send": "Request the bill",
+      "sending": "Requesting…",
+      "onTheWay": "Your waiter is on the way with the bill.",
+      "nothing": "There's nothing on your bill yet."
+    },
+    "ended": {
+      "title": "This table's visit has ended. Thank you!",
+      "body": "We hope to see you again soon at Lodos.",
+      "farewell": "Until next time"
+    },
+    "invalid": {
+      "title": "This QR code isn't valid.",
+      "body": "Please ask your waiter for help."
+    },
+    "footer": {
+      "address": "Karaköy · İstanbul",
+      "credits": "Photo credits",
+      "creditsTitle": "Photo credits",
+      "creditsIntro": "Menu photos are from Wikimedia Commons, used under their free licences.",
+      "creditsFile": "Full credits file",
+      "by": "by {{author}}",
+      "source": "Source"
+    }
   }
 }

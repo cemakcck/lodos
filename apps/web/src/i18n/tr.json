@@ -1,7 +1,19 @@
 {
-  "app": { "name": "Lodos", "loading": "Yükleniyor…", "notFound": "Sayfa bulunamadı", "comingSoon": "Çok yakında" },
-  "conn": { "reconnecting": "Yeniden bağlanılıyor…", "lastUpdated": "Son güncelleme {{time}}" },
-  "lang": { "label": "Dil", "en": "English", "tr": "Türkçe" },
+  "app": {
+    "name": "Lodos",
+    "loading": "Yükleniyor…",
+    "notFound": "Sayfa bulunamadı",
+    "comingSoon": "Çok yakında"
+  },
+  "conn": {
+    "reconnecting": "Yeniden bağlanılıyor…",
+    "lastUpdated": "Son güncelleme {{time}}"
+  },
+  "lang": {
+    "label": "Dil",
+    "en": "English",
+    "tr": "Türkçe"
+  },
   "errors": {
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
     "network": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
@@ -17,5 +29,155 @@
     "conflict": "Siz işlem yaparken bu değişti. Lütfen sayfayı yenileyip tekrar deneyin.",
     "demo_busy": "Demo şu anda yoğun. Lütfen birazdan tekrar deneyin.",
     "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin."
+  },
+  "guest": {
+    "hero": {
+      "since": "Karaköy · 2026'dan beri",
+      "welcome": "{{table}} · hoş geldiniz",
+      "welcomeGeneric": "Hoş geldiniz"
+    },
+    "nav": {
+      "menu": "Menü",
+      "yourTable": "Masanız",
+      "menuSections": "Menü bölümleri",
+      "language": "Dil"
+    },
+    "menu": {
+      "loading": "Masanız hazırlanıyor…",
+      "loadFailed": "Menü yüklenemedi.",
+      "retry": "Tekrar deneyin",
+      "soldOut": "Bu akşam tükendi",
+      "remaining": "Son {{count}} adet",
+      "add": "{{name}} ekle",
+      "addUnavailable": "{{name}} bu akşam tükendi",
+      "details": "{{name}}, {{price}}. Ayrıntılar",
+      "added": "{{name}} siparişinize eklendi",
+      "signature": "İmza"
+    },
+    "dietary": {
+      "vegetarian": "Vejetaryen",
+      "vegan": "Vegan",
+      "gluten-free": "Glutensiz"
+    },
+    "dietaryLong": {
+      "vegetarian": "Vejetaryen",
+      "vegan": "Vegan",
+      "gluten-free": "Glutensiz"
+    },
+    "allergens": {
+      "gluten": "Gluten",
+      "crustaceans": "Kabuklular",
+      "eggs": "Yumurta",
+      "fish": "Balık",
+      "peanuts": "Yer fıstığı",
+      "soybeans": "Soya",
+      "milk": "Süt",
+      "nuts": "Sert kabuklu yemişler",
+      "celery": "Kereviz",
+      "mustard": "Hardal",
+      "sesame": "Susam",
+      "sulphites": "Sülfitler",
+      "lupin": "Acı bakla",
+      "molluscs": "Yumuşakçalar"
+    },
+    "sheet": {
+      "close": "Kapat",
+      "story": "Hikâyesi",
+      "allergens": "Alerjenler",
+      "noAllergens": "14 temel alerjenden hiçbirini içermez",
+      "allergenHint": "Alerjiniz varsa lütfen garsonunuza söyleyin. Mutfağımızda 14 temel alerjenin tümü kullanılmaktadır.",
+      "required": "Zorunlu",
+      "optional": "İsteğe bağlı",
+      "chooseOne": "Birini seçin",
+      "chooseAny": "Dilediğinizi seçin",
+      "choose": "Lütfen seçin: {{group}}",
+      "note": "Mutfağa notunuz",
+      "notePlaceholder": "ör. sosu ayrı gelsin",
+      "noteCount": "{{count}}/{{max}}",
+      "quantity": "Adet",
+      "decrease": "Adedi azalt",
+      "increase": "Adedi artır",
+      "addToOrder": "Siparişe ekle",
+      "soldOut": "Bu akşam tükendi"
+    },
+    "cart": {
+      "view": "Siparişi gör · {{count}}",
+      "viewLabel": "Siparişinizi görün: {{count}} ürün, {{total}}",
+      "title": "Siparişiniz",
+      "empty": "Siparişiniz henüz boş.",
+      "remove": "{{name}} çıkar",
+      "decrease": "Bir {{name}} eksilt",
+      "increase": "Bir {{name}} daha",
+      "lineQty": "{{name}} adedi",
+      "soldOut": "Bu akşam tükendi",
+      "unavailable": "Artık mevcut değil",
+      "removeToContinue": "Devam etmek için mevcut olmayan ürünleri çıkarın.",
+      "tooMany": "Bir siparişte en fazla {{max}} ürün olabilir. Bunu gönderip yeniden sipariş verebilirsiniz.",
+      "place": "Siparişi gönder",
+      "placing": "Gönderiliyor…",
+      "straightTo": "Siparişiniz doğrudan mutfağa ve bara iletilir.",
+      "rateLimited": "Kısa sürede çok sipariş verdiniz. Lütfen birkaç dakika bekleyin ya da garsonunuzu çağırın.",
+      "failed": "Siparişiniz gönderilemedi. Lütfen tekrar deneyin.",
+      "sent": "Siparişiniz yola çıktı."
+    },
+    "table": {
+      "title": "Masanız",
+      "subtitle": "Bu akşam {{table}} masasından verilen her şey, canlı.",
+      "nothingYet": "Henüz sipariş verilmedi.",
+      "browse": "Menüye göz atın",
+      "food": "Yemekler",
+      "drinks": "İçecekler",
+      "total": "Toplam",
+      "foodTotal": "Yemekler",
+      "drinksTotal": "İçecekler",
+      "noCancel": "Siparişi değiştirmek ya da iptal etmek için lütfen garsonunuzu çağırın.",
+      "status": {
+        "sent": "İletildi",
+        "preparing": "Hazırlanıyor",
+        "ready": "Hazır",
+        "served": "Servis edildi"
+      }
+    },
+    "call": {
+      "title": "Garsonu çağırın",
+      "reason": "Neden (isteğe bağlı)",
+      "reasons": {
+        "wine": "Şarap önerisi",
+        "problem": "Bir sorun var",
+        "other": "Diğer"
+      },
+      "send": "Garsonu çağır",
+      "sending": "Çağrılıyor…",
+      "onTheWay": "Garsonunuz geliyor.",
+      "alreadyCalled": "Garsonunuz zaten çağrıldı, yolda."
+    },
+    "bill": {
+      "title": "Hesabı isteyin",
+      "method": "Nasıl ödemek istersiniz?",
+      "card": "Kart",
+      "cash": "Nakit",
+      "send": "Hesabı iste",
+      "sending": "İsteniyor…",
+      "onTheWay": "Garsonunuz hesapla birlikte geliyor.",
+      "nothing": "Henüz hesabınızda bir şey yok."
+    },
+    "ended": {
+      "title": "Masanızın hesabı kapandı. Teşekkür ederiz!",
+      "body": "Sizi yeniden Lodos'ta ağırlamayı umuyoruz.",
+      "farewell": "Yine bekleriz"
+    },
+    "invalid": {
+      "title": "Bu QR kod geçerli değil.",
+      "body": "Lütfen garsonunuzdan yardım isteyin."
+    },
+    "footer": {
+      "address": "Karaköy · İstanbul",
+      "credits": "Fotoğraf kaynakları",
+      "creditsTitle": "Fotoğraf kaynakları",
+      "creditsIntro": "Menü fotoğrafları Wikimedia Commons'tan, özgür lisansları kapsamında kullanılmaktadır.",
+      "creditsFile": "Kaynak dosyasının tamamı",
+      "by": "{{author}}",
+      "source": "Kaynak"
+    }
   }
 }
