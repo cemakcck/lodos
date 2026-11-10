@@ -314,7 +314,8 @@
     },
     "sound": {
       "enable": "Enable sound",
-      "enableAria": "Enable the new-ticket chime"
+      "enableAria": "Enable the new-ticket chime",
+      "activate": "Sound on, tap to activate"
     },
     "stats": {
       "open": "open tickets",
@@ -369,8 +370,8 @@
       "holdAria": "Hold {{table}}",
       "resume": "Resume",
       "resumeAria": "Resume {{table}}",
-      "allergen": "Allergen",
-      "allergyNote": "Allergy in note"
+      "allergy": "Allergy",
+      "contains": "Contains: {{list}}"
     }
   }
 }

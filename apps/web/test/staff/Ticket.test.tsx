@@ -82,19 +82,38 @@ describe("Ticket", () => {
     expect(screen.getByRole("article").getAttribute("data-age")).toBe("late");
   });
 
-  it("flags an allergy mentioned in the note even when the dish has no allergens", () => {
+  it("shows the red allergy chip with the guest's words when the note mentions an allergy", () => {
     const t = ticket();
-    t.items[1] = { ...t.items[1]!, note: "fıstık alerjisi", allergyFlag: false };
-    renderTicket(t, at(1));
-    expect(screen.getByText("fıstık alerjisi")).toBeTruthy();
-    expect(screen.getByText("Allergy in note")).toBeTruthy();
+    t.items[1] = { ...t.items[1]!, note: "fıstık alerjisi", allergyFlag: true };
+    const { container } = renderTicket(t, at(1));
+    const chip = container.querySelector(".alg")!;
+    expect(chip).toBeTruthy();
+    expect(chip.textContent).toBe("Allergy fıstık alerjisi");
+    // the note is not repeated as a plain line
+    expect(container.querySelector(".mod.note")).toBeNull();
   });
 
-  it("names the dish allergens in the chip", () => {
+  it("lists the dish's own allergens as one quiet line, never in red", () => {
     const t = ticket();
-    t.items[0] = { ...t.items[0]!, allergens: ["sesame", "milk"] };
+    t.items[0] = { ...t.items[0]!, allergens: ["sesame", "milk"], allergyFlag: true };
+    const { container } = renderTicket(t, at(1));
+    expect(screen.getByText("Contains: sesame, milk").className).toBe("contains");
+    expect(container.querySelector(".alg")).toBeNull();
+  });
+
+  it("an ordinary note is a plain line with no chip", () => {
+    const t = ticket();
+    t.items[0] = { ...t.items[0]!, note: "Sauce on the side" };
+    const { container } = renderTicket(t, at(1));
+    expect(screen.getByText("Sauce on the side").className).toContain("note");
+    expect(container.querySelector(".alg")).toBeNull();
+  });
+
+  it("keeps numbers with their units so a name never ends on an orphaned unit", () => {
+    const t = ticket();
+    t.items[1] = { ...t.items[1]!, name: n("Dry-aged ribeye, 300 g", "Dinlendirilmiş antrikot, 300 g") };
     renderTicket(t, at(1));
-    expect(screen.getByText("Sesame, Milk")).toBeTruthy();
+    expect(screen.getByText("Dry-aged ribeye, 300\u00a0g", { normalizer: (x) => x })).toBeTruthy();
   });
 
   it("masks profanity in the note", () => {
@@ -146,5 +165,11 @@ describe("Ticket", () => {
     expect(screen.getByRole("article", { name: "Fiş T12, gecikti, 16 dakika 20 saniye" })).toBeTruthy();
     expect(screen.getByText("Dinlendirilmiş antrikot")).toBeTruthy();
     expect(screen.getByRole("button", { name: "T12 hazır" })).toBeTruthy();
+    const t2 = ticket({ id: "tk3", tableName: "T3" });
+    t2.items[0] = { ...t2.items[0]!, allergens: ["milk", "nuts"], note: "fındık alerjisi var" };
+    cleanup();
+    renderTicket(t2, at(1));
+    expect(screen.getByText("İçerir: süt, sert kabuklu yemişler")).toBeTruthy();
+    expect(screen.getByText("Alerji")).toBeTruthy();
   });
 });

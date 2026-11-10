@@ -98,9 +98,9 @@ export const Ticket = memo(function Ticket({ ticket, now, thresholds, onBump, on
 function ItemRow({ item, lang, disabled, onToggle }: { item: KdsItem; lang: "en" | "tr"; disabled: boolean; onToggle: (i: number) => void }) {
   const { t } = useTranslation();
   const note = item.note ? maskProfanity(item.note) : null;
-  const allergy = item.allergyFlag || item.allergens.length > 0 || (!!item.note && noteMentionsAllergy(item.note));
-  const chip =
-    item.allergens.length > 0 ? item.allergens.map((a) => t(`guest.allergens.${a}`, { defaultValue: a })).join(", ") : t("kds.ticket.allergyNote");
+  // Red is earned: only a guest who wrote about an allergy gets the red chip. The dish's own allergens are a quiet line.
+  const allergyNote = !!note && noteMentionsAllergy(note);
+  const contains = item.allergens.map((a) => t(`guest.allergens.${a}`, { defaultValue: a }).toLocaleLowerCase(lang)).join(", ");
 
   return (
     <button
@@ -119,14 +119,16 @@ function ItemRow({ item, lang, disabled, onToggle }: { item: KdsItem; lang: "en"
             {loc(o, lang)}
           </span>
         ))}
-        {note && <span className="mod note">{note}</span>}
-        {allergy && (
+        {note && !allergyNote && <span className="mod note">{note}</span>}
+        {allergyNote && (
           <span className="alg">
             <AlertTriangle size={12} strokeWidth={2} aria-hidden="true" />
-            <span className="sr-only">{t("kds.ticket.allergen")}: </span>
-            <span>{chip}</span>
+            <span>
+              <b>{t("kds.ticket.allergy")}</b> <span className="alg-note">{note}</span>
+            </span>
           </span>
         )}
+        {contains && <span className="contains">{t("kds.ticket.contains", { list: contains })}</span>}
       </span>
       <span className="cb" aria-hidden="true">
         {item.checked && <Check size={11} strokeWidth={3} />}

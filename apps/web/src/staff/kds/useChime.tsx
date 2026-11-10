@@ -41,6 +41,8 @@ export function playChime(ctx: AudioContext): void {
 export interface Chime {
   /** The user has turned sound on (remembered across visits). */
   enabled: boolean;
+  /** The AudioContext exists and is running, so a chime will actually be heard. */
+  active: boolean;
   /** Call from a tap: creates or resumes the AudioContext and remembers the choice. */
   enable: () => void;
   /** Plays the chime if sound is on and the browser allows it. */
@@ -53,13 +55,20 @@ export interface Chime {
  */
 export function useChime(): Chime {
   const [enabled, setEnabled] = useState(readStored);
+  const [active, setActive] = useState(false);
   const ctx = useRef<AudioContext | null>(null);
 
+  /** Creates or resumes the context; only works inside a user gesture. Reports whether it is running. */
   const unlock = useCallback(() => {
     const Ctor = audioCtor();
     if (!Ctor) return;
-    if (!ctx.current || ctx.current.state === "closed") ctx.current = new Ctor();
-    if (ctx.current.state === "suspended") void ctx.current.resume().catch(() => {});
+    if (!ctx.current || ctx.current.state === "closed") {
+      ctx.current = new Ctor();
+      ctx.current.onstatechange = () => setActive(ctx.current?.state === "running");
+    }
+    const c = ctx.current;
+    if (c.state === "running") setActive(true);
+    else void c.resume().then(() => setActive(c.state === "running"), () => setActive(false));
   }, []);
 
   const enable = useCallback(() => {
@@ -72,13 +81,10 @@ export function useChime(): Chime {
     setEnabled(true);
   }, [unlock]);
 
-  // Remembered "on" but no context yet (fresh page load): re-create it on the next gesture.
+  // Remembered "on" but not running (fresh page load): any first tap or key press on the page resumes it.
   useEffect(() => {
-    if (!enabled) return;
-    const onGesture = () => {
-      unlock();
-      if (ctx.current?.state === "running") detach();
-    };
+    if (!enabled || active) return;
+    const onGesture = () => unlock();
     const detach = () => {
       window.removeEventListener("pointerdown", onGesture, true);
       window.removeEventListener("keydown", onGesture, true);
@@ -86,7 +92,7 @@ export function useChime(): Chime {
     window.addEventListener("pointerdown", onGesture, true);
     window.addEventListener("keydown", onGesture, true);
     return detach;
-  }, [enabled, unlock]);
+  }, [enabled, active, unlock]);
 
   useEffect(
     () => () => {
@@ -98,8 +104,7 @@ export function useChime(): Chime {
 
   const play = useCallback(() => {
     const c = ctx.current;
-    if (!enabled || !c) return;
-    if (c.state === "suspended") void c.resume().catch(() => {});
+    if (!enabled || !c || c.state !== "running") return;
     try {
       playChime(c);
     } catch {
@@ -107,13 +112,24 @@ export function useChime(): Chime {
     }
   }, [enabled]);
 
-  return { enabled, enable, play };
+  return { enabled, active, enable, play };
 }
 
-/** The toolbar button shown until sound is enabled. */
+/**
+ * The toolbar button shown until sound is really playable: "Enable sound" the first time, then, after a reload
+ * (choice remembered, context not yet allowed), a compact "Sound on, tap to activate".
+ */
 export function EnableSoundButton({ chime }: { chime: Chime }) {
   const { t } = useTranslation();
-  if (chime.enabled) return null;
+  if (chime.enabled && chime.active) return null;
+  if (chime.enabled) {
+    return (
+      <button type="button" className="staff-btn kds-sound-arm" onClick={chime.enable}>
+        <Volume2 size={16} strokeWidth={1.75} aria-hidden="true" />
+        {t("kds.sound.activate")}
+      </button>
+    );
+  }
   return (
     <button type="button" className="staff-btn" onClick={chime.enable} aria-label={t("kds.sound.enableAria")}>
       <Volume2 size={16} strokeWidth={1.75} aria-hidden="true" />

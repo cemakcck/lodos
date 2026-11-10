@@ -1,7 +1,11 @@
 import { fold } from "@lodos/shared";
 import type { KdsTicket, Loc } from "./types";
 
-export const loc = (l: Loc, lang: "en" | "tr") => l[lang] || l.en;
+/** Keeps a number with its unit on one line: "300 g", "50 ml", "3 adet". */
+export const keepUnits = (s: string) => s.replace(/(\d) (g|kg|ml|cl|l|cm|adet|pcs)\b/g, "$1\u00a0$2");
+
+/** The text in the board language, with numbers and units held together. */
+export const loc = (l: Loc, lang: "en" | "tr") => keepUnits(l[lang] || l.en);
 
 /** Client-side search by table name or dish name (either language), case- and diacritic-insensitive. */
 export function matchesSearch(t: KdsTicket, query: string): boolean {

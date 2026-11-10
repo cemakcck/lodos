@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { RotateCcw, Search } from "lucide-react";
@@ -27,20 +27,33 @@ export interface KdsProps {
   clock?: () => number;
 }
 
-/** One shared 1 s tick per board, corrected to server time (`offset = server now - device now`). */
+/** Offsets this close to the held one are network noise; a bigger jump is a real clock change. */
+const OFFSET_JUMP_MS = 2000;
+
+/**
+ * The board's server-time offset, smoothed. Each snapshot measures `server now - local receive time`; latency
+ * only makes that smaller than the truth, so a larger sample is always accepted, and a smaller one only when it
+ * differs by more than 2 s (the device or server clock really moved). Timers therefore never step backwards on a
+ * refetch.
+ */
+export function nextOffset(held: number | null, sample: number): number {
+  if (held === null || sample > held || held - sample > OFFSET_JUMP_MS) return sample;
+  return held;
+}
+
+/** One shared 1 s re-render per board. The time itself is read at render: `clock() + offset`. */
 function useBoardNow(offsetMs: number, clock: () => number): Date {
-  const [tick, setTick] = useState(clock);
+  const [, setTick] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setTick(clock()), 1000);
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(id);
-  }, [clock]);
-  return useMemo(() => new Date(tick + offsetMs), [tick, offsetMs]);
+  }, []);
+  return new Date(clock() + offsetMs);
 }
 
 type Mapper = (tickets: KdsTicket[]) => KdsTicket[];
 const patch = (qc: QueryClient, key: readonly unknown[], fn: Mapper) =>
   qc.setQueryData<KdsData>(key, (d) => (d ? { ...d, tickets: fn(d.tickets) } : d));
-const bySent = (a: KdsTicket, b: KdsTicket) => Date.parse(a.sentAt) - Date.parse(b.sentAt);
 
 /** The kitchen or bar display: toolbar, stats strip, the ticket grid, and the All day / 86 column. */
 export function Kds({ station, clock = Date.now }: KdsProps) {
@@ -56,9 +69,13 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const liveRef = useRef<HTMLDivElement>(null);
 
+  // The held offset, shared by the three tab queries. A plain mutable holder: written only when a response arrives.
+  const [offset] = useState<{ ms: number | null }>(() => ({ ms: null }));
   const fetchTab = (tb: KdsTab) => async (): Promise<KdsData> => {
     const snap = await api<KdsSnapshot>(`/api/kds/${station}?tab=${tb}`);
-    return { ...snap, offsetMs: Date.parse(snap.now) - clock() };
+    const ms = nextOffset(offset.ms, Date.parse(snap.now) - clock());
+    offset.ms = ms;
+    return { ...snap, offsetMs: ms };
   };
   const active = useQuery({ queryKey: kdsKey(station, "active"), queryFn: fetchTab("active") });
   const held = useQuery({ queryKey: kdsKey(station, "held"), queryFn: fetchTab("held") });
@@ -152,48 +169,67 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
       return next;
     });
   const refetchAll = () => qc.invalidateQueries({ queryKey: kdsKey(station) });
+  const isConflict = (err: unknown) => err instanceof ApiClientError && err.status === 409;
 
+  /** Inline message on the ticket. A 409 refetches only after the message has been read. */
   const errorFor = (err: unknown, id: string) => {
-    if (err instanceof ApiClientError && err.status === 409) flash(id, t("kds.conflict"), () => void refetchAll());
-    else {
-      flash(id, t("kds.failed"));
-      void refetchAll();
-    }
+    if (isConflict(err)) flash(id, t("kds.conflict"), () => void refetchAll());
+    else flash(id, t("kds.failed"));
+  };
+  /** onSettled: reconcile with the server at once, except after a 409 (errorFor refetches after the message). */
+  const settle = (err: unknown) => {
+    if (!isConflict(err)) void refetchAll();
   };
 
-  // Bump: off the board at once; back in place with a message if the server refuses.
+  // Tickets whose bump is in flight stay off the board, even if a refetch lands meanwhile and still has them.
+  const [bumping, setBumping] = useState<ReadonlySet<string>>(new Set());
+  const markBumping = (id: string, on: boolean) =>
+    setBumping((s) => {
+      const next = new Set(s);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  // Standard TanStack optimistic updates: cancel, snapshot, patch; restore the snapshot on error; refetch when settled.
   const bump = useMutation({
     mutationFn: (tk: KdsTicket) => api<{ ticket: KdsTicket }>(`/api/tickets/${tk.id}/bump`, { method: "POST" }),
     onMutate: async (tk) => {
-      await qc.cancelQueries({ queryKey: kdsKey(station, "active") });
-      patch(qc, kdsKey(station, "active"), (ts) => ts.filter((x) => x.id !== tk.id));
+      markBumping(tk.id, true);
+      const key = kdsKey(station, "active");
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<KdsData>(key);
+      patch(qc, key, (ts) => ts.filter((x) => x.id !== tk.id));
+      return { previous };
     },
-    onError: (err, tk) => {
-      patch(qc, kdsKey(station, "active"), (ts) => (ts.some((x) => x.id === tk.id) ? ts : [...ts, tk].sort(bySent)));
+    onError: (err, tk, ctx) => {
+      if (ctx?.previous) qc.setQueryData(kdsKey(station, "active"), ctx.previous);
       errorFor(err, tk.id);
     },
-    onSuccess: () => void refetchAll(),
+    onSettled: (_r, err, tk) => {
+      markBumping(tk.id, false);
+      settle(err);
+    },
   });
 
-  // Tick-off: flips at once, flips back on error.
   const toggle = useMutation({
     mutationFn: ({ tk, index }: { tk: KdsTicket; index: number; tab: KdsTab }) =>
       api<{ ticket: KdsTicket }>(`/api/tickets/${tk.id}/items/${index}/toggle`, { method: "POST" }),
-    onMutate: ({ tk, index, tab: tb }) => {
-      patch(qc, kdsKey(station, tb), (ts) =>
+    onMutate: async ({ tk, index, tab: tb }) => {
+      const key = kdsKey(station, tb);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<KdsData>(key);
+      patch(qc, key, (ts) =>
         ts.map((x) => (x.id === tk.id ? { ...x, items: x.items.map((i) => (i.index === index ? { ...i, checked: !i.checked } : i)) } : x)),
       );
+      return { previous };
     },
-    onError: (err, { tk, index, tab: tb }) => {
-      patch(qc, kdsKey(station, tb), (ts) =>
-        ts.map((x) => (x.id === tk.id ? { ...x, items: x.items.map((i) => (i.index === index ? { ...i, checked: !i.checked } : i)) } : x)),
-      );
+    onError: (err, { tk, tab: tb }, ctx) => {
+      if (ctx?.previous) qc.setQueryData(kdsKey(station, tb), ctx.previous);
       errorFor(err, tk.id);
     },
-    onSuccess: ({ ticket }, { tab: tb }) => {
-      patch(qc, kdsKey(station, tb), (ts) => ts.map((x) => (x.id === ticket.id ? ticket : x)));
-      void qc.invalidateQueries({ queryKey: kdsKey(station, "active") }); // All day counts
-    },
+    onSuccess: ({ ticket }, { tab: tb }) => patch(qc, kdsKey(station, tb), (ts) => ts.map((x) => (x.id === ticket.id ? ticket : x))),
+    onSettled: (_r, err) => settle(err),
   });
 
   const move = useMutation({
@@ -201,8 +237,10 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
       api<{ ticket: KdsTicket }>(`/api/tickets/${tk.id}/${action}`, { method: "POST" }),
     onMutate: ({ tk }) => setBusyFor(tk.id, true),
     onError: (err, { tk }) => errorFor(err, tk.id),
-    onSuccess: () => void refetchAll(),
-    onSettled: (_r, _e, { tk }) => setBusyFor(tk.id, false),
+    onSettled: (_r, err, { tk }) => {
+      setBusyFor(tk.id, false);
+      settle(err);
+    },
   });
 
   const showNotice = useCallback((text: string) => {
@@ -222,14 +260,15 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
   });
 
   // ---- Derived --------------------------------------------------------------------------------------
-  const activeTickets = snapshot?.tickets ?? [];
-  const shown = (current.data?.tickets ?? []).filter((tk) => matchesSearch(tk, query));
+  const notBumping = (tk: KdsTicket) => !bumping.has(tk.id);
+  const activeTickets = (snapshot?.tickets ?? []).filter(notBumping);
+  const shown = (current.data?.tickets ?? []).filter((tk) => notBumping(tk) && matchesSearch(tk, query));
   const lateCount = thresholds
     ? activeTickets.filter((tk) => ticketAgeState(new Date(tk.sentAt), now, thresholds) === "late").length
     : 0;
   const itemCount = activeTickets.reduce((n, tk) => n + tk.items.reduce((m, i) => m + i.qty, 0), 0);
   const counts: Record<KdsTab, string> = {
-    active: active.data ? String(active.data.tickets.length) : "–",
+    active: active.data ? String(activeTickets.length) : "–",
     held: held.data ? String(held.data.tickets.length) : "–",
     done: done.data ? (done.data.tickets.length >= DONE_CAP ? `${DONE_CAP}+` : String(done.data.tickets.length)) : "–",
   };

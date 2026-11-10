@@ -208,10 +208,14 @@
   .kds-it .mod.note { color: var(--color-staff-fg-2); font-style: italic; }
   .kds-it .mod.note::before { content: "“"; }
   .kds-it .mod.note::after { content: "”"; }
+  .kds-it .nm { text-wrap: balance; }
+  .kds-it .contains { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--color-staff-fg-3); text-wrap: pretty; }
   .kds-it .alg {
-    display: flex; width: fit-content; align-items: center; gap: 4px; margin-top: 5px; font-size: 11px; font-weight: 600;
+    display: flex; width: fit-content; max-width: 100%; align-items: flex-start; gap: 4px; margin-top: 5px; font-size: 11px; font-weight: 600; line-height: 1.35;
     color: var(--color-staff-red); background: var(--color-staff-red-50); border: 1px solid #f8d5db; padding: 1px 6px; border-radius: 5px;
   }
+  .kds-it .alg svg { margin-top: 2px; flex: none; }
+  .kds-it .alg-note { font-weight: 500; }
   .kds-it .cb { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--color-staff-line-2); margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #fff; }
   .kds-it.is-done .q, .kds-it.is-done .n { color: var(--color-staff-fg-3); }
   .kds-it.is-done .nm { text-decoration: line-through; }
@@ -249,6 +253,7 @@
   }
   .kds-side-h .hint { letter-spacing: 0.04em; }
   .kds-side-empty { padding: 4px 14px 8px; color: var(--color-staff-fg-3); font-size: 12px; }
+  .kds-ad > span { text-wrap: balance; }
   .kds-ad { display: flex; justify-content: space-between; gap: 8px; padding: 7px 14px; font-size: 13px; border-bottom: 1px solid var(--color-staff-line); }
   .kds-ad b { font-family: var(--font-mono); font-weight: 600; }
   .kds-ad.is-hot b { color: var(--color-staff-rail); }

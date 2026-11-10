@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor, within, act } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, within, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryRouter } from "react-router";
@@ -157,6 +157,35 @@ describe("Kds board", () => {
     expect(within(t12).getByText("17:21")).toBeTruthy();
   });
 
+  it("a refetch with a slightly earlier server time never moves a timer backwards", async () => {
+    setup();
+    const t12 = await card(/Ticket T12/);
+    expect(within(t12).getByText("17:20")).toBeTruthy();
+    // Same device time, server now 900 ms earlier (a slow response): the held offset stays.
+    routes["GET /api/kds/kitchen?tab=active"] = snap([T12, B2, T9], { now: new Date(SERVER_NOW - 900).toISOString() });
+    act(() => sockets[0]!.emit("event", { type: "ticket.updated", ids: ["a"], tableId: "t-T12" }));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 1100));
+    });
+    expect(within(t12).getByText("17:20")).toBeTruthy();
+    // A sample that is ahead is accepted at once (proves the refetches above really ran).
+    routes["GET /api/kds/kitchen?tab=active"] = snap([T12, B2, T9], { now: new Date(SERVER_NOW + 3000).toISOString() });
+    act(() => sockets[0]!.emit("event", { type: "ticket.updated", ids: ["a"], tableId: "t-T12" }));
+    await waitFor(() => expect(within(t12).getByText("17:23")).toBeTruthy());
+  });
+
+  it("after a reload with sound remembered, shows 'tap to activate' until a gesture starts the audio", async () => {
+    localStorage.setItem(SOUND_KEY, "on");
+    setup();
+    await card(/Ticket T12/);
+    expect(screen.queryByRole("button", { name: "Enable the new-ticket chime" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Sound on, tap to activate" })).toBeTruthy();
+    expect(FakeAudio.made).toHaveLength(0);
+    fireEvent.pointerDown(document.body);
+    expect(FakeAudio.made).toHaveLength(1);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Sound on, tap to activate" })).toBeNull());
+  });
+
   it("chimes once and announces when a ticket.created brings a new ticket", async () => {
     const user = userEvent.setup();
     setup();
@@ -221,6 +250,26 @@ describe("Kds board", () => {
     release();
     const b2 = await card(/Ticket B2/);
     expect(within(b2).getByText("This ticket just changed. Refreshing…")).toBeTruthy();
+  });
+
+  it("a refetch during a pending bump does not bring the ticket back", async () => {
+    const user = userEvent.setup();
+    setup();
+    await card(/Ticket B2/);
+    routes["POST /api/tickets/b/bump"] = { ticket: { ...B2, status: "ready" } };
+    const release = gateFetch("/bump");
+    await user.click(screen.getByRole("button", { name: "Bump B2" }));
+    // A live event refetches the board before the bump has committed: the server still lists B2.
+    act(() => sockets[0]!.emit("event", { type: "ticket.updated", ids: ["a"], tableId: "t-T12" }));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+    expect(screen.queryByRole("article", { name: /Ticket B2/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Active 2/ })).toBeTruthy();
+    routes["GET /api/kds/kitchen?tab=active"] = snap([T12, T9]);
+    release();
+    await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(2));
+    expect(screen.queryByRole("article", { name: /Ticket B2/ })).toBeNull();
   });
 
   it("search filters by table or dish, ignoring case and Turkish diacritics; / focuses it", async () => {

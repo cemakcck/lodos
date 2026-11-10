@@ -314,7 +314,8 @@
     },
     "sound": {
       "enable": "Sesi aç",
-      "enableAria": "Yeni fiş sesini aç"
+      "enableAria": "Yeni fiş sesini aç",
+      "activate": "Ses açık, etkinleştirmek için dokunun"
     },
     "stats": {
       "open": "açık fiş",
@@ -369,8 +370,8 @@
       "holdAria": "{{table}} beklet",
       "resume": "Devam",
       "resumeAria": "{{table}} devam",
-      "allergen": "Alerjen",
-      "allergyNote": "Notta alerji"
+      "allergy": "Alerji",
+      "contains": "İçerir: {{list}}"
     }
   }
 }
