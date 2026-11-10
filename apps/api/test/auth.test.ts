@@ -233,7 +233,7 @@ describe("role matrix", () => {
       for (const [role, status] of Object.entries(expected)) {
         const res = await t.inject({ method: "GET", url, cookies: { lodos_sid: cookies[role]! } });
         expect([url, role, res.statusCode]).toEqual([url, role, status]);
-        if (status === 200) expect(res.json()).toEqual({ ok: true });
+        if (status === 200) expect(res.json()).toEqual(url.startsWith("/api/kds") ? expect.objectContaining({ tickets: expect.any(Array) }) : { ok: true });
         else expect(res.json().error.code).toBe("forbidden");
       }
     });

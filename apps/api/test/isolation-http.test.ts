@@ -142,6 +142,23 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(JSON.stringify(orders.json())).not.toContain(String(bT7._id));
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
-  it.todo("T9/T10: A's session gets 404 on B's ticket, check and table ids (GET and POST); B unchanged");
+  it("T9: A's manager session gets 404 on B's ticket ids (every KDS action); B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    expect(before.tickets.length).toBeGreaterThan(0);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    for (const tk of before.tickets) {
+      for (const action of ["start", "hold", "unhold", "bump", "items/0/toggle"]) {
+        const res = await t.inject({ method: "POST", url: `/api/tickets/${String(tk._id)}/${action}`, cookies });
+        expect(res.statusCode).toBe(404);
+      }
+    }
+    for (const station of ["kitchen", "bar"]) {
+      const res = await t.inject({ method: "GET", url: `/api/kds/${station}?tab=done`, cookies });
+      expect(res.statusCode).toBe(200);
+      for (const tk of before.tickets) expect(JSON.stringify(res.json())).not.toContain(String(tk._id));
+    }
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+  it.todo("T10: A's session gets 404 on B's check and table ids (GET and POST); B unchanged");
   it.todo("T11: A's manager session gets 404 on B's menu item ids (GET, PATCH, DELETE); B unchanged");
 });
