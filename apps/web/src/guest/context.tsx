@@ -11,6 +11,8 @@ export type GuestContextValue = {
   cart: CartApi;
   /** Ends the visit on this page: shows VisitEnded and clears the cart. */
   endVisit: () => void;
+  /** Adopts the check an order reply named as this page's visit. */
+  adoptVisit: (checkId: string) => void;
   /** Called by the cart after every successful order. */
   orderPlaced: (orderId: string) => void;
   cartOpen: boolean;

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api, ApiClientError } from "../lib/api";
 import { reconnectStaffSocket } from "../lib/socket";
+import { restartGuestPages } from "../guest/session";
 import { fetchMe, meKey } from "../staff/auth";
 
 export const DEMO_ROLES = ["guest", "waiter", "kitchen", "bar", "manager"] as const;
@@ -48,7 +49,10 @@ export function useDemoSession() {
   return useMutation({
     mutationFn: async (role: DemoRole) => {
       const { redirect } = await api<{ redirect: string }>("/api/demo/session", { method: "POST", body: JSON.stringify({ role }) });
-      if (role === "guest") qc.setQueryData(meKey, null);
+      if (role === "guest") {
+        qc.setQueryData(meKey, null);
+        restartGuestPages(); // a guest page that showed "visit ended" starts over and adopts the table's visit
+      }
       else {
         try {
           await qc.fetchQuery({ queryKey: meKey, queryFn: fetchMe, staleTime: 0 });

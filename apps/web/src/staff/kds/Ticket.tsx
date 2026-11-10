@@ -40,17 +40,19 @@ export const Ticket = memo(function Ticket({ ticket, now, thresholds, onBump, on
 
   return (
     <article className={`kds-tk is-${age}${isNew ? " is-new" : ""}`} data-age={age} aria-label={label} aria-busy={busy || undefined}>
+      {/* Row 1: table, New tag, timer. Row 2: who and covers (one line, a long name truncates), sent time on the right. */}
       <header className="kds-tk-h">
         <span className="kds-tno">{ticket.tableName}</span>
-        <span className="kds-tmeta">
-          <b>{ticket.serverName ?? t("kds.ticket.qr")}</b>
-          {ticket.covers != null && <> · {t("kds.ticket.covers", { count: ticket.covers })}</>}
-          {isNew && <span className="kds-tag">{t("kds.ticket.new")}</span>}
-          <br />
-          {t("kds.ticket.sent", { time: clock(sent) })}
-        </span>
+        <span className="kds-tk-tag">{isNew && <span className="kds-tag">{t("kds.ticket.new")}</span>}</span>
         <span className={`kds-timer${age === "warn" ? " is-warn" : age === "late" ? " is-late" : ""}`} aria-hidden="true">
           {elapsed(ms)}
+        </span>
+        <span className="kds-tmeta">
+          <span className="kds-tmeta-who">
+            <b>{ticket.serverName ?? t("kds.ticket.qr")}</b>
+            {ticket.covers != null && <> · {t("kds.ticket.covers", { count: ticket.covers })}</>}
+          </span>
+          <span className="kds-tmeta-sent">{t("kds.ticket.sent", { time: clock(sent) })}</span>
         </span>
       </header>
 

@@ -133,7 +133,7 @@ describe("Availability", () => {
   it("is labelled in Turkish", async () => {
     await setLanguage("tr");
     setup();
-    expect(screen.getByRole("switch", { name: /Bu akşam tükendi, Burrata/ })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: /^Burrata.*: bu akşam tükendi olarak işaretle$/ })).toBeTruthy();
     expect(screen.getByRole("spinbutton", { name: /Kalan porsiyon, Burrata/ })).toBeTruthy();
   });
 });

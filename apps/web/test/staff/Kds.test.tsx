@@ -7,7 +7,7 @@ import { RouterProvider, createMemoryRouter } from "react-router";
 vi.mock("socket.io-client", async () => (await import("../guest/fakeSocket")).socketModule);
 
 import { setLanguage } from "../../src/i18n";
-import { Kds } from "../../src/staff/kds/Kds";
+import { Kds, KDS_BACKSTOP_MS } from "../../src/staff/kds/Kds";
 import { SOUND_KEY } from "../../src/staff/kds/useChime";
 import type { KdsSnapshot, KdsTicket } from "../../src/staff/kds/types";
 import { mockFetch, reply, sockets, staffOf } from "./harness";
@@ -144,6 +144,22 @@ describe("Kds board", () => {
     expect(within(screen.getByRole("complementary")).getByText("Oysters: out")).toBeTruthy();
     expect(screen.getByText("QR order")).toBeTruthy();
     expect(screen.getByText("New")).toBeTruthy();
+  });
+
+  it("backstop: refetches the active tickets every 30 s while the live socket is not connected", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    try {
+      setup();
+      await card(/Ticket T12/);
+      const fetches = () => (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter((c) => String(c[0]).endsWith("tab=active")).length;
+      const before = fetches();
+      routes["GET /api/kds/kitchen?tab=active"] = snap([B2, T9]);
+      await act(async () => { vi.advanceTimersByTime(KDS_BACKSTOP_MS); });
+      await waitFor(() => expect(fetches()).toBe(before + 1));
+      await waitFor(() => expect(screen.queryByRole("article", { name: /Ticket T12/ })).toBeNull());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("times tickets by server time even when the device clock is wrong, ticking every second", async () => {

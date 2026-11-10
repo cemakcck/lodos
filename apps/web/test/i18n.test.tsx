@@ -39,6 +39,13 @@ describe("i18n", () => {
     expect(b).toEqual(a);
   });
 
+  it("uses the reviewed Turkish wording for the cart stepper, the 86 switch and the phone QR", async () => {
+    await setLanguage("tr");
+    expect(i18n.t("guest.cart.decrease", { name: "Burrata" })).toBe("Burrata adedini azalt");
+    expect(i18n.t("manager.avail.switch", { name: "Burrata" })).toBe("Burrata: bu akşam tükendi olarak işaretle");
+    expect(i18n.t("demo.phone.button")).toBe("Telefonunuzdan sipariş vermek için okutun");
+  });
+
   it("has an error message per API error code", () => {
     for (const c of ["validation", "unauthorized", "forbidden", "not_found", "sold_out", "item_unavailable",
       "check_closed", "rate_limited", "limit_exceeded", "conflict", "demo_busy", "internal"]) {

@@ -68,6 +68,20 @@ describe("useLive", () => {
     expect(spy.mock.calls.length).toBe(first * 2);
   });
 
+  it("lastSyncAt also advances on every successful snapshot refetch, not only on reconnect", async () => {
+    const { result } = renderHook(() => useLive({ audience: "staff" }, () => {}), { wrapper });
+    act(() => sockets[0]!.emit("connect"));
+    const first = result.current.lastSyncAt!.getTime();
+    act(() => { vi.advanceTimersByTime(5000); });
+    await act(() => qc.fetchQuery({ queryKey: ["kds", "kitchen", "active"], queryFn: async () => 1 }));
+    expect(result.current.lastSyncAt!.getTime()).toBe(first + 5000);
+    // A query this screen does not follow, or a manual cache write, is not a snapshot.
+    act(() => { vi.advanceTimersByTime(5000); });
+    await act(() => qc.fetchQuery({ queryKey: ["auth", "me"], queryFn: async () => 1 }));
+    act(() => { qc.setQueryData(["kds", "kitchen", "active"], 2); });
+    expect(result.current.lastSyncAt!.getTime()).toBe(first + 5000);
+  });
+
   it("calls onEvent and invalidates mapped keys", () => {
     const spy = vi.spyOn(qc, "invalidateQueries");
     const onEvent = vi.fn();

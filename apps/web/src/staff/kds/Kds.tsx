@@ -35,6 +35,9 @@ type Mapper = (tickets: KdsTicket[]) => KdsTicket[];
 const patch = (qc: QueryClient, key: readonly unknown[], fn: Mapper) =>
   qc.setQueryData<KdsData>(key, (d) => (d ? { ...d, tickets: fn(d.tickets) } : d));
 
+/** While the live socket is not connected, the active board refetches this often. */
+export const KDS_BACKSTOP_MS = 30_000;
+
 /** The kitchen or bar display: toolbar, stats strip, the ticket grid, and the All day / 86 column. */
 export function Kds({ station, clock = Date.now }: KdsProps) {
   const { t } = useTranslation();
@@ -57,16 +60,6 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
     offset.ms = ms;
     return { ...snap, offsetMs: ms };
   };
-  const active = useQuery({ queryKey: kdsKey(station, "active"), queryFn: fetchTab("active") });
-  const held = useQuery({ queryKey: kdsKey(station, "held"), queryFn: fetchTab("held") });
-  const done = useQuery({ queryKey: kdsKey(station, "done"), queryFn: fetchTab("done") });
-  const byTab = { active, held, done };
-  const current = byTab[tab];
-
-  const snapshot = active.data;
-  const thresholds = snapshot?.thresholds ?? current.data?.thresholds;
-  const now = useServerNow(snapshot?.offsetMs ?? current.data?.offsetMs ?? 0, clock);
-
   // ---- New-ticket chime and announcement --------------------------------------------------------------
   // Events carry ids only, so remember the ids a ticket.created named and look for them in the refetched list.
   const pending = useRef(new Set<string>());
@@ -78,7 +71,23 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
     if (pending.current.size > 500) pending.current.clear();
     for (const id of e.ids) pending.current.add(id);
   }, []);
-  useLive({ audience: "staff" }, onEvent);
+  const live = useLive({ audience: "staff" }, onEvent);
+
+  // Backstop: while the live socket is down, poll the active board so a kitchen never sits on a stale screen.
+  const active = useQuery({
+    queryKey: kdsKey(station, "active"),
+    queryFn: fetchTab("active"),
+    refetchInterval: live.connected ? false : KDS_BACKSTOP_MS,
+  });
+  const held = useQuery({ queryKey: kdsKey(station, "held"), queryFn: fetchTab("held") });
+  const done = useQuery({ queryKey: kdsKey(station, "done"), queryFn: fetchTab("done") });
+  const byTab = { active, held, done };
+  const current = byTab[tab];
+
+  const snapshot = active.data;
+  const thresholds = snapshot?.thresholds ?? current.data?.thresholds;
+  const now = useServerNow(snapshot?.offsetMs ?? current.data?.offsetMs ?? 0, clock);
+
 
   useEffect(() => {
     for (const d of [held.data, done.data]) for (const tk of d?.tickets ?? []) seen.current?.add(tk.id);

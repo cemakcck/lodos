@@ -72,7 +72,15 @@ export function useLive(opts: LiveAudience, onEvent?: (e: LiveEvent) => void): L
     socket.on("connect_error", onConnectError);
     socket.on("event", onLive);
     if (socket.connected) onConnect();
+    // "Last updated" also moves on every successful snapshot refetch of a query this screen follows (an event, the
+    // KDS backstop poll), not only on reconnect. A manual cache write is not a snapshot.
+    const roots = new Set(LIVE_KEYS[audience].map((k) => k[0]));
+    const unwatch = qc.getQueryCache().subscribe((ev) => {
+      if (ev.type !== "updated" || ev.action.type !== "success" || ev.action.manual) return;
+      if (roots.has(ev.query.queryKey[0])) setLastSyncAt(new Date());
+    });
     return () => {
+      unwatch();
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("connect_error", onConnectError);

@@ -75,7 +75,7 @@ export function CartSheet({ onClose }: { onClose: () => void }) {
   const { lang, money } = useFormat();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { token, cart, itemsById, menu, endVisit, orderPlaced } = useGuest();
+  const { token, cart, itemsById, menu, endVisit, adoptVisit, orderPlaced } = useGuest();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lines = cart.cart.lines;
@@ -90,12 +90,13 @@ export function CartSheet({ onClose }: { onClose: () => void }) {
     setError(null);
     cart.update((c) => withIdempotencyKey(c));
     try {
-      const res = await api<{ orderId: string }>("/api/guest/orders", {
+      const res = await api<{ orderId: string; checkId: string }>("/api/guest/orders", {
         method: "POST",
         tableToken: token,
         body: toOrderRequest(cart.get()) as unknown as BodyInit,
       });
       cart.update(orderSucceeded);
+      adoptVisit(res.checkId);
       void qc.invalidateQueries({ queryKey: ["guest"] });
       onClose();
       orderPlaced(res.orderId);

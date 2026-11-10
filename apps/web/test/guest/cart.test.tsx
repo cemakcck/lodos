@@ -132,7 +132,7 @@ describe("placing an order", () => {
     let n = 0;
     const { calls } = mockFetch({
       ...baseRoutes("c1"),
-      "POST /api/guest/orders": () => (++n === 1 ? { status: 500, body: { error: { code: "internal", message: "x" } } } : { status: 201, body: { orderId: "o9" } }),
+      "POST /api/guest/orders": () => (++n === 1 ? { status: 500, body: { error: { code: "internal", message: "x" } } } : { status: 201, body: { orderId: "o9", checkId: "c1" } }),
     });
     renderGuest("/t/tok");
     await userEvent.click(await screen.findByRole("button", { name: /view order · 3/i }));

@@ -106,7 +106,7 @@
       "title": "Siparişiniz",
       "empty": "Siparişiniz henüz boş.",
       "remove": "{{name}} çıkar",
-      "decrease": "Bir {{name}} eksilt",
+      "decrease": "{{name}} adedini azalt",
       "increase": "Bir {{name}} daha",
       "lineQty": "{{name}} adedi",
       "soldOut": "Bu akşam tükendi",
@@ -246,7 +246,7 @@
     "on": "açık",
     "off": "kapalı",
     "phone": {
-      "button": "Telefonunuzdan okutup sipariş verin",
+      "button": "Telefonunuzdan sipariş vermek için okutun",
       "title": "Telefonunuzdan sipariş verin",
       "body": "Demo restoranınızın T7 masasını açmak için telefon kameranızla okutun. Siparişiniz buradaki mutfak ekranına düşer.",
       "qrLabel": "{{url}} için QR kod",
@@ -699,7 +699,7 @@
       "hiddenTag": "Gizli"
     },
     "avail": {
-      "switch": "Bu akşam tükendi, {{name}}",
+      "switch": "{{name}}: bu akşam tükendi olarak işaretle",
       "on": "Tükendi",
       "off": "Satışta",
       "left": "Kalan porsiyon, {{name}}",
