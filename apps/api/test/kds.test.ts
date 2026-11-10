@@ -25,6 +25,15 @@ const call = (role: string, method: "GET" | "POST", url: string) => t.inject({ m
 const tickets = (station: string, tab = "active", role = station) => call(role, "GET", `/api/kds/${station}?tab=${tab}`);
 const find = (q: object) => runWithTenant("main", () => t.models.Ticket.findOne(q).lean().orFail());
 
+/** Adds an unserved ready bar ticket (readyAt = `at`) so recall tests do not depend on how many the seed has. */
+async function addReadyBar(at: Date) {
+  const base = await find({ station: "bar" });
+  const doc = await runWithTenant("main", () =>
+    t.models.Ticket.create({ orderId: base.orderId, checkId: base.checkId, tableId: base.tableId, tableName: base.tableName, station: "bar", status: "ready", sentAt: new Date(at.getTime() - 60_000), readyAt: at, items: base.items }),
+  );
+  return String(doc._id);
+}
+
 describe("GET /api/kds/:station", () => {
   it("active tickets are oldest first, with ageState and stats.late counting the seeded 2", async () => {
     const res = await tickets("kitchen");
@@ -134,11 +143,13 @@ describe("ticket actions", () => {
     const doc = await find({ _id: back.id });
     expect(doc.servedAt).toBeNull();
     // Next recall takes another unserved ready ticket or 404s, but never a served one.
+    t.clock.advance(4000);
     const next = await call("kitchen", "POST", "/api/kds/kitchen/recall");
     if (next.statusCode === 200) expect((await find({ _id: next.json().ticket.id })).servedAt).toBeNull();
     else expect(next.statusCode).toBe(404);
     const servedStill = await runWithTenant("main", () => t.models.Ticket.countDocuments({ station: "kitchen", status: "ready", servedAt: { $ne: null } }));
     expect(servedStill).toBeGreaterThan(0);
+    t.clock.advance(4000);
     expect((await call("kitchen", "POST", "/api/kds/kitchen/recall")).statusCode).toBe(404);
   });
 
@@ -149,10 +160,9 @@ describe("ticket actions", () => {
     });
     // Ensure at least two unserved ready bar tickets exist.
     while (ids.length < 2) {
-      const x = await find({ station: "bar", status: { $in: ["new", "started"] } });
-      await call("bar", "POST", `/api/tickets/${x._id}/bump`);
-      ids.push(String(x._id));
+      ids.push(await addReadyBar(new Date(t.clock.now().getTime() - 1000 * (3 - ids.length))));
     }
+    t.clock.advance(4000);
     const emit = vi.spyOn(t.app.realtime, "emit");
     const rs = await Promise.all([call("bar", "POST", "/api/kds/bar/recall"), call("bar", "POST", "/api/kds/bar/recall")]);
     expect(rs.map((r) => r.statusCode)).toEqual([200, 200]);
@@ -162,6 +172,32 @@ describe("ticket actions", () => {
     const stillReady = await runWithTenant("main", () => t.models.Ticket.countDocuments({ _id: { $in: ids }, status: "ready" }));
     expect(back).toBe(1);
     expect(stillReady).toBe(ids.length - 1);
+    emit.mockRestore();
+  });
+
+  it("sequential recalls inside 3 s return the same ticket unchanged; after 4 s the next ticket is recalled", async () => {
+    t.clock.advance(4000);
+    const ids = await runWithTenant("main", async () => (await t.models.Ticket.find({ station: "bar", status: "ready", servedAt: null }).lean()).map((r) => String(r._id)));
+    while (ids.length < 3) {
+      ids.push(await addReadyBar(new Date(t.clock.now().getTime() - 1000 * (5 - ids.length))));
+    }
+    t.clock.advance(4000);
+    const emit = vi.spyOn(t.app.realtime, "emit");
+    const first = await call("bar", "POST", "/api/kds/bar/recall");
+    expect(first.statusCode).toBe(200);
+    t.clock.advance(1000);
+    const second = await call("bar", "POST", "/api/kds/bar/recall");
+    expect(second.statusCode).toBe(200);
+    expect(second.json().ticket.id).toBe(first.json().ticket.id);
+    expect(emit).toHaveBeenCalledTimes(1);
+    const started = () => runWithTenant("main", () => t.models.Ticket.countDocuments({ _id: { $in: ids }, status: "started" }));
+    const startedBefore = await started();
+    t.clock.advance(4000);
+    const third = await call("bar", "POST", "/api/kds/bar/recall");
+    expect(third.statusCode).toBe(200);
+    expect(third.json().ticket.id).not.toBe(first.json().ticket.id);
+    expect(emit).toHaveBeenCalledTimes(2);
+    expect(await started()).toBe(startedBefore + 1);
     emit.mockRestore();
   });
 

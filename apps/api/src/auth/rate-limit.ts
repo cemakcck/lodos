@@ -36,3 +36,20 @@ export async function claim(models: Models, key: string, limit: number, windowMs
   await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteOne({ _id: event._id }));
   return false;
 }
+
+/**
+ * Single-winner claim: exactly one of any set of parallel callers is allowed per window. Inserts an event, then the
+ * caller wins iff its event is the earliest in the window (ties broken by `_id`), so a tie cannot refuse everyone
+ * the way `claim`'s insert-then-count can. Refused events are removed, so refusals never extend the window.
+ */
+export async function claimFirst(models: Models, key: string, windowMs: number, now: Date): Promise<boolean> {
+  const mine = await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.create({ key, at: now }));
+  const first = await unscoped("rate limits are keyed, not tenant-scoped", () =>
+    models.RateEvent.findOne({ key, at: { $gt: since(windowMs, now) } })
+      .sort({ at: 1, _id: 1 })
+      .lean(),
+  );
+  if (first && String(first._id) === String(mine._id)) return true;
+  await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteOne({ _id: mine._id }));
+  return false;
+}

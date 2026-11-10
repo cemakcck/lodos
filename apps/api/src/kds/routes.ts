@@ -62,7 +62,7 @@ export function registerKdsRoutes(app: FastifyInstance): void {
     staffRoute(stationRoles, async (req) => {
       const { station } = req.params;
       if (station !== "kitchen" && station !== "bar") throw new ApiError(404, "not_found");
-      const r = await recall(req.server.models, station, req.server.clock.now());
+      const r = await recall(req.server.models, station, req.server.clock.now(), req.staff.tenantId);
       emitUpdated(req, r);
       return { ticket: r.ticket };
     }),

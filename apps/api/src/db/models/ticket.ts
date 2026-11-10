@@ -33,6 +33,8 @@ export const ticketSchema = new Schema({
   startedAt: { type: Date, default: null },
   readyAt: { type: Date, default: null },
   servedAt: { type: Date, default: null },
+  /** Set by recall; the 3 s double-tap dedupe window reads it. */
+  recalledAt: { type: Date, default: null },
   items: { type: [ticketLineSchema], required: true },
 });
 ticketSchema.index({ tenantId: 1, station: 1, status: 1 });

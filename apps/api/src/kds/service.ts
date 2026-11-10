@@ -8,6 +8,7 @@ import {
   type TicketStatus,
 } from "@lodos/shared";
 import type { Models } from "../db/models/index";
+import { claimFirst, clearHits } from "../auth/rate-limit";
 import { ApiError } from "../errors";
 
 export type Station = "kitchen" | "bar";
@@ -209,20 +210,50 @@ export async function toggleItem(models: Models, id: string, scope: Station | nu
   throw new ApiError(409, "conflict");
 }
 
-export async function recall(models: Models, station: Station, now: Date): Promise<ActionResult> {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const last = await models.Ticket.findOne({ station, status: "ready", servedAt: null }).sort({ readyAt: -1 }).lean();
-    if (!last) throw notFound();
-    const won = await models.Ticket.findOneAndUpdate(
-      { _id: last._id, status: "ready", servedAt: null },
-      { $set: { status: "started", readyAt: null, startedAt: last.startedAt ?? now } },
-      { returnDocument: "after" },
-    ).lean();
-    if (won) return { ticket: view(won, now, await thresholds(models)), changed: true };
-    // Lost the race for this ticket. If a concurrent recall already took it back, that is our answer (double tap):
-    // never fall through to the next ready ticket.
-    const cur = await models.Ticket.findOne({ _id: last._id }).lean();
-    if (cur && cur.status !== "ready") return { ticket: view(cur, now, await thresholds(models)), changed: false };
+export const RECALL_WINDOW_MS = 3000;
+
+/**
+ * Recall the latest bumped, unserved ticket. Double-tap safe in two layers:
+ * 1. `claimFirst()` on a per-(tenant, station) marker admits exactly one recall per 3 s window (insert, then win only
+ *    if ours is the earliest event, `_id` breaking ties), so parallel taps cannot both pass and cannot both be refused.
+ *    Refused taps return the ticket recalled inside the window (changed:false), waiting briefly for the winner's write.
+ * 2. The conditional update (status "ready", servedAt null) is the final guard; a lost race returns the ticket the
+ *    winner took back instead of moving to a different ticket.
+ */
+export async function recall(models: Models, station: Station, now: Date, tenantId: string): Promise<ActionResult> {
+  const key = `recall:${tenantId}:${station}`;
+  const th = await thresholds(models);
+  const recentlyRecalled = () =>
+    models.Ticket.findOne({ station, status: "started", servedAt: null, recalledAt: { $gte: new Date(now.getTime() - RECALL_WINDOW_MS) } })
+      .sort({ recalledAt: -1 })
+      .lean();
+
+  if (!(await claimFirst(models, key, RECALL_WINDOW_MS, now))) {
+    // The winner may still be writing; give it a moment to finish.
+    for (let i = 0; i < 10; i++) {
+      const prior = await recentlyRecalled();
+      if (prior) return { ticket: view(prior, now, th), changed: false };
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    throw new ApiError(409, "conflict");
   }
-  throw new ApiError(409, "conflict");
+  const release = () => clearHits(models, key);
+  try {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const last = await models.Ticket.findOne({ station, status: "ready", servedAt: null }).sort({ readyAt: -1 }).lean();
+      if (!last) throw notFound();
+      const won = await models.Ticket.findOneAndUpdate(
+        { _id: last._id, status: "ready", servedAt: null },
+        { $set: { status: "started", readyAt: null, startedAt: last.startedAt ?? now, recalledAt: now } },
+        { returnDocument: "after" },
+      ).lean();
+      if (won) return { ticket: view(won, now, th), changed: true };
+      const cur = await models.Ticket.findOne({ _id: last._id }).lean();
+      if (cur && cur.status !== "ready") return { ticket: view(cur, now, th), changed: false };
+    }
+    throw new ApiError(409, "conflict");
+  } catch (err) {
+    await release(); // nothing was recalled: do not hold the window
+    throw err;
+  }
 }
