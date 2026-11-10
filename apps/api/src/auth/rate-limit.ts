@@ -24,3 +24,15 @@ export async function hit(models: Models, key: string, limit: number, windowMs: 
 export function clearHits(models: Models, key: string): Promise<unknown> {
   return unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteMany({ key }));
 }
+
+/**
+ * Like `hit`, but a refused hit is removed again, so refusals never extend the window: a cooldown ("once per 60 s")
+ * reopens exactly `windowMs` after the last *allowed* hit. Parallel callers still see each other (insert, then count);
+ * in a tie both may be refused, never both allowed.
+ */
+export async function claim(models: Models, key: string, limit: number, windowMs: number, now: Date): Promise<boolean> {
+  const event = await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.create({ key, at: now }));
+  if ((await recentHits(models, key, windowMs, now)) <= limit) return true;
+  await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteOne({ _id: event._id }));
+  return false;
+}

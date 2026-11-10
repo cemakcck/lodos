@@ -11,8 +11,10 @@ import { connectDb } from "./db/connect";
 import { bindModels, type Models } from "./db/models/index";
 import { registerErrorHandling } from "./errors";
 import { registerFloorRoutes } from "./floor/routes";
+import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
+import { noopRealtime, type Realtime } from "./realtime/emit";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -22,6 +24,8 @@ declare module "fastify" {
     demoMode: boolean;
     /** Who is connected right now. Task 8 replaces `isConnected` with the real socket presence. */
     presence: { isConnected(tenantId: string): boolean };
+    /** Post-commit event fan-out. A no-op until Task 8 replaces it with Socket.IO rooms. */
+    realtime: Realtime;
   }
 }
 
@@ -58,6 +62,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   app.decorate("models", models);
   app.decorate("demoMode", opts.demoMode ?? false);
   app.decorate("presence", { isConnected: () => false });
+  app.decorate("realtime", noopRealtime());
 
   await app.register(helmet);
   await app.register(cors, { origin: opts.webOrigin, credentials: true });
@@ -69,6 +74,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerKdsRoutes(app);
   registerFloorRoutes(app);
   registerManagerRoutes(app);
+  registerGuestRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
   // Rooms, auth and events are wired in Task 8.

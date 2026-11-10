@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
 import { makeTestApp } from "./helpers";
@@ -35,7 +36,12 @@ const snapshot = (tenantId: string) =>
     tickets: await t.models.Ticket.find({}).sort({ _id: 1 }).lean(),
     checks: await t.models.Check.find({}).sort({ _id: 1 }).lean(),
     items: await t.models.MenuItem.find({}).sort({ _id: 1 }).lean(),
+    orders: await t.models.Order.find({}).sort({ _id: 1 }).lean(),
+    calls: await t.models.Call.find({}).sort({ _id: 1 }).lean(),
+    availability: await t.models.Availability.find({}).sort({ _id: 1 }).lean(),
   }));
+
+const t7 = (tenantId: string) => runWithTenant(tenantId, () => t.models.Table.findOne({ name: "T7" }).lean().orFail());
 
 beforeAll(async () => {
   t = await makeTestApp({ now: NOW, demoMode: true, sandboxesPerIpHour: 1000 });
@@ -103,7 +109,39 @@ describe("cross-sandbox access through the HTTP surface", () => {
  * (T7: A's guest token cannot read B's menu; T9/T10: floor and KDS ids; T11: manager menu ids).
  */
 describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", () => {
-  it.todo("T7: A's guest token cannot read B's menu or order on B's table");
+  it("T7: A's guest token cannot read B's menu or order on B's table", async () => {
+    const before = await snapshot(b.tenantId);
+    const aT7 = await t7(a.tenantId);
+    const bT7 = await t7(b.tenantId);
+    const headers = { "x-table-token": aT7.token };
+    const bItemIds = before.items.map((i) => String(i._id));
+
+    const menu = await t.inject({ method: "GET", url: "/api/guest/menu", headers });
+    expect(menu.statusCode).toBe(200);
+    const menuIds = (menu.json().items as { id: string }[]).map((i) => i.id);
+    for (const id of bItemIds) expect(menuIds).not.toContain(id);
+
+    const table = await t.inject({ method: "GET", url: "/api/guest/table", headers });
+    expect(table.json().table.id).toBe(String(aT7._id));
+
+    // Ordering B's items with A's token: they do not exist in A's tenant.
+    const order = await t.inject({
+      method: "POST",
+      url: "/api/guest/orders",
+      headers,
+      payload: { idempotencyKey: randomUUID(), items: [{ itemId: bItemIds[0], qty: 1, options: [] }] },
+    });
+    expect(order.statusCode).toBe(409);
+    expect(order.json().error.code).toBe("item_unavailable");
+
+    // A sandbox cookie for B changes nothing: the token alone decides the table.
+    for (const url of ["/api/guest/orders", "/api/guest/calls", "/api/guest/bill"]) {
+      await t.inject({ method: "POST", url, headers, cookies: { lodos_sb: b.sb }, payload: { reason: "wine", method: "card" } });
+    }
+    const orders = await t.inject({ method: "GET", url: "/api/guest/orders", headers, cookies: { lodos_sb: b.sb } });
+    expect(JSON.stringify(orders.json())).not.toContain(String(bT7._id));
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
   it.todo("T9/T10: A's session gets 404 on B's ticket, check and table ids (GET and POST); B unchanged");
   it.todo("T11: A's manager session gets 404 on B's menu item ids (GET, PATCH, DELETE); B unchanged");
 });
