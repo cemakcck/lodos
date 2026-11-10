@@ -6,7 +6,7 @@ import { ApiError } from "../errors";
 import { ALL_ROLES, sessionCookieOptions, staffRoute } from "./guard";
 import { loginTenant } from "./login-tenant";
 import { PinSchema, verifyPin } from "./pin";
-import { clearHits, hit, recentHits } from "./rate-limit";
+import { clearHits, hit } from "./rate-limit";
 import { SESSION_COOKIE, SESSION_TTL_MS, createSession, deleteSession, sessionKindFor } from "./sessions";
 
 const MIN = 60_000;
@@ -35,13 +35,13 @@ export function registerAuthRoutes(app: FastifyInstance): void {
       throw new ApiError(429, "rate_limited", "Too many attempts, try again later");
     }
     const failKey = `pin:${tenantId}:${staffId}`;
-    if ((await recentHits(models, failKey, PIN_FAILURES.windowMs, now)) >= PIN_FAILURES.limit) {
+    // Every attempt is recorded before the (slow) verify, so parallel guesses count against the lock; success clears them.
+    if (!(await hit(models, failKey, PIN_FAILURES.limit, PIN_FAILURES.windowMs, now))) {
       throw new ApiError(429, "rate_limited", "Too many wrong PINs, try again in a few minutes");
     }
 
     const staff = await runWithTenant(tenantId, () => models.Staff.findOne({ _id: staffId, active: true }));
     if (!staff || !(await verifyPin(staff.pinHash, pin))) {
-      await hit(models, failKey, PIN_FAILURES.limit, PIN_FAILURES.windowMs, now);
       throw new ApiError(401, "unauthorized", "Wrong PIN");
     }
 

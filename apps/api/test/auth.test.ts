@@ -2,11 +2,12 @@ import { createHash } from "node:crypto";
 import cookie from "@fastify/cookie";
 import Fastify from "fastify";
 import { Types } from "mongoose";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { ApiError, registerErrorHandling } from "../src/errors";
 import { staffRoute } from "../src/auth/guard";
 import { registerAuthRoutes } from "../src/auth/routes";
 import { hit } from "../src/auth/rate-limit";
+import * as pin from "../src/auth/pin";
 import { SANDBOX_COOKIE } from "../src/auth/login-tenant";
 import { seedRestaurant, type SeedResult } from "../src/seed/seed";
 import { makeTestApp, newTenant, TEST_SECRET } from "./helpers";
@@ -39,13 +40,14 @@ afterAll(async () => {
 
 const sid = (res: { cookies: { name: string; value: string }[] }) => res.cookies.find((c) => c.name === "lodos_sid")?.value;
 
+let ipSeq = 0;
 async function login(
   app: typeof t,
   staffId: string,
   pin: string,
-  headers: Record<string, string> = {},
+  remoteAddress = `10.0.${Math.floor(ipSeq / 250)}.${(ipSeq++ % 250) + 1}`, // each login its own IP unless a test says otherwise
 ) {
-  return app.inject({ method: "POST", url: "/api/auth/pin", payload: { staffId, pin }, headers });
+  return app.inject({ method: "POST", url: "/api/auth/pin", payload: { staffId, pin }, remoteAddress });
 }
 
 describe("PIN login", () => {
@@ -92,6 +94,34 @@ describe("PIN login", () => {
     t.clock.advance(5 * MIN);
     expect((await login(t, id, "4444")).statusCode).toBe(200);
     t.clock.set(NOW);
+  });
+
+  it("parallel wrong guesses cannot beat the lock: at most 5 reach verifyPin", async () => {
+    const spy = vi.spyOn(pin, "verifyPin");
+    try {
+      const id = seedMain.staff.manager;
+      const results = await Promise.all(Array.from({ length: 20 }, () => login(t, id, "0000")));
+      const codes = results.map((r) => r.statusCode);
+      expect(codes.filter((c) => c === 401).length).toBeLessThanOrEqual(5);
+      expect(codes.filter((c) => c === 429).length).toBeGreaterThanOrEqual(15);
+      expect(spy.mock.calls.length).toBeLessThanOrEqual(5);
+      expect((await login(t, id, "9999")).statusCode).toBe(429);
+    } finally {
+      spy.mockRestore();
+      t.clock.advance(5 * MIN);
+      expect((await login(t, seedMain.staff.manager, "9999")).statusCode).toBe(200);
+      t.clock.set(NOW);
+    }
+  });
+
+  it("a burst from one IP is capped at 30 per 10 minutes", async () => {
+    const staff = await t.models.Staff.collection.find({ tenantId: "main" }).toArray();
+    const results = await Promise.all(
+      Array.from({ length: 45 }, (_, i) => login(t, String(staff[i % staff.length]!._id), "0000", "192.0.2.7")),
+    );
+    const codes = results.map((r) => r.statusCode);
+    expect(codes.filter((c) => c === 401).length).toBeLessThanOrEqual(30);
+    expect(codes.filter((c) => c === 429).length).toBeGreaterThanOrEqual(15);
   });
 
   it("GET /api/auth/staff lists the main tenant's staff without hashes", async () => {

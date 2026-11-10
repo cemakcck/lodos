@@ -1,5 +1,6 @@
 import argon2 from "argon2";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { seedRestaurant } from "../src/seed/seed";
 import { runWithTenant } from "../src/db/tenancy";
 import { runSetup } from "../src/scripts/setup";
 import { makeTestApp, newTenant } from "./helpers";
@@ -33,6 +34,24 @@ describe("runSetup", () => {
     expect(await argon2.verify(selin.pinHash, "482910")).toBe(true);
     expect(await argon2.verify(deniz.pinHash, "5678")).toBe(true); // upserted
     expect(await argon2.verify(deniz.pinHash, "1234")).toBe(false);
+  });
+
+  it("repairs a half-finished run: demo staff left on a seeded tenant are removed", async () => {
+    const tenant = newTenant();
+    const now = new Date("2026-11-10T17:00:00Z");
+    await seedRestaurant(t.models, tenant, now, { liveService: false }); // seeded, cleanup never ran
+    await runSetup(["--tenant", tenant, "--staff", "Zeynep:manager:482910"], { models: t.models, env, log: () => {} });
+    const [staff, tables] = await runWithTenant(tenant, () => Promise.all([t.models.Staff.find(), t.models.Table.find()]));
+    expect(staff.map((s) => s.name)).toEqual(["Zeynep"]);
+    expect(tables.every((x) => x.sectionStaffId === null)).toBe(true);
+  });
+
+  it("keeps a real staff member who merely shares a demo name", async () => {
+    const tenant = newTenant();
+    await runSetup(["--tenant", tenant, "--staff", "Selin:manager:482910"], { models: t.models, env, log: () => {} });
+    await runSetup(["--tenant", tenant], { models: t.models, env, log: () => {} });
+    const staff = await runWithTenant(tenant, () => t.models.Staff.find());
+    expect(staff.map((s) => s.name)).toEqual(["Selin"]);
   });
 
   it("refuses when DEMO_MODE=1", async () => {

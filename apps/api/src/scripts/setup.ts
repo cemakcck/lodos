@@ -2,11 +2,13 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { StaffRole } from "@lodos/shared";
+import type { Types } from "mongoose";
 import { z } from "zod";
-import { hashPin, PinSchema } from "../auth/pin";
+import { hashPin, PinSchema, verifyPin } from "../auth/pin";
 import { connectDb } from "../db/connect";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
+import { STAFF } from "../seed/content";
 import { seedRestaurant } from "../seed/seed";
 
 const StaffSpec = z
@@ -64,12 +66,7 @@ export async function runSetup(args: string[], deps: SetupDeps = {}): Promise<vo
     const exists = await runWithTenant(tenantId, () => m.Tenant.exists({}));
     if (!exists) {
       if (values["seed-menu"]) {
-        const seeded = await seedRestaurant(m, tenantId, now, { liveService: false });
-        // The seed ships public demo staff; a real restaurant gets only the staff given here.
-        await runWithTenant(tenantId, async () => {
-          await m.Staff.deleteMany({ _id: { $in: Object.values(seeded.staff) } });
-          await m.Table.updateMany({}, { $set: { sectionStaffId: null } });
-        });
+        await seedRestaurant(m, tenantId, now, { liveService: false });
         log(`Seeded menu and tables for tenant "${tenantId}"`);
       } else {
         await runWithTenant(tenantId, () => m.Tenant.create({ name: "Lodos", createdAt: now }));
@@ -78,6 +75,7 @@ export async function runSetup(args: string[], deps: SetupDeps = {}): Promise<vo
     } else if (values["seed-menu"]) {
       log(`Tenant "${tenantId}" already exists; menu not re-seeded`);
     }
+    await removeDemoStaff(m, tenantId, log);
 
     for (const [name, role, pin] of staff) {
       const pinHash = await hashPin(pin);
@@ -89,6 +87,25 @@ export async function runSetup(args: string[], deps: SetupDeps = {}): Promise<vo
   } finally {
     await close?.();
   }
+}
+
+/**
+ * The seed ships staff with public PINs. Runs on every setup (so a half-finished earlier run is repaired):
+ * removes staff that still have a demo name, role and demo PIN, and detaches tables from them.
+ */
+async function removeDemoStaff(m: Models, tenantId: string, log: (line: string) => void): Promise<void> {
+  await runWithTenant(tenantId, async () => {
+    const current = await m.Staff.find({ name: { $in: STAFF.map((s) => s.name) } });
+    const demoIds: Types.ObjectId[] = [];
+    for (const s of current) {
+      const demo = STAFF.find((d) => d.name === s.name && d.role === s.role);
+      if (demo && (await verifyPin(s.pinHash, demo.pin))) demoIds.push(s._id);
+    }
+    if (demoIds.length === 0) return;
+    await m.Staff.deleteMany({ _id: { $in: demoIds } });
+    await m.Table.updateMany({ sectionStaffId: { $in: demoIds } }, { $set: { sectionStaffId: null } });
+    log(`Removed ${demoIds.length} demo staff`);
+  });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
