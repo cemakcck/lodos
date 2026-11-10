@@ -1,7 +1,7 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { resolveOptions, type OptionSelection } from "@lodos/shared";
 import { useFormat } from "../lib/format";
+import { useOptionPicks } from "../lib/useOptionPicks";
 import { MAX_LINE_QTY, NOTE_MAX, type NewLine } from "./cart";
 import { ArchPhoto, Ornament, Sheet, Stepper } from "./ui";
 import { loc, type MenuItem } from "./types";
@@ -12,28 +12,14 @@ type Props = { item: MenuItem; onClose: () => void; onAdd: (line: NewLine) => vo
 export function DishSheet({ item, onClose, onAdd }: Props) {
   const { t } = useTranslation();
   const { lang, money } = useFormat();
-  const [picked, setPicked] = useState<Record<string, string[]>>({});
+  const { selection, valid, missing, delta, isOn, toggle } = useOptionPicks(item.optionGroups);
   const [note, setNote] = useState("");
   const [qty, setQty] = useState(1);
   const noteId = useId();
   const soldOut = item.availability.soldOut;
 
-  const selection: OptionSelection[] = useMemo(
-    () => item.optionGroups.map((g) => ({ groupId: g.id, optionIds: picked[g.id] ?? [] })).filter((s) => s.optionIds.length > 0),
-    [item.optionGroups, picked],
-  );
-  const resolved = resolveOptions(item.optionGroups, selection);
-  const missing = item.optionGroups.filter((g) => g.required && !(picked[g.id]?.length));
-  const deltas = item.optionGroups.flatMap((g) => g.options.filter((o) => picked[g.id]?.includes(o.id)).map((o) => o.priceDelta));
-  const unit = item.price + deltas.reduce((a, b) => a + b, 0);
-  const canAdd = resolved.ok && !soldOut;
-
-  const toggle = (groupId: string, optionId: string, single: boolean) =>
-    setPicked((p) => {
-      const cur = p[groupId] ?? [];
-      if (single) return { ...p, [groupId]: [optionId] };
-      return { ...p, [groupId]: cur.includes(optionId) ? cur.filter((x) => x !== optionId) : [...cur, optionId] };
-    });
+  const unit = item.price + delta;
+  const canAdd = valid && !soldOut;
 
   const add = () => {
     if (!canAdd) return;
@@ -123,7 +109,7 @@ export function DishSheet({ item, onClose, onAdd }: Props) {
             </legend>
             <div className="mt-2 flex flex-col gap-1.5">
               {g.options.map((o) => {
-                const on = picked[g.id]?.includes(o.id) ?? false;
+                const on = isOn(g.id, o.id);
                 return (
                   <label key={o.id} className={`guest-option ${on ? "is-on" : ""}`}>
                     <input

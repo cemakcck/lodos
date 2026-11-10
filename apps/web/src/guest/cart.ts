@@ -30,7 +30,7 @@ export const NOTE_MAX = 140;
 
 export const emptyCart = (): Cart => ({ checkId: null, lines: [], idempotencyKey: null });
 
-const canonicalOptions = (options: OptionSelection[]): OptionSelection[] =>
+export const canonicalOptions = (options: OptionSelection[]): OptionSelection[] =>
   options
     .filter((o) => o.optionIds.length > 0)
     .map((o) => ({ groupId: o.groupId, optionIds: [...o.optionIds].sort() }))
@@ -76,7 +76,7 @@ export function markProblem(cart: Cart, itemId: string, problem: LineProblem): C
   return edited(cart, cart.lines.map((l) => (l.itemId === itemId ? { ...l, problem } : l)));
 }
 
-function uuidv4(): string {
+export function uuidv4(): string {
   const c = globalThis.crypto;
   if (typeof c?.randomUUID === "function") return c.randomUUID();
   // randomUUID is missing on plain-http LAN origins (a phone hitting the dev box by IP).

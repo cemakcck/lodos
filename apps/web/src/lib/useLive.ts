@@ -10,13 +10,13 @@ export function invalidationsFor(e: LiveEvent): QueryKey[] {
   if (e.type.startsWith("ticket.")) return [["kds"], ["floor"], ...check, ["guest", "orders"]];
   if (e.type === "check.updated") return [["floor"], ...check, ["guest", "orders"], ["guest", "table"]];
   if (e.type.startsWith("call.")) return [["floor"], ...check];
-  if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["kds"], ["manager"]];
+  if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
   if (e.type === "tables.changed") return [["floor"], ["manager"]];
   return [];
 }
 
 const LIVE_KEYS: Record<LiveAudience["audience"], QueryKey[]> = {
-  staff: [["kds"], ["floor"], ["check"], ["manager"]],
+  staff: [["kds"], ["floor"], ["check"], ["menu"], ["manager"]],
   guest: [["guest"]],
 };
 

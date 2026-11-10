@@ -9,6 +9,7 @@ import { Shell } from "./staff/Shell";
 import { Kds } from "./staff/kds/Kds";
 import { Floor } from "./staff/floor/Floor";
 import { PrintCheck } from "./staff/PrintCheck";
+import { OrderEntry } from "./staff/order/OrderEntry";
 import type { StaffRole } from "./staff/auth";
 
 /** A staff screen still to be built: the real Shell around a quiet note. Later tasks replace these. */
@@ -57,7 +58,7 @@ export const routes: RouteObject[] = [
           guarded(["bar"], [{ path: "/staff/bar", element: <Kds key="bar" station="bar" /> }]),
           guarded(["waiter"], [
             { path: "/staff/floor", element: <Floor /> },
-            ph("/staff/order/:tableId", "staff.nav.floor"),
+            { path: "/staff/order/:tableId", element: <OrderEntry /> },
             { path: "/staff/check/:id/print", element: <PrintCheck /> },
           ]),
           guarded(["manager"], [

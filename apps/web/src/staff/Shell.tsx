@@ -35,6 +35,8 @@ export const RAIL: readonly RailItem[] = [
 export const railFor = (role: StaffRole | undefined) => (role ? RAIL.filter((i) => canAccess(role, i.roles)) : []);
 
 export interface ShellProps {
+  /** Toolbar content before the title, e.g. a back link. */
+  leading?: ReactNode;
   /** Toolbar title, e.g. "Kitchen". Rendered as the page's h1. */
   title: ReactNode;
   /** Muted text after the title, e.g. "Hot line". */
@@ -62,7 +64,7 @@ export interface ShellProps {
  * optional 40px stats strip, and the scrolling body. It owns the staff live socket for the connection
  * status, and signs out locally when the socket reports the session is gone.
  */
-export function Shell({ title, subtitle, toolbar, actions, stats, statsEnd, clock = true, railBadges, children }: ShellProps) {
+export function Shell({ leading, title, subtitle, toolbar, actions, stats, statsEnd, clock = true, railBadges, children }: ShellProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const me = useMe().data ?? undefined;
@@ -101,6 +103,7 @@ export function Shell({ title, subtitle, toolbar, actions, stats, statsEnd, cloc
 
       <div className="staff-main">
         <header className="staff-bar">
+          {leading}
           <h1 className="staff-title">
             {title}
             {subtitle && <span className="sub">· {subtitle}</span>}

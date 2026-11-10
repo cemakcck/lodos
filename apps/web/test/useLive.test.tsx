@@ -82,6 +82,19 @@ describe("useLive", () => {
     expect(spy).toHaveBeenCalledWith({ queryKey: ["check", "t9"] });
   });
 
+  it("menu and availability events refresh the staff order-entry menu (and it is part of the reconnect snapshot)", () => {
+    const spy = vi.spyOn(qc, "invalidateQueries");
+    renderHook(() => useLive({ audience: "staff" }, () => {}), { wrapper });
+    const s = sockets[0]!;
+    act(() => s.emit("connect"));
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["menu"] });
+    for (const type of ["availability.changed", "menu.changed"]) {
+      spy.mockClear();
+      act(() => s.emit("event", { type, ids: ["i"], at: "x" }));
+      expect(spy).toHaveBeenCalledWith({ queryKey: ["menu"] });
+    }
+  });
+
   it("shares one socket per audience and closes it when unused", () => {
     const a = renderHook(() => useLive({ audience: "staff" }, () => {}), { wrapper });
     const b = renderHook(() => useLive({ audience: "staff" }, () => {}), { wrapper });

@@ -11,6 +11,7 @@ import { AllDay } from "./AllDay";
 import { EightySix } from "./EightySix";
 import { Ticket } from "./Ticket";
 import { matchesSearch } from "./lib";
+import { useSlashFocus } from "../../lib/useSlashFocus";
 import { EnableSoundButton, useChime } from "./useChime";
 import { nextOffset, useServerNow } from "../serverTime";
 
@@ -106,18 +107,7 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
     }
   }, [snapshot, play, t]);
 
-  // ---- "/" focuses the search -------------------------------------------------------------------------
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = e.target as HTMLElement | null;
-      if (el && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))) return;
-      e.preventDefault();
-      searchRef.current?.focus();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  useSlashFocus(searchRef);
 
   // ---- Inline messages and busy state -----------------------------------------------------------------
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());

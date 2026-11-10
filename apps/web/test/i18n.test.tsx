@@ -63,7 +63,7 @@ describe("invalidationsFor", () => {
     expect(invalidationsFor({ type: "call.opened", ids: [], tableId: "t2", at })).toEqual([["floor"], ["check", "t2"]]);
   });
   it("maps menu and availability", () => {
-    const k = [["guest", "menu"], ["kds"], ["manager"]];
+    const k = [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
     expect(invalidationsFor({ type: "menu.changed", ids: [], at })).toEqual(k);
     expect(invalidationsFor({ type: "availability.changed", ids: [], at })).toEqual(k);
   });
