@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Bodoni+Moda:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f6f4;--panel:#fff;--sunk:#f1efec;--line:#e7e4df;--line-2:#d9d5ce;--fg:#18161a;--fg-2:#4a4549;--fg-3:#8a8388;--plum:#4b1d3f;--plum-50:#f5eef3;--plum-100:#eadbe6;--red:#c8102e;--red-50:#fdf0f2;--red-100:#f8d5db;--amber:#9a6a14;--amber-50:#fbf5e9;--ok:#2f6b4f;--ok-50:#eef5f1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1718;color:#eee;font-family:Inter,system-ui,sans-serif;padding:32px 20px 60px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto}
+h1{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:34px}
+.lead{color:#b9b0aa;margin:6px 0 24px;font-size:15px;max-width:920px;line-height:1.55}
+h2{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:26px;margin:40px 0 6px}
+.note{color:#b9b0aa;font-size:14px;margin-bottom:14px;max-width:920px;line-height:1.5}
+.device{border-radius:22px;padding:10px;background:#0b0b0b;box-shadow:0 30px 70px rgba(0,0,0,.55),inset 0 0 0 1px #2a2a2a}
+.app{border-radius:13px;overflow:hidden;background:var(--bg);color:var(--fg);font-size:13px;font-feature-settings:"tnum";position:relative}
+svg.i{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mono{font-family:"JetBrains Mono",monospace}
+.bar{height:56px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.title{font-weight:600;font-size:15px}.title span{color:var(--fg-3);font-weight:500}
+.grow{flex:1}
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:2px}
+.seg span{padding:7px 14px;border-radius:6px;color:var(--fg-2);font-weight:500}
+.seg span.on{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--line)}
+.btn{height:38px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:500;color:var(--fg);font-size:13px}
+.btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+/* split */
+.split{display:grid;grid-template-columns:1fr 1.25fr;height:600px}
+.items{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column}
+.items .hd{padding:14px 18px 8px;display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 18px;border-top:1px solid var(--line)}
+.row .n{font-weight:500}.row .n small{display:block;color:var(--fg-3);font-weight:400;font-size:12px;margin-top:2px}
+.row .p{font-family:"JetBrains Mono",monospace;color:var(--fg-2);font-size:12.5px}
+.who{display:flex;gap:4px}
+.g{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:1px solid var(--line-2);color:var(--fg-3);background:var(--panel)}
+.g.a{background:#4b1d3f;color:#fff;border-color:#4b1d3f}.g.b{background:#c8102e;color:#fff;border-color:#c8102e}.g.c{background:#9a6a14;color:#fff;border-color:#9a6a14}.g.d{background:#2f6b4f;color:#fff;border-color:#2f6b4f}
+.row.sel{background:var(--plum-50);box-shadow:inset 3px 0 0 var(--plum)}
+.row.comp .n{color:var(--fg-3)}.row.comp .p{text-decoration:line-through;color:var(--fg-3)}
+.tagc{font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--amber-50);color:var(--amber);border:1px solid #ecdcb8;margin-left:6px}
+.unas{margin:auto 18px 16px;padding:10px 12px;border-radius:8px;background:var(--amber-50);color:var(--amber);font-size:12.5px;display:flex;gap:8px;align-items:center;border:1px solid #ecdcb8}
+.guests{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.gc{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:236px}
+.gc-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.gc-h b{font-size:14px}.gc-h .st{margin-left:auto;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--fg-2)}
+.gc-h .st.paid{background:var(--ok-50);color:var(--ok)}
+.gl{display:flex;justify-content:space-between;padding:5px 14px;font-size:12.5px;color:var(--fg-2)}
+.gl span:last-child{font-family:"JetBrains Mono",monospace}
+.gt{margin-top:auto;border-top:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.gt .amt{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:15px}
+.gt .btn{margin-left:auto;height:34px}
+.gc.paid{background:var(--sunk)}.gc.paid .gl{color:var(--fg-3)}
+.foot{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.prog{flex:1;display:flex;gap:4px}.prog i{flex:1;height:5px;border-radius:3px;background:var(--line)}.prog i.d{background:var(--ok)}
+/* pin + receipt */
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:24px;align-items:start}
+.veil{height:720px;background:rgba(24,22,26,.35);display:flex;align-items:center;justify-content:center}
+.sheet{width:440px;background:var(--panel);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden}
+.sheet-h{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.sheet-h b{font-size:15px}
+.sb{padding:14px 18px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 14px}
+.choice div{border:1px solid var(--line);border-radius:9px;padding:10px 12px}.choice div b{display:block;font-size:13.5px}.choice div span{font-size:12px;color:var(--fg-3)}
+.choice div.on{border-color:var(--plum);box-shadow:0 0 0 1px var(--plum);background:var(--plum-50)}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+.reasons span{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;font-size:12.5px;font-weight:500}
+.reasons span.on{background:var(--fg);color:#fff;border-color:var(--fg)}
+.pinrow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--sunk)}
+.pinrow .who{flex-direction:column;gap:2px;font-size:12px;color:var(--fg-3)}.pinrow .who b{color:var(--fg);font-size:13px}
+.dots{display:flex;gap:8px;margin-left:auto}.dots i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line-2)}.dots i.f{background:var(--fg);border-color:var(--fg)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.keys span{height:42px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px}
+.sf{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}.sf .btn{flex:1}
+.paper{background:#fffdf9;color:#111;width:302px;margin:0 auto;padding:22px 18px 30px;font-family:"JetBrains Mono",monospace;font-size:11.5px;line-height:1.55;box-shadow:0 20px 50px rgba(0,0,0,.5);position:relative}
+.paper:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:radial-gradient(circle at 6px 0,#fffdf9 6px,transparent 6.5px) 0 0/12px 8px}
+.paper .logo{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:600;font-size:30px;text-align:center;line-height:1}
+.paper .c{text-align:center}
+.paper hr{border:0;border-top:1px dashed #999;margin:9px 0}
+.paper .l{display:flex;justify-content:space-between;gap:8px}
+.paper .tot{font-weight:600;font-size:13px}
+.paper .m{color:#555}
+.cap{color:#b9b0aa;font-size:13px;margin-top:20px;text-align:center}
+</style></head><body><div class="wrap">
+<h1>Phase 2 · Closing the check</h1>
+<p class="lead">Same staff style as phase 1: light, 1px hairlines, one type family, monospaced money. These are mockups for reacting to, not final screens. Table T4, four covers, end of the night.</p>
+
+<h2>1 · Split by item</h2>
+<p class="note">The waiter taps a dish on the left, then taps a guest letter (or several, to share it). Each guest's card adds up live and is paid on its own. The table stays open until every share is paid. "Evenly" swaps the right side for N equal cards; "In full" is phase 1's one-tap close.</p>
+<div class="device"><div class="app">
+  <div class="bar">
+    <svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="title">Close check · T4 <span>· 4 covers · Mert</span></div>
+    <div class="seg" style="margin-left:14px"><span>In full</span><span>Evenly</span><span class="on">By item</span></div>
+    <div class="grow"></div>
+    <span class="lbl">Check total</span><span class="mono" style="font-weight:600;font-size:15px">₺9.960</span>
+  </div>
+  <div class="split">
+    <div class="items">
+      <div class="hd"><span class="lbl">On the check · 10</span><span class="lbl">Who pays</span></div>
+      <div class="row"><div class="n">Burrata, heirloom tomato<small>Shared starter</small></div><div class="who"><span class="g a">A</span><span class="g b">B</span></div><div class="p">540</div></div>
+      <div class="row"><div class="n">Charred octopus, fava</div><div class="who"><span class="g c">C</span><span class="g d">D</span></div><div class="p">920</div></div>
+      <div class="row"><div class="n">Dry-aged ribeye, 300 g<small>Medium rare</small></div><div class="who"><span class="g a">A</span></div><div class="p">2.450</div></div>
+      <div class="row"><div class="n">Lamb chops, mint yoghurt</div><div class="who"><span class="g b">B</span></div><div class="p">1.180</div></div>
+      <div class="row"><div class="n">Whole sea bream</div><div class="who"><span class="g c">C</span></div><div class="p">1.250</div></div>
+      <div class="row"><div class="n">Little gem, herbs, lemon</div><div class="who"><span class="g d">D</span></div><div class="p">380</div></div>
+      <div class="row sel"><div class="n">Öküzgözü, bottle<small>Tap guests to share · 4 selected</small></div><div class="who"><span class="g a">A</span><span class="g b">B</span><span class="g c">C</span><span class="g d">D</span></div><div class="p">2.200</div></div>
+      <div class="row"><div class="n">Negroni × 2</div><div class="who"><span class="g">A</span><span class="g">B</span><span class="g">C</span><span class="g">D</span></div><div class="p">1.040</div></div>
+      <div class="row comp"><div class="n">Olive oil gelato <span class="tagc">Comp · birthday</span></div><div class="who"><span class="g" style="border-style:dashed">—</span></div><div class="p">260</div></div>
+      <div class="unas"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Negroni × 2 not assigned yet · ₺1.040</div>
+    </div>
+    <div class="guests">
+      <div class="gc paid"><div class="gc-h"><span class="g a">A</span><b>Guest A</b><span class="st paid">Paid · card</span></div>
+        <div class="gl"><span>½ Burrata</span><span>270</span></div><div class="gl"><span>Dry-aged ribeye</span><span>2.450</span></div><div class="gl"><span>¼ Öküzgözü</span><span>550</span></div>
+        <div class="gt"><span class="amt">₺3.270</span><span class="btn" style="height:34px"><svg class="i" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>Receipt</span></div></div>
+      <div class="gc"><div class="gc-h"><span class="g b">B</span><b>Guest B</b><span class="st">Open</span></div>
+        <div class="gl"><span>½ Burrata</span><span>270</span></div><div class="gl"><span>Lamb chops</span><span>1.180</span></div><div class="gl"><span>¼ Öküzgözü</span><span>550</span></div>
+        <div class="gt"><span class="amt">₺2.000</span><span class="btn primary">Take payment</span></div></div>
+      <div class="gc"><div class="gc-h"><span class="g c">C</span><b>Guest C</b><span class="st">Open</span></div>
+        <div class="gl"><span>½ Charred octopus</span><span>460</span></div><div class="gl"><span>Whole sea bream</span><span>1.250</span></div><div class="gl"><span>¼ Öküzgözü</span><span>550</span></div>
+        <div class="gt"><span class="amt">₺2.260</span><span class="btn primary">Take payment</span></div></div>
+      <div class="gc"><div class="gc-h"><span class="g d">D</span><b>Guest D</b><span class="st">Open</span></div>
+        <div class="gl"><span>½ Charred octopus</span><span>460</span></div><div class="gl"><span>Little gem</span><span>380</span></div><div class="gl"><span>¼ Öküzgözü</span><span>550</span></div>
+        <div class="gt"><span class="amt">₺1.390</span><span class="btn primary">Take payment</span></div></div>
+      <div class="foot"><span class="lbl">1 of 4 paid</span><div class="prog"><i class="d"></i><i></i><i></i><i></i></div><span class="mono" style="color:var(--fg-2)">₺6.690 left</span></div>
+    </div>
+  </div>
+</div></div>
+
+<h2>2 · Comp or void, with the manager's PIN</h2>
+<p class="note">From the table panel, the waiter taps an item and picks Comp (made, on the house) or Void (a mistake, never cooked). A reason is required. The manager approves by entering their PIN on the same tablet, so the waiter doesn't have to go and find their screen. A void on a dish the kitchen hasn't bumped shows up struck through on the kitchen ticket.</p>
+<div class="two">
+<div class="device"><div class="app"><div class="veil"><div class="sheet">
+  <div class="sheet-h"><b>Olive oil gelato · T4</b><span class="grow"></span><span class="mono" style="color:var(--fg-2)">₺260</span></div>
+  <div class="sb">
+    <span class="lbl">What happened</span>
+    <div class="choice"><div class="on"><b>Comp</b><span>Made and served, on the house</span></div><div><b>Void</b><span>Mistake, never made</span></div></div>
+    <span class="lbl">Reason</span>
+    <div class="reasons"><span class="on">Birthday / celebration</span><span>Guest complaint</span><span>Long wait</span><span>Regular</span><span>Other…</span></div>
+    <div class="pinrow"><div class="who"><b>Manager approval</b>Selin, or any manager</div><div class="dots"><i class="f"></i><i class="f"></i><i></i><i></i></div></div>
+    <div class="keys"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span style="border:0"></span><span>0</span><span style="border:0;color:var(--fg-3)">⌫</span></div>
+  </div>
+  <div class="sf"><span class="btn">Cancel</span><span class="btn primary">Approve comp</span></div>
+</div></div></div></div>
+
+<div><div class="paper">
+  <div class="logo">Lodos</div>
+  <div class="c m" style="margin-top:6px">Kemankeş Mah. · Karaköy, İstanbul</div>
+  <div class="c m">Demo restaurant, not real</div>
+  <hr>
+  <div class="l"><span>T4 · Guest A of 4</span><span>Check #0427</span></div>
+  <div class="l m"><span>10.11.2026 23:14</span><span>Mert</span></div>
+  <hr>
+  <div class="l"><span>½ Burrata, heirloom tom.</span><span>270,00</span></div>
+  <div class="l"><span>Dry-aged ribeye 300 g</span><span>2.450,00</span></div>
+  <div class="l m"><span>  medium rare</span><span></span></div>
+  <div class="l"><span>¼ Öküzgözü, bottle</span><span>550,00</span></div>
+  <hr>
+  <div class="l tot"><span>TOTAL</span><span>₺3.270,00</span></div>
+  <div class="l m"><span>incl. KDV 10% (food)</span><span>247,27</span></div>
+  <div class="l m"><span>incl. KDV 20% (drinks)</span><span>91,67</span></div>
+  <div class="l"><span>Card ····4821</span><span>3.270,00</span></div>
+  <hr>
+  <div class="c m">Comps on this check: 1 · ₺260</div>
+  <div class="c" style="margin-top:8px">Teşekkürler · Thank you</div>
+  <div class="c m" style="font-size:10px;margin-top:6px">Not a fiscal receipt (bilgi fişi)</div>
+</div>
+<p class="cap">3 · Receipt for 80 mm receipt paper, printed from the browser.<br>One per share; KDV split by food and drinks.</p></div>
+</div>
+</div></body></html>
