@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { computeAccessibleName } from "dom-accessibility-api";
 import { screen, cleanup, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { formatElapsed, formatTRY } from "@lodos/shared";
@@ -78,9 +79,10 @@ describe("Menu editor", () => {
     setup("/staff/menu");
     const table = await screen.findByRole("table", { name: /Items/ });
     const rows = within(table).getAllByRole("row").slice(1);
-    expect(rows.map((r) => within(r).queryByRole("button", { name: /^Edit / })?.getAttribute("aria-label")).filter(Boolean)).toEqual([
-      "Edit Burrata, heirloom tomato",
-      "Edit Dry-aged ribeye, 300\u00a0g", // keepUnits binds the number to its unit
+    expect(rows.map((r) => within(r).queryByRole("button", { name: /^Edit / })).filter((b) => b !== null).map((b) => computeAccessibleName(b))).toEqual([
+      // The name is the visible text in reading order (label in name), with "Edit" for screen readers.
+      "Edit Burrata, heirloom tomato, Burrata, yerli domates",
+      "Edit Dry-aged ribeye, 300\u00a0g, Dinlendirilmiş antrikot, 300\u00a0g, 1 option group", // keepUnits binds the number to its unit
       "Edit Lodos Negroni",
     ]);
     const burrataRow = rows.find((r) => r.textContent?.includes("Burrata"))!;
@@ -94,7 +96,7 @@ describe("Menu editor", () => {
 
   it("opens the item form when an item is selected", async () => {
     setup("/staff/menu");
-    await userEvent.click(await screen.findByRole("button", { name: "Edit Lodos Negroni" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Edit Lodos Negroni/ }));
     const dialog = await screen.findByRole("dialog", { name: /Lodos Negroni/ });
     expect(within(dialog).getByRole("textbox", { name: "Name (English)" })).toHaveProperty("value", "Lodos Negroni");
   });

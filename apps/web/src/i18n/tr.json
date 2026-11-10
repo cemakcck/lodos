@@ -50,7 +50,7 @@
       "remaining": "Son {{count}} adet",
       "add": "{{name}} ekle",
       "addUnavailable": "{{name}} bu akşam tükendi",
-      "details": "{{name}}, {{price}}. Ayrıntılar",
+      "details": ", {{price}}. Ayrıntılar",
       "added": "{{name}} siparişinize eklendi",
       "signature": "İmza"
     },
@@ -313,7 +313,7 @@
     },
     "sound": {
       "enable": "Sesi aç",
-      "enableAria": "Yeni fiş sesini aç",
+      "enableAria": "Sesi aç, yeni fişler için",
       "activate": "Ses açık, etkinleştirmek için dokunun"
     },
     "stats": {
@@ -476,6 +476,7 @@
         "ready": "Hazır",
         "served": "Servis edildi"
       },
+      "lines": "{{table}} hesabı",
       "noLines": "Henüz sipariş yok.",
       "freeHint": "{{table}} boş. Hesap açmak için misafirleri oturtun.",
       "calling": "{{time}} süredir çağırıyor",

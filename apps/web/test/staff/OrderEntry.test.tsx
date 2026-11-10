@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { computeAccessibleName } from "dom-accessibility-api";
 import { render, screen, cleanup, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -98,13 +99,13 @@ describe("OrderEntry", () => {
     expect(screen.getByRole("link", { name: "Back to floor" }).getAttribute("href")).toBe("/staff/floor?table=t7");
 
     const b = await tile(/^Burrata/);
-    expect(b.getAttribute("aria-label")).toBe(`Burrata, heirloom tomato, ${formatTRY(54000, "en")}, food`);
+    expect(computeAccessibleName(b)).toBe(`Burrata, heirloom tomato, ${formatTRY(54000, "en")}, food`);
     expect(b.textContent).toContain(formatTRY(54000, "en"));
     expect(b.textContent).toContain("Food");
     expect((await tile(/^Lodos Negroni/)).textContent).toContain("Drink");
-    expect((await tile(/^Dry-aged ribeye/)).getAttribute("aria-label")).toContain("choose options");
+    expect(computeAccessibleName(await tile(/^Dry-aged ribeye/))).toContain("choose options");
     const g = await tile(/^Olive oil gelato/);
-    expect(g.getAttribute("aria-label")).toContain("sold out");
+    expect(computeAccessibleName(g)).toContain("sold out");
     expect((g as HTMLButtonElement).disabled).toBe(true);
     expect(g.textContent).toContain("Sold out");
   });
@@ -120,7 +121,7 @@ describe("OrderEntry", () => {
     expect(within(lines()[0]!).getByTestId("line-qty").textContent).toBe("2");
     expect(sendBtn().disabled).toBe(false);
     expect(screen.getByTestId("order-total").textContent).toBe(formatTRY(108000, "en"));
-    expect((await tile(/^Burrata/)).getAttribute("aria-label")).toContain("2 in this order");
+    expect(computeAccessibleName(await tile(/^Burrata/))).toContain("2 in this order");
   });
 
   it("an item with options opens a focus-trapped sheet; a required group blocks Add; different options make separate lines", async () => {
@@ -248,7 +249,7 @@ describe("OrderEntry", () => {
     expect(document.activeElement).toBe(search);
     await userEvent.type(search, "ribe");
     const grid = screen.getByRole("group", { name: /Menu items/ });
-    expect(within(grid).getAllByRole("button").map((b) => b.getAttribute("aria-label")!.split(",")[0])).toEqual(["Dry-aged ribeye"]);
+    expect(within(grid).getAllByRole("button").map((b) => computeAccessibleName(b).split(",")[0])).toEqual(["Dry-aged ribeye"]);
     await userEvent.keyboard("{Escape}");
     expect((search as HTMLInputElement).value).toBe("");
   });

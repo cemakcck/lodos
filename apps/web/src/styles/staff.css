@@ -15,7 +15,7 @@
   /* red only for late / allergen */
   --color-staff-red: #c8102e;
   --color-staff-red-50: #fdf0f2;
-  --color-staff-amber: #9a6a14;
+  --color-staff-amber: #8c5f10; /* 4.5:1+ on amber-50, white and sunk (axe colour-contrast) */
   --color-staff-amber-50: #fbf5e9;
   --color-staff-ok: #2f6b4f;
   --color-staff-ok-50: #eef5f1;

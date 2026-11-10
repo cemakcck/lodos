@@ -50,7 +50,7 @@
       "remaining": "Only {{count}} left",
       "add": "Add {{name}}",
       "addUnavailable": "{{name}} is sold out tonight",
-      "details": "{{name}}, {{price}}. See details",
+      "details": ", {{price}}. See details",
       "added": "{{name}} added to your order",
       "signature": "Signature"
     },
@@ -313,7 +313,7 @@
     },
     "sound": {
       "enable": "Enable sound",
-      "enableAria": "Enable the new-ticket chime",
+      "enableAria": "Enable sound for new tickets",
       "activate": "Sound on, tap to activate"
     },
     "stats": {
@@ -477,6 +477,7 @@
         "served": "Served"
       },
       "noLines": "Nothing ordered yet.",
+      "lines": "Check for {{table}}",
       "freeHint": "{{table}} is free. Seat guests to open a check.",
       "calling": "Calling for {{time}}",
       "billAsked": "Asked for the bill {{time}} ago",

@@ -41,18 +41,24 @@ export function TableShape({ table, now, scale, selected, mine, dimmed, onSelect
     .filter(Boolean)
     .join(" ");
 
+  const label = tableLabel(table, now, t, mine);
+  const spokenRest = label.startsWith(table.name) ? label.slice(table.name.length) : `, ${label}`;
   return (
     <button
       type="button"
       className={cls}
       style={{ left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px` }}
       aria-pressed={selected}
-      aria-label={tableLabel(table, now, t, mine)}
       onClick={() => onSelect(table.id)}
     >
+      {/* The name comes from the content: the visible table name, then the spoken state (WCAG 2.5.3, label in
+          name). The meta line is the visual shorthand of the same facts ("4 · 1h 12m"). */}
       {dot && <span className="st" aria-hidden="true" />}
-      <span className="no">{table.name}</span>
-      <span className="m">{meta}</span>
+      <span className="no">
+        {table.name}
+        <span className="sr-only">{spokenRest}</span>
+      </span>
+      <span className="m" aria-hidden="true">{meta}</span>
     </button>
   );
 }

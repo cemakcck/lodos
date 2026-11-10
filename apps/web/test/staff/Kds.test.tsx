@@ -178,7 +178,7 @@ describe("Kds board", () => {
     localStorage.setItem(SOUND_KEY, "on");
     setup();
     await card(/Ticket T12/);
-    expect(screen.queryByRole("button", { name: "Enable the new-ticket chime" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enable sound for new tickets" })).toBeNull();
     expect(screen.getByRole("button", { name: "Sound on, tap to activate" })).toBeTruthy();
     expect(FakeAudio.made).toHaveLength(0);
     fireEvent.pointerDown(document.body);
@@ -190,9 +190,9 @@ describe("Kds board", () => {
     const user = userEvent.setup();
     setup();
     await card(/Ticket T12/);
-    await user.click(screen.getByRole("button", { name: "Enable the new-ticket chime" }));
+    await user.click(screen.getByRole("button", { name: "Enable sound for new tickets" }));
     expect(localStorage.getItem(SOUND_KEY)).toBe("on");
-    expect(screen.queryByRole("button", { name: "Enable the new-ticket chime" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enable sound for new tickets" })).toBeNull();
     const audio = FakeAudio.made[0]!;
 
     const T4 = tk("d", "T4", new Date(SERVER_NOW + 5000).toISOString(), [item(0, "Octopus")]);
@@ -212,7 +212,7 @@ describe("Kds board", () => {
     const user = userEvent.setup();
     setup();
     await card(/Ticket T12/);
-    await user.click(screen.getByRole("button", { name: "Enable the new-ticket chime" }));
+    await user.click(screen.getByRole("button", { name: "Enable sound for new tickets" }));
     const old = tk("z", "T3", ago(30), [item(0, "Octopus")], { status: "started" });
     routes["POST /api/kds/kitchen/recall"] = { ticket: old };
     routes["GET /api/kds/kitchen?tab=active"] = snap([old, T12, B2, T9]);

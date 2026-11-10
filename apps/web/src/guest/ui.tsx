@@ -115,10 +115,11 @@ export function LangToggle({ className = "" }: { className?: string }) {
           type="button"
           lang={l}
           aria-pressed={lang === l}
-          aria-label={t(`lang.${l}`)}
           onClick={() => void setLanguage(l)}
         >
+          {/* The visible code starts the accessible name ("EN, English"), so speech users can say what they see. */}
           {l.toUpperCase()}
+          <span className="sr-only">, {t(`lang.${l}`)}</span>
         </button>
       ))}
     </div>

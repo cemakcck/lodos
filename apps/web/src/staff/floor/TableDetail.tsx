@@ -317,7 +317,8 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
         </dl>
       </div>
 
-      <div className="fl-det-body">
+      {/* It scrolls on a long check, so it takes keyboard focus to be scrollable without a mouse (WCAG 2.1.1). */}
+      <div className="fl-det-body" tabIndex={0} role="group" aria-label={t("floor.detail.lines", { table: name })}>
         {!open ? (
           <p className="fl-hint">{t("floor.detail.freeHint", { table: name })}</p>
         ) : lines.length === 0 ? (

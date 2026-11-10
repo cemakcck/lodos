@@ -130,10 +130,15 @@ export function DishRow({ item, onOpen, onQuickAdd }: { item: MenuItem; onOpen: 
 
   return (
     <li className={`guest-dish ${soldOut ? "is-sold-out" : ""}`}>
-      <button type="button" className="guest-dish-main" onClick={onOpen} aria-label={t("guest.menu.details", { name, price: money(item.price) })}>
+      {/* The whole row opens the sheet, but the button holds only the dish name (stretched over the row in CSS),
+          so its accessible name starts with exactly what is visible: "Levrek crudo…, ₺780. See details". */}
+      <div className="guest-dish-main">
         <ArchPhoto src={item.photo} size={74} dim={soldOut} />
         <span className="min-w-0 flex-1">
-          <span className="guest-dish-name">{name}</span>
+          <button type="button" className="guest-dish-name guest-dish-open" onClick={onOpen}>
+            {name}
+            <span className="sr-only">{t("guest.menu.details", { price: money(item.price) })}</span>
+          </button>
           <span className="guest-dish-desc">{loc(item.description, lang)}</span>
           <span className="mt-1.5 flex flex-wrap gap-1">
             {soldOut && <span className="guest-tag guest-tag-soldout">{t("guest.menu.soldOut")}</span>}
@@ -147,7 +152,7 @@ export function DishRow({ item, onOpen, onQuickAdd }: { item: MenuItem; onOpen: 
             {more > 0 && <span className="guest-tag guest-tag-allergen">+{more}</span>}
           </span>
         </span>
-      </button>
+      </div>
       <div className="flex flex-col items-end gap-2 pt-0.5">
         <span className="guest-price">{money(item.price)}</span>
         <button

@@ -61,7 +61,9 @@ describe("TableShape", () => {
     draw(table({ state: "free", covers: null, seatedAt: null, checkId: null, name: "T5", capacity: 2 }));
     const btn = screen.getByRole("button", { name: "T5, free, seats 2" });
     expect(btn.className).toContain("is-free");
-    expect(btn.textContent).toBe("T52");
+    // On screen: the name and the seats; the spoken state is screen-reader only.
+    expect(btn.querySelector(".no")?.firstChild?.textContent).toBe("T5");
+    expect(btn.querySelector(".m")?.textContent).toBe("2");
   });
 
   it("short visits read in minutes, and a QR check without covers says so", () => {

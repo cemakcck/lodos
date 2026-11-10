@@ -46,8 +46,8 @@ function ItemTile({ item, count, onPick }: { item: MenuItem; count: number; onPi
   const hasOptions = item.optionGroups.length > 0;
   const Icon = drink ? GlassWater : UtensilsCrossed;
 
-  const aria = [
-    name,
+  // Spoken after the visible name: the footer is visual shorthand of the same facts.
+  const spoken = [
     price,
     t(drink ? "order.tile.drinkAria" : "order.tile.foodAria"),
     soldOut ? t("order.tile.soldOutAria") : null,
@@ -56,17 +56,21 @@ function ItemTile({ item, count, onPick }: { item: MenuItem; count: number; onPi
     count > 0 ? t("order.tile.inOrder", { count }) : null,
   ]
     .filter(Boolean)
-    .join(", ");
+    .map((part) => `, ${part}`)
+    .join("");
 
   return (
     <button
       type="button"
       className={`oe-tile ${count > 0 ? "is-in" : ""} ${drink ? "is-drink" : ""}`}
       disabled={soldOut}
-      aria-label={aria}
       onClick={() => onPick(item)}
     >
-      <span className="nm">{name}</span>
+      {/* The name comes from the content and starts with the visible dish name (WCAG 2.5.3, label in name). */}
+      <span className="nm">
+        {name}
+        <span className="sr-only">{spoken}</span>
+      </span>
       {count > 0 && <span className="badge font-mono" aria-hidden="true">×{count}</span>}
       <span className="ft" aria-hidden="true">
         <span className="kind">

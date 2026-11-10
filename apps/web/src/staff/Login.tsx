@@ -117,8 +117,9 @@ function LangSeg() {
   return (
     <div className="staff-seg" role="group" aria-label={t("lang.label")}>
       {(["en", "tr"] as const).map((l) => (
-        <button key={l} type="button" lang={l} aria-pressed={lang === l} aria-label={t(`lang.${l}`)} onClick={() => void setLanguage(l)}>
+        <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => void setLanguage(l)}>
           {l.toUpperCase()}
+          <span className="sr-only">, {t(`lang.${l}`)}</span>
         </button>
       ))}
     </div>

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { computeAccessibleName } from "dom-accessibility-api";
 import { render, screen, cleanup, within, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -111,7 +112,7 @@ describe("Floor", () => {
   it("shows the room's tables in name order with server-time elapsed, the stats strip and my section", async () => {
     setup();
     await tableBtn(/^T2, food ready/);
-    const names = within(canvas()).getAllByRole("button").map((b) => b.getAttribute("aria-label")!.split(",")[0]);
+    const names = within(canvas()).getAllByRole("button").map((b) => computeAccessibleName(b).split(",")[0]);
     expect(names).toEqual(["B1", "T2", "T7", "T10"]);
     // Elapsed from the snapshot's now, not the device clock (a year off).
     expect(screen.getByRole("button", { name: /^T2, food ready, 4 covers, 1 hour 12 minutes/ }).textContent).toContain("4 · 1h 12m");

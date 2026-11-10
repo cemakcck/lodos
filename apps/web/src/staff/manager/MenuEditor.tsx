@@ -247,6 +247,8 @@ function ItemRow({ item, lang, price, onEdit }: { item: ItemView; lang: "en" | "
         ? { cls: "is-low", text: t("manager.menu.status.left", { count: remaining }) }
         : { cls: "is-ok", text: t("manager.menu.status.available") };
   const StationIcon = item.station === "bar" ? Wine : Flame;
+  // "Edit {{name}}" / "{{name}} düzenle": the words around the name, spoken but not shown.
+  const [editBefore = "", editAfter = ""] = t("manager.menu.edit", { name: "\u0000" }).split("\u0000");
   return (
     <tr className={item.active ? undefined : "is-inactive"}>
       <td className="c-photo">
@@ -259,10 +261,28 @@ function ItemRow({ item, lang, price, onEdit }: { item: ItemView; lang: "en" | "
         )}
       </td>
       <td className="c-name">
-        <button type="button" className="mg-item-btn" aria-label={t("manager.menu.edit", { name })} onClick={onEdit}>
-          <span className="nm">{name}</span>
-          {other !== name && <span className="alt" lang={lang === "en" ? "tr" : "en"}>{other}</span>}
-          {item.optionGroups.length > 0 && <span className="meta">{t("manager.menu.options", { count: item.optionGroups.length })}</span>}
+        {/* Named from its content, so everything visible is part of the name (WCAG 2.5.3), in reading order, with
+            the verb added for screen readers: "Edit Burrata, heirloom tomato, Burrata, yerli domates, 1 option group". */}
+        <button type="button" className="mg-item-btn" onClick={onEdit}>
+          <span className="nm">
+            {editBefore.trim() && <span className="sr-only">{editBefore.trim()}</span>}
+            {editBefore.trim() && " "}
+            {name}
+            {editAfter.trim() && " "}
+            {editAfter.trim() && <span className="sr-only">{editAfter.trim()}</span>}
+          </span>
+          {other !== name && (
+            <span className="alt" lang={lang === "en" ? "tr" : "en"}>
+              <span className="sr-only">,</span>{" "}
+              {other}
+            </span>
+          )}
+          {item.optionGroups.length > 0 && (
+            <span className="meta">
+              <span className="sr-only">,</span>{" "}
+              {t("manager.menu.options", { count: item.optionGroups.length })}
+            </span>
+          )}
         </button>
       </td>
       <td className="c-num font-mono">{price}</td>
