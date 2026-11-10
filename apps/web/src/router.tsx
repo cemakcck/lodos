@@ -6,6 +6,7 @@ import { DemoLanding } from "./demo/DemoLanding";
 import { Login } from "./staff/Login";
 import { RequireStaff, StaffHome } from "./staff/RequireStaff";
 import { Shell } from "./staff/Shell";
+import { Kds } from "./staff/kds/Kds";
 import type { StaffRole } from "./staff/auth";
 
 /** A staff screen still to be built: the real Shell around a quiet note. Later tasks replace these. */
@@ -50,8 +51,8 @@ export const routes: RouteObject[] = [
         children: [
           { path: "/staff/login", element: <Login /> },
           { path: "/staff", element: <RequireStaff><StaffHome /></RequireStaff> },
-          guarded(["kitchen"], [ph("/staff/kitchen", "staff.nav.kitchen")]),
-          guarded(["bar"], [ph("/staff/bar", "staff.nav.bar")]),
+          guarded(["kitchen"], [{ path: "/staff/kitchen", element: <Kds key="kitchen" station="kitchen" /> }]),
+          guarded(["bar"], [{ path: "/staff/bar", element: <Kds key="bar" station="bar" /> }]),
           guarded(["waiter"], [
             ph("/staff/floor", "staff.nav.floor"),
             ph("/staff/order/:tableId", "staff.nav.floor"),

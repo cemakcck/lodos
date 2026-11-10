@@ -288,5 +288,89 @@
       "openLink": "Open the kitchen screen",
       "dismiss": "Dismiss"
     }
+  },
+  "kds": {
+    "title": {
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "hotLine": "Hot line"
+    },
+    "tabs": {
+      "label": "Ticket view",
+      "active": "Active",
+      "held": "Held",
+      "done": "Done"
+    },
+    "search": {
+      "label": "Find table or dish",
+      "placeholder": "Find table or dish",
+      "hint": "Press / to search"
+    },
+    "recall": {
+      "label": "Recall",
+      "aria": "Recall the last bumped ticket",
+      "none": "Nothing to recall",
+      "done": "{{table}} is back on the board"
+    },
+    "sound": {
+      "enable": "Enable sound",
+      "enableAria": "Enable the new-ticket chime"
+    },
+    "stats": {
+      "open": "open tickets",
+      "items": "items",
+      "avg": "avg ticket time",
+      "over": "over {{count}} min"
+    },
+    "allDay": {
+      "title": "All day",
+      "hint": "items to fire",
+      "empty": "Nothing to fire"
+    },
+    "eightySix": {
+      "title": "86'd tonight",
+      "left": "{{name}}: {{count}} left",
+      "out": "{{name}}: out",
+      "empty": "Nothing 86'd"
+    },
+    "empty": {
+      "active": "No open tickets. New orders appear here.",
+      "held": "No tickets on hold.",
+      "done": "Nothing bumped yet today.",
+      "search": "No tickets match “{{query}}”."
+    },
+    "announce": {
+      "new_one": "New ticket {{tables}}",
+      "new_other": "{{count}} new tickets: {{tables}}"
+    },
+    "conflict": "This ticket just changed. Refreshing…",
+    "failed": "That didn't go through. Try again.",
+    "loadError": "Couldn't load the tickets.",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "seconds_one": "{{count}} second",
+    "seconds_other": "{{count}} seconds",
+    "ticket": {
+      "aria": {
+        "ok": "Ticket {{table}}, {{time}}",
+        "warn": "Ticket {{table}}, running long, {{time}}",
+        "late": "Ticket {{table}}, late, {{time}}",
+        "held": "Ticket {{table}}, on hold, {{time}}",
+        "done": "Ticket {{table}}, ready in {{time}}"
+      },
+      "qr": "QR order",
+      "new": "New",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "sent": "Sent {{time}}",
+      "readyAt": "Ready {{time}}",
+      "bump": "Bump",
+      "bumpAria": "Bump {{table}}",
+      "holdAria": "Hold {{table}}",
+      "resume": "Resume",
+      "resumeAria": "Resume {{table}}",
+      "allergen": "Allergen",
+      "allergyNote": "Allergy in note"
+    }
   }
 }

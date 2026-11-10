@@ -288,5 +288,89 @@
       "openLink": "Mutfak ekranını aç",
       "dismiss": "Kapat"
     }
+  },
+  "kds": {
+    "title": {
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "hotLine": "Sıcak hat"
+    },
+    "tabs": {
+      "label": "Fiş görünümü",
+      "active": "Aktif",
+      "held": "Bekleyen",
+      "done": "Biten"
+    },
+    "search": {
+      "label": "Masa veya yemek ara",
+      "placeholder": "Masa veya yemek ara",
+      "hint": "Aramak için / tuşuna basın"
+    },
+    "recall": {
+      "label": "Geri al",
+      "aria": "Son hazır fişi geri al",
+      "none": "Geri alınacak fiş yok",
+      "done": "{{table}} yeniden ekranda"
+    },
+    "sound": {
+      "enable": "Sesi aç",
+      "enableAria": "Yeni fiş sesini aç"
+    },
+    "stats": {
+      "open": "açık fiş",
+      "items": "ürün",
+      "avg": "ort. fiş süresi",
+      "over": "{{count}} dk üstü"
+    },
+    "allDay": {
+      "title": "Toplam",
+      "hint": "hazırlanacak",
+      "empty": "Hazırlanacak ürün yok"
+    },
+    "eightySix": {
+      "title": "Bu akşam tükenenler",
+      "left": "{{name}}: {{count}} kaldı",
+      "out": "{{name}}: tükendi",
+      "empty": "Tükenen ürün yok"
+    },
+    "empty": {
+      "active": "Açık fiş yok. Yeni siparişler burada görünür.",
+      "held": "Bekleyen fiş yok.",
+      "done": "Bugün henüz hazırlanan fiş yok.",
+      "search": "“{{query}}” ile eşleşen fiş yok."
+    },
+    "announce": {
+      "new_one": "Yeni fiş {{tables}}",
+      "new_other": "{{count}} yeni fiş: {{tables}}"
+    },
+    "conflict": "Bu fiş az önce değişti. Yenileniyor…",
+    "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
+    "loadError": "Fişler yüklenemedi.",
+    "minutes_one": "{{count}} dakika",
+    "minutes_other": "{{count}} dakika",
+    "seconds_one": "{{count}} saniye",
+    "seconds_other": "{{count}} saniye",
+    "ticket": {
+      "aria": {
+        "ok": "Fiş {{table}}, {{time}}",
+        "warn": "Fiş {{table}}, uzuyor, {{time}}",
+        "late": "Fiş {{table}}, gecikti, {{time}}",
+        "held": "Fiş {{table}}, beklemede, {{time}}",
+        "done": "Fiş {{table}}, {{time}} içinde hazırlandı"
+      },
+      "qr": "QR sipariş",
+      "new": "Yeni",
+      "covers_one": "{{count}} kişi",
+      "covers_other": "{{count}} kişi",
+      "sent": "Geliş {{time}}",
+      "readyAt": "Hazır {{time}}",
+      "bump": "Hazır",
+      "bumpAria": "{{table}} hazır",
+      "holdAria": "{{table}} beklet",
+      "resume": "Devam",
+      "resumeAria": "{{table}} devam",
+      "allergen": "Alerjen",
+      "allergyNote": "Notta alerji"
+    }
   }
 }
