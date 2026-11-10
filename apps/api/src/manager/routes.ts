@@ -42,7 +42,7 @@ export function registerManagerRoutes(app: FastifyInstance): void {
   app.post(
     "/api/manager/categories",
     staffRoute([], async (req, reply) => {
-      const c = await createCategory(models, CategoryInput.parse(req.body));
+      const c = await conflictOn(() => createCategory(models, CategoryInput.parse(req.body)));
       emit(req.staff.tenantId, "menu.changed", [c.id]);
       return reply.status(201).send(c);
     }),
@@ -50,7 +50,7 @@ export function registerManagerRoutes(app: FastifyInstance): void {
   app.patch<IdParams>(
     "/api/manager/categories/:id",
     staffRoute([], async (req) => {
-      const c = await updateCategory(models, req.params.id, CategoryInput.partial().parse(req.body));
+      const c = await conflictOn(() => updateCategory(models, req.params.id, CategoryInput.partial().parse(req.body)));
       emit(req.staff.tenantId, "menu.changed", [c.id]);
       return c;
     }),
@@ -67,7 +67,7 @@ export function registerManagerRoutes(app: FastifyInstance): void {
   app.post(
     "/api/manager/items",
     staffRoute([], async (req, reply) => {
-      const item = await createItem(models, MenuItemInput.parse(req.body));
+      const item = await conflictOn(() => createItem(models, MenuItemInput.parse(req.body)));
       emit(req.staff.tenantId, "menu.changed", [item.id]);
       return reply.status(201).send(item);
     }),
@@ -78,7 +78,7 @@ export function registerManagerRoutes(app: FastifyInstance): void {
       // Only the keys the client sent: a partial parse must not re-apply schema defaults to the rest.
       const body = MenuItemInput.partial().parse(req.body);
       const sent = Object.fromEntries(Object.entries(body).filter(([k]) => k in ((req.body ?? {}) as object)));
-      const item = await updateItem(models, req.params.id, sent);
+      const item = await conflictOn(() => updateItem(models, req.params.id, sent));
       emit(req.staff.tenantId, "menu.changed", [item.id]);
       return item;
     }),
@@ -169,6 +169,8 @@ export function registerManagerRoutes(app: FastifyInstance): void {
     return reply
       .header("Content-Type", p.contentType)
       .header("Cache-Control", "public, max-age=31536000, immutable")
+      // helmet defaults to same-origin, which would block <img> from the web origin (same-site subdomain).
+      .header("Cross-Origin-Resource-Policy", "same-site")
       .send(p.data);
   });
 }

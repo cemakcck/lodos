@@ -147,6 +147,35 @@ describe("menu editor", () => {
   });
 });
 
+describe("option groups", () => {
+  const grp = (id: string | undefined, opts: (string | undefined)[]) => ({
+    ...(id ? { id } : {}),
+    name: { en: "G", tr: "G" },
+    type: "single",
+    required: false,
+    options: opts.map((o) => ({ ...(o ? { id: o } : {}), name: { en: "o", tr: "o" }, priceDelta: 0 })),
+  });
+  it("duplicate group ids and duplicate option ids -> 400", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const c = String((await anyCategory(s))._id);
+    expect((await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("a", ["x"]), grp("a", ["y"])] }))).statusCode).toBe(400);
+    expect((await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("a", ["x", "x"])] }))).statusCode).toBe(400);
+  });
+  it("new groups and options get ids; a PATCH echoing ids keeps them", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const c = String((await anyCategory(s))._id);
+    const made = (await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("keep", ["k1", undefined]), grp(undefined, [undefined])] }))).json() as { id: string; optionGroups: { id: string; options: { id: string }[] }[] };
+    expect(made.optionGroups[0]!.id).toBe("keep");
+    expect(made.optionGroups[0]!.options[0]!.id).toBe("k1");
+    expect(made.optionGroups[0]!.options[1]!.id).toMatch(/^[0-9a-f]{10}$/);
+    expect(made.optionGroups[1]!.id).toMatch(/^[0-9a-f]{10}$/);
+    const patched = (await m("PATCH", `/api/manager/items/${made.id}`, { optionGroups: made.optionGroups })).json() as typeof made;
+    expect(patched.optionGroups).toEqual(made.optionGroups);
+  });
+});
+
 describe("86 and N left", () => {
   it("86 -> the guest menu shows soldOut; availability.changed reaches guests", async () => {
     const s = await seedTenant(t);
@@ -175,6 +204,15 @@ describe("86 and N left", () => {
     expect((await m("POST", `/api/manager/availability/${item.id}`, { remaining: -1 })).statusCode).toBe(400);
     expect((await m("POST", `/api/manager/availability/${"0".repeat(24)}`, { soldOut: true })).statusCode).toBe(404);
     expect((await m("POST", "/api/manager/availability/bad", { soldOut: true })).statusCode).toBe(404);
+  });
+
+  it("concurrent availability posts for one item never 500", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const item = await itemNamed(t, s.tenantId, "Truffle fries");
+    const rs = await Promise.all(Array.from({ length: 6 }, (_, i) => m("POST", `/api/manager/availability/${item.id}`, { remaining: i + 1 })));
+    for (const r of rs) expect([200, 409]).toContain(r.statusCode);
+    expect(rs.some((r) => r.statusCode === 200)).toBe(true);
   });
 
   it("remaining 1 plus one order -> soldOut", async () => {
@@ -250,6 +288,7 @@ describe("photos", () => {
     const got = await t.inject({ method: "GET", url: photo });
     expect(got.statusCode).toBe(200);
     expect(got.headers["content-type"]).toBe("image/png");
+    expect(got.headers["cross-origin-resource-policy"]).toBe("same-site");
     expect(got.headers["cache-control"]).toBe("public, max-age=31536000, immutable");
     expect(got.rawPayload.equals(PNG)).toBe(true);
 

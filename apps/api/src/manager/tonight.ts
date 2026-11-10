@@ -19,6 +19,7 @@ export async function tonight(models: Models, now: Date): Promise<Tonight> {
   const [opened, paid, open, ready, top] = await Promise.all([
     models.Check.find({ openedAt: day }, { covers: 1 }).lean(),
     models.Check.find({ status: "paid", "payment.at": day }, { payment: 1 }).lean(),
+    // "Open checks" means every check currently open, not only those opened today.
     models.Check.find({ status: "open" }, { _id: 1 }).lean(),
     models.Ticket.find({ status: "ready", readyAt: day }, { sentAt: 1, readyAt: 1 }).lean(),
     models.Order.aggregate<{ _id: unknown; name: { en: string; tr: string }; qty: number }>([

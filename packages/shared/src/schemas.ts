@@ -39,9 +39,10 @@ const LocOptional = z.object({ en: z.string().trim().max(2000), tr: z.string().t
 
 export const DIETARY = ["vegetarian", "vegan", "gluten-free"] as const;
 
-const OptionInput = z.object({ id: z.string().min(1).max(64), name: Loc, priceDelta: z.number().int() });
+const OptionInput = z.object({ id: z.string().min(1).max(64).optional(), name: Loc, priceDelta: z.number().int() });
 const OptionGroupInput = z.object({
-  id: z.string().min(1).max(64),
+  /** Omit for a new group: the server generates one. Sent ids are kept, so edits stay stable. */
+  id: z.string().min(1).max(64).optional(),
   name: Loc,
   type: z.enum(["single", "multi"]),
   required: z.boolean(),
@@ -58,7 +59,25 @@ export const MenuItemInput = z.object({
   station: z.enum(["kitchen", "bar"]),
   dietary: z.array(z.enum(DIETARY)).max(DIETARY.length).default([]),
   allergens: z.array(z.enum(ALLERGENS)).default([]),
-  optionGroups: z.array(OptionGroupInput).max(20).default([]),
+  optionGroups: z
+    .array(OptionGroupInput)
+    .max(20)
+    .superRefine((groups, ctx) => {
+      const seen = new Set<string>();
+      groups.forEach((g, gi) => {
+        if (g.id !== undefined) {
+          if (seen.has(g.id)) ctx.addIssue({ code: "custom", path: [gi, "id"], message: `Duplicate option group id "${g.id}"` });
+          seen.add(g.id);
+        }
+        const opts = new Set<string>();
+        g.options.forEach((o, oi) => {
+          if (o.id === undefined) return;
+          if (opts.has(o.id)) ctx.addIssue({ code: "custom", path: [gi, "options", oi, "id"], message: `Duplicate option id "${o.id}" in group` });
+          opts.add(o.id);
+        });
+      });
+    })
+    .default([]),
   active: z.boolean().default(true),
   sort: z.number().int().optional(),
 });

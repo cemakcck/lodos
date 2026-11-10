@@ -1,4 +1,5 @@
 import { serviceDayOf, type AvailabilityInput, type CategoryInput, type MenuItemInput } from "@lodos/shared";
+import { randomBytes } from "node:crypto";
 import type { Models } from "../db/models/index";
 import { ApiError } from "../errors";
 import { isOid, notFound } from "../kds/service";
@@ -24,6 +25,14 @@ export type ItemView = {
 };
 export type CategoryView = { id: string; name: Loc; sort: number; active: boolean };
 export type AvailabilityView = { itemId: string; serviceDay: string; soldOut: boolean; remaining: number | null };
+
+const newId = () => randomBytes(5).toString("hex");
+type GroupIn = { id?: string; options: { id?: string }[] };
+/** Keeps ids the client sent; entries without one get a short random id. */
+function withIds<T extends GroupIn>(groups: T[]): T[] {
+  return groups.map((g) => ({ ...g, id: g.id ?? newId(), options: g.options.map((o) => ({ ...o, id: o.id ?? newId() })) }));
+}
+const isDup = (e: unknown) => typeof e === "object" && e !== null && (e as { code?: unknown }).code === 11000;
 
 const loc = (l: Loc): Loc => ({ en: l.en, tr: l.tr });
 
@@ -95,13 +104,14 @@ export async function deleteCategory(models: Models, id: string): Promise<void> 
 export async function createItem(models: Models, body: MenuItemInput & { dietary: string[]; allergens: string[]; optionGroups: unknown[]; active: boolean }): Promise<ItemView> {
   await requireCategory(models, body.categoryId);
   const sort = body.sort ?? ((await models.MenuItem.findOne({ categoryId: body.categoryId }).sort({ sort: -1 }).lean())?.sort ?? -1) + 1;
-  const doc = await models.MenuItem.create({ ...body, story: body.story ?? { en: "", tr: "" }, sort });
+  const doc = await models.MenuItem.create({ ...body, optionGroups: withIds(body.optionGroups as GroupIn[]), story: body.story ?? { en: "", tr: "" }, sort });
   return itemView(doc as never);
 }
 
 export async function updateItem(models: Models, id: string, patch: Record<string, unknown>): Promise<ItemView> {
   if (!isOid(id)) throw notFound();
   if (typeof patch.categoryId === "string") await requireCategory(models, patch.categoryId);
+  if (Array.isArray(patch.optionGroups)) patch = { ...patch, optionGroups: withIds(patch.optionGroups as GroupIn[]) };
   const doc = await models.MenuItem.findOneAndUpdate({ _id: id }, { $set: patch }, { returnDocument: "after", runValidators: true }).lean();
   if (!doc) throw notFound();
   return itemView(doc as never);
@@ -119,7 +129,13 @@ export async function setAvailability(models: Models, itemId: string, body: Avai
   const cur = await models.Availability.findOne({ serviceDay, itemId }).lean();
   const remaining = body.remaining !== undefined ? body.remaining : body.soldOut === false ? null : (cur?.remaining ?? null);
   const soldOut = remaining === 0 ? true : (body.soldOut ?? cur?.soldOut ?? false);
-  await models.Availability.updateOne({ serviceDay, itemId }, { $set: { soldOut, remaining } }, { upsert: true });
+  const write = () => models.Availability.updateOne({ serviceDay, itemId }, { $set: { soldOut, remaining } }, { upsert: true });
+  try {
+    await write();
+  } catch (e) {
+    if (!isDup(e)) throw e;
+    await write(); // a concurrent upsert created the row first; the retry updates it
+  }
   return { itemId, serviceDay, soldOut, remaining };
 }
 
