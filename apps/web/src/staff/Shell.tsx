@@ -48,6 +48,8 @@ export interface ShellProps {
    * figures in between (`<span><b>9</b>open tickets</span>`). Omit to hide the strip.
    */
   stats?: ReactNode;
+  /** Figures at the right end of the stats strip, before the connection status (e.g. "My section"). */
+  statsEnd?: ReactNode;
   /** Show the HH:MM:SS clock at the right of the toolbar. Default true. */
   clock?: boolean;
   /** Red dots on rail items, e.g. `{ floor: true }` while a table is calling. */
@@ -60,7 +62,7 @@ export interface ShellProps {
  * optional 40px stats strip, and the scrolling body. It owns the staff live socket for the connection
  * status, and signs out locally when the socket reports the session is gone.
  */
-export function Shell({ title, subtitle, toolbar, actions, stats, clock = true, railBadges, children }: ShellProps) {
+export function Shell({ title, subtitle, toolbar, actions, stats, statsEnd, clock = true, railBadges, children }: ShellProps) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const me = useMe().data ?? undefined;
@@ -119,6 +121,7 @@ export function Shell({ title, subtitle, toolbar, actions, stats, clock = true, 
             {status}
             {stats}
             <div className="staff-grow" />
+            {statsEnd}
             <div className="text-staff-fg-3">
               <ConnectionBanner connected={live.connected} lastSyncAt={live.lastSyncAt} />
             </div>

@@ -373,5 +373,185 @@
       "allergy": "Allergy",
       "contains": "Contains: {{list}}"
     }
+  },
+  "floor": {
+    "title": "Floor",
+    "rooms": {
+      "label": "Rooms",
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Terrace",
+      "calling": "{{room}}, a table is calling"
+    },
+    "state": {
+      "label": {
+        "free": "Free",
+        "seated": "Seated",
+        "ready": "Food ready",
+        "calling": "Calling",
+        "bill": "Bill"
+      },
+      "aria": {
+        "free": "free",
+        "seated": "seated",
+        "ready": "food ready",
+        "calling": "calling",
+        "bill": "wants the bill"
+      }
+    },
+    "table": {
+      "seats": "seats {{count}}",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "noCovers": "covers not set",
+      "mine": "your section"
+    },
+    "time": {
+      "underMinute": "under a minute",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "now": "now",
+      "min": "{{count}}m"
+    },
+    "chips": {
+      "label": "Needs attention",
+      "calling": "{{table}} calling · {{time}}",
+      "ready": "{{table}} ready to run",
+      "readyMany": "{{count}} ready to run",
+      "readyManyAria": "{{count}} ready to run: {{tables}}",
+      "bill": "{{table}} wants the bill",
+      "mine": "{{label}}, your table",
+      "more": "+{{count}}",
+      "moreAria": "{{count}} more need attention: {{tables}}"
+    },
+    "newOrder": "New order",
+    "pickTable": "Pick a table for the new order",
+    "cancel": "Cancel",
+    "myTables": "My tables",
+    "stats": {
+      "seated": "of {{total}} tables seated",
+      "covers": "covers",
+      "avgTurn": "avg turn",
+      "open": "open checks",
+      "mySection": "My section:",
+      "tables_one": "{{count}} table",
+      "tables_other": "{{count}} tables"
+    },
+    "canvas": {
+      "label": "Floor plan, {{room}}",
+      "legend": "Legend",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset zoom, {{pct}}%",
+      "zoomValue": "{{pct}}%",
+      "empty": "No tables in this room."
+    },
+    "decor": {
+      "mirror": "Mirror wall · booths",
+      "serviceBar": "Service bar",
+      "barCounter": "Bar counter · 8 stools",
+      "railing": "Terrace railing"
+    },
+    "loadError": "Couldn't load the floor.",
+    "detail": {
+      "label": "Table {{table}}",
+      "none": "Select a table",
+      "noneHint": "Tap a table to see its check and actions.",
+      "server": "Server {{name}}",
+      "kv": {
+        "covers": "Covers",
+        "seated": "Seated",
+        "check": "Check",
+        "seats": "Seats"
+      },
+      "food": "Food",
+      "drinks": "Drinks",
+      "subtotal": "Subtotal",
+      "total": "Open check",
+      "seat": "Seat {{n}}",
+      "status": {
+        "sent": "Sent",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "served": "Served"
+      },
+      "noLines": "Nothing ordered yet.",
+      "freeHint": "{{table}} is free. Seat guests to open a check.",
+      "calling": "Calling for {{time}}",
+      "billAsked": "Asked for the bill {{time}} ago",
+      "billAskedBy": "Asked for the bill {{time}} ago, by {{method}}",
+      "reasons": {
+        "wine": "Wine advice",
+        "problem": "Something's wrong",
+        "other": "Wants the waiter"
+      },
+      "loadError": "Couldn't load this check.",
+      "actions": {
+        "seat": "Seat table",
+        "setCovers": "Set covers",
+        "addItems": "Add items",
+        "pickedUp": "Mark picked up",
+        "pickedUpAria": "Mark picked up: {{items}}",
+        "answer": "Answer call",
+        "print": "Print check",
+        "close": "Close check"
+      },
+      "failed": "That didn't go through. Try again.",
+      "conflict": "This table just changed. Refreshing…",
+      "closed": "{{table}} closed: {{amount}} by {{method}}"
+    },
+    "seat": {
+      "title": "Seat {{table}}",
+      "titleSet": "Set covers · {{table}}",
+      "covers": "Covers",
+      "fewer": "Fewer covers",
+      "more": "More covers",
+      "capacity": "The table seats {{count}}.",
+      "over": "More than the table seats. That's fine for a pulled-up chair.",
+      "confirm_one": "Seat {{count}} cover",
+      "confirm_other": "Seat {{count}} covers",
+      "confirmSet_one": "Set {{count}} cover",
+      "confirmSet_other": "Set {{count}} covers",
+      "saving": "Saving…",
+      "taken": "Someone just seated this table. Refreshing…"
+    },
+    "close": {
+      "title": "Close check · {{table}}",
+      "total": "Total",
+      "method": "Payment method",
+      "card": "Card",
+      "cash": "Cash",
+      "methodWord": {
+        "card": "card",
+        "cash": "cash"
+      },
+      "confirm": "Close check",
+      "confirmAria": "Close check, {{amount}} by {{method}}",
+      "closing": "Closing…",
+      "simulated": "The payment is recorded only. No card is charged by this system.",
+      "asked": "The guest asked to pay by {{method}}."
+    },
+    "print": {
+      "title": "Check {{table}}",
+      "back": "Back to floor",
+      "print": "Print",
+      "table": "Table",
+      "date": "Date",
+      "time": "Time",
+      "server": "Server",
+      "covers": "Covers",
+      "food": "Food",
+      "drinks": "Drinks",
+      "subtotal": "{{group}} subtotal",
+      "total": "Total",
+      "vat": "KDV dahil / VAT included",
+      "paidBy": "Paid by {{method}}",
+      "open": "Open check, not yet paid",
+      "thanks": "Thank you",
+      "loadError": "Couldn't load this check.",
+      "loading": "Preparing the check…"
+    }
   }
 }

@@ -12,6 +12,9 @@ import { EightySix } from "./EightySix";
 import { Ticket } from "./Ticket";
 import { matchesSearch } from "./lib";
 import { EnableSoundButton, useChime } from "./useChime";
+import { nextOffset, useServerNow } from "../serverTime";
+
+export { nextOffset };
 import type { KdsData, KdsSnapshot, KdsTab, KdsTicket, Station } from "./types";
 
 const TABS: readonly KdsTab[] = ["active", "held", "done"];
@@ -25,30 +28,6 @@ export interface KdsProps {
   station: Station;
   /** Device clock in ms; injectable for tests. The board corrects it by the server offset. */
   clock?: () => number;
-}
-
-/** Offsets this close to the held one are network noise; a bigger jump is a real clock change. */
-const OFFSET_JUMP_MS = 2000;
-
-/**
- * The board's server-time offset, smoothed. Each snapshot measures `server now - local receive time`; latency
- * only makes that smaller than the truth, so a larger sample is always accepted, and a smaller one only when it
- * differs by more than 2 s (the device or server clock really moved). Timers therefore never step backwards on a
- * refetch.
- */
-export function nextOffset(held: number | null, sample: number): number {
-  if (held === null || sample > held || held - sample > OFFSET_JUMP_MS) return sample;
-  return held;
-}
-
-/** One shared 1 s re-render per board. The time itself is read at render: `clock() + offset`. */
-function useBoardNow(offsetMs: number, clock: () => number): Date {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return new Date(clock() + offsetMs);
 }
 
 type Mapper = (tickets: KdsTicket[]) => KdsTicket[];
@@ -85,7 +64,7 @@ export function Kds({ station, clock = Date.now }: KdsProps) {
 
   const snapshot = active.data;
   const thresholds = snapshot?.thresholds ?? current.data?.thresholds;
-  const now = useBoardNow(snapshot?.offsetMs ?? current.data?.offsetMs ?? 0, clock);
+  const now = useServerNow(snapshot?.offsetMs ?? current.data?.offsetMs ?? 0, clock);
 
   // ---- New-ticket chime and announcement --------------------------------------------------------------
   // Events carry ids only, so remember the ids a ticket.created named and look for them in the refetched list.

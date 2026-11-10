@@ -373,5 +373,185 @@
       "allergy": "Alerji",
       "contains": "İçerir: {{list}}"
     }
+  },
+  "floor": {
+    "title": "Masa planı",
+    "rooms": {
+      "label": "Bölümler",
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Teras",
+      "calling": "{{room}}, bir masa çağırıyor"
+    },
+    "state": {
+      "label": {
+        "free": "Boş",
+        "seated": "Dolu",
+        "ready": "Yemek hazır",
+        "calling": "Çağırıyor",
+        "bill": "Hesap"
+      },
+      "aria": {
+        "free": "boş",
+        "seated": "dolu",
+        "ready": "yemek hazır",
+        "calling": "çağırıyor",
+        "bill": "hesap istiyor"
+      }
+    },
+    "table": {
+      "seats": "{{count}} kişilik",
+      "covers_one": "{{count}} kişi",
+      "covers_other": "{{count}} kişi",
+      "noCovers": "kişi sayısı girilmedi",
+      "mine": "sizin bölümünüz"
+    },
+    "time": {
+      "underMinute": "bir dakikadan az",
+      "hours_one": "{{count}} saat",
+      "hours_other": "{{count}} saat",
+      "minutes_one": "{{count}} dakika",
+      "minutes_other": "{{count}} dakika",
+      "now": "şimdi",
+      "min": "{{count}}dk"
+    },
+    "chips": {
+      "label": "İlgi bekleyenler",
+      "calling": "{{table}} çağırıyor · {{time}}",
+      "ready": "{{table}} servise hazır",
+      "readyMany": "{{count}} masa servise hazır",
+      "readyManyAria": "{{count}} masa servise hazır: {{tables}}",
+      "bill": "{{table}} hesap istiyor",
+      "mine": "{{label}}, sizin masanız",
+      "more": "+{{count}}",
+      "moreAria": "{{count}} masa daha ilgi bekliyor: {{tables}}"
+    },
+    "newOrder": "Yeni sipariş",
+    "pickTable": "Yeni sipariş için bir masa seçin",
+    "cancel": "Vazgeç",
+    "myTables": "Masalarım",
+    "stats": {
+      "seated": "/ {{total}} masa dolu",
+      "covers": "kişi",
+      "avgTurn": "ort. masa süresi",
+      "open": "açık hesap",
+      "mySection": "Bölümüm:",
+      "tables_one": "{{count}} masa",
+      "tables_other": "{{count}} masa"
+    },
+    "canvas": {
+      "label": "Masa planı, {{room}}",
+      "legend": "Açıklama",
+      "zoomIn": "Yakınlaştır",
+      "zoomOut": "Uzaklaştır",
+      "zoomReset": "Yakınlaştırmayı sıfırla, %{{pct}}",
+      "zoomValue": "%{{pct}}",
+      "empty": "Bu bölümde masa yok."
+    },
+    "decor": {
+      "mirror": "Ayna duvarı · localar",
+      "serviceBar": "Servis barı",
+      "barCounter": "Bar tezgâhı · 8 tabure",
+      "railing": "Teras korkuluğu"
+    },
+    "loadError": "Masa planı yüklenemedi.",
+    "detail": {
+      "label": "Masa {{table}}",
+      "none": "Bir masa seçin",
+      "noneHint": "Hesabı ve işlemleri görmek için bir masaya dokunun.",
+      "server": "Garson {{name}}",
+      "kv": {
+        "covers": "Kişi",
+        "seated": "Süre",
+        "check": "Hesap",
+        "seats": "Kapasite"
+      },
+      "food": "Yemek",
+      "drinks": "İçecek",
+      "subtotal": "Ara toplam",
+      "total": "Açık hesap",
+      "seat": "{{n}}. koltuk",
+      "status": {
+        "sent": "İletildi",
+        "preparing": "Hazırlanıyor",
+        "ready": "Hazır",
+        "served": "Servis edildi"
+      },
+      "noLines": "Henüz sipariş yok.",
+      "freeHint": "{{table}} boş. Hesap açmak için misafirleri oturtun.",
+      "calling": "{{time}} süredir çağırıyor",
+      "billAsked": "{{time}} önce hesap istedi",
+      "billAskedBy": "{{time}} önce hesap istedi, {{method}}",
+      "reasons": {
+        "wine": "Şarap önerisi",
+        "problem": "Bir sorun var",
+        "other": "Garsonu çağırıyor"
+      },
+      "loadError": "Bu hesap yüklenemedi.",
+      "actions": {
+        "seat": "Masayı aç",
+        "setCovers": "Kişi sayısını gir",
+        "addItems": "Ürün ekle",
+        "pickedUp": "Alındı olarak işaretle",
+        "pickedUpAria": "Alındı olarak işaretle: {{items}}",
+        "answer": "Çağrıyı yanıtla",
+        "print": "Hesabı yazdır",
+        "close": "Hesabı kapat"
+      },
+      "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
+      "conflict": "Bu masa az önce değişti. Yenileniyor…",
+      "closed": "{{table}} kapatıldı: {{amount}}, {{method}}"
+    },
+    "seat": {
+      "title": "{{table}} masasını aç",
+      "titleSet": "Kişi sayısı · {{table}}",
+      "covers": "Kişi",
+      "fewer": "Kişi azalt",
+      "more": "Kişi artır",
+      "capacity": "Masa {{count}} kişilik.",
+      "over": "Masanın kapasitesinden fazla. Ek sandalye için sorun değil.",
+      "confirm_one": "{{count}} kişiyle aç",
+      "confirm_other": "{{count}} kişiyle aç",
+      "confirmSet_one": "{{count}} kişi olarak kaydet",
+      "confirmSet_other": "{{count}} kişi olarak kaydet",
+      "saving": "Kaydediliyor…",
+      "taken": "Bu masa az önce açıldı. Yenileniyor…"
+    },
+    "close": {
+      "title": "Hesabı kapat · {{table}}",
+      "total": "Toplam",
+      "method": "Ödeme yöntemi",
+      "card": "Kart",
+      "cash": "Nakit",
+      "methodWord": {
+        "card": "kart",
+        "cash": "nakit"
+      },
+      "confirm": "Hesabı kapat",
+      "confirmAria": "Hesabı kapat, {{amount}}, {{method}}",
+      "closing": "Kapatılıyor…",
+      "simulated": "Ödeme yalnızca kaydedilir. Bu sistem karttan çekim yapmaz.",
+      "asked": "Misafir {{method}} ile ödemek istedi."
+    },
+    "print": {
+      "title": "Hesap {{table}}",
+      "back": "Masa planına dön",
+      "print": "Yazdır",
+      "table": "Masa",
+      "date": "Tarih",
+      "time": "Saat",
+      "server": "Garson",
+      "covers": "Kişi",
+      "food": "Yemek",
+      "drinks": "İçecek",
+      "subtotal": "{{group}} ara toplamı",
+      "total": "Toplam",
+      "vat": "KDV dahil / VAT included",
+      "paidBy": "Ödeme: {{method}}",
+      "open": "Açık hesap, henüz ödenmedi",
+      "thanks": "Teşekkür ederiz",
+      "loadError": "Bu hesap yüklenemedi.",
+      "loading": "Hesap hazırlanıyor…"
+    }
   }
 }

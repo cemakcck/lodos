@@ -7,6 +7,8 @@ import { Login } from "./staff/Login";
 import { RequireStaff, StaffHome } from "./staff/RequireStaff";
 import { Shell } from "./staff/Shell";
 import { Kds } from "./staff/kds/Kds";
+import { Floor } from "./staff/floor/Floor";
+import { PrintCheck } from "./staff/PrintCheck";
 import type { StaffRole } from "./staff/auth";
 
 /** A staff screen still to be built: the real Shell around a quiet note. Later tasks replace these. */
@@ -54,9 +56,9 @@ export const routes: RouteObject[] = [
           guarded(["kitchen"], [{ path: "/staff/kitchen", element: <Kds key="kitchen" station="kitchen" /> }]),
           guarded(["bar"], [{ path: "/staff/bar", element: <Kds key="bar" station="bar" /> }]),
           guarded(["waiter"], [
-            ph("/staff/floor", "staff.nav.floor"),
+            { path: "/staff/floor", element: <Floor /> },
             ph("/staff/order/:tableId", "staff.nav.floor"),
-            ph("/staff/check/:id/print", "staff.nav.floor"),
+            { path: "/staff/check/:id/print", element: <PrintCheck /> },
           ]),
           guarded(["manager"], [
             ph("/staff/menu", "staff.nav.menu"),
