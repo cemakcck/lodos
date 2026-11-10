@@ -1,0 +1,36 @@
+/* Staff surface. Tokens are prefixed so they never collide with guest.
+   Wrap staff screens in <div class="theme-staff">. Tailwind itself is imported in guest.css. */
+@theme {
+  --color-staff-bg: #f7f6f4;
+  --color-staff-panel: #ffffff;
+  --color-staff-sunk: #f1efec;
+  --color-staff-line: #e7e4df;
+  --color-staff-line-2: #d9d5ce;
+  --color-staff-fg: #18161a;
+  --color-staff-fg-2: #4a4549;
+  --color-staff-fg-3: #6b6569;
+  --color-staff-rail: #4b1d3f;
+  --color-staff-plum-50: #f5eef3;
+  --color-staff-plum-100: #eadbe6;
+  /* red only for late / allergen */
+  --color-staff-red: #c8102e;
+  --color-staff-red-50: #fdf0f2;
+  --color-staff-amber: #9a6a14;
+  --color-staff-amber-50: #fbf5e9;
+  --color-staff-ok: #2f6b4f;
+  --color-staff-ok-50: #eef5f1;
+  --font-staff-ui: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.theme-staff {
+  background: var(--color-staff-bg);
+  color: var(--color-staff-fg);
+  font-family: var(--font-staff-ui);
+  font-size: 13px;
+  min-height: 100dvh;
+}
+.theme-staff :focus-visible {
+  outline: 2px solid var(--color-staff-rail);
+  outline-offset: 2px;
+}

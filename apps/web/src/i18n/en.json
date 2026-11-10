@@ -1,0 +1,21 @@
+{
+  "app": { "name": "Lodos", "loading": "Loading…", "notFound": "Page not found", "comingSoon": "Coming soon" },
+  "conn": { "reconnecting": "Reconnecting…", "lastUpdated": "Last updated {{time}}" },
+  "lang": { "label": "Language", "en": "English", "tr": "Türkçe" },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Can't reach the server. Check your connection.",
+    "validation": "Please check the details and try again.",
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You don't have permission to do that.",
+    "not_found": "We couldn't find that.",
+    "sold_out": "Sorry, that item just sold out.",
+    "item_unavailable": "That item isn't available right now.",
+    "check_closed": "This check is already closed.",
+    "rate_limited": "Too many requests. Please wait a moment.",
+    "limit_exceeded": "You've reached the limit for this.",
+    "conflict": "That changed while you were working. Please refresh and try again.",
+    "demo_busy": "The demo is busy right now. Please try again shortly.",
+    "internal": "Something went wrong on our side. Please try again."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "app": { "name": "Lodos", "loading": "Yükleniyor…", "notFound": "Sayfa bulunamadı", "comingSoon": "Çok yakında" },
+  "conn": { "reconnecting": "Yeniden bağlanılıyor…", "lastUpdated": "Son güncelleme {{time}}" },
+  "lang": { "label": "Dil", "en": "English", "tr": "Türkçe" },
+  "errors": {
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "network": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
+    "validation": "Lütfen bilgileri kontrol edip tekrar deneyin.",
+    "unauthorized": "Devam etmek için lütfen giriş yapın.",
+    "forbidden": "Bu işlem için yetkiniz yok.",
+    "not_found": "Aradığınız bulunamadı.",
+    "sold_out": "Üzgünüz, bu ürün az önce tükendi.",
+    "item_unavailable": "Bu ürün şu anda mevcut değil.",
+    "check_closed": "Bu hesap zaten kapatılmış.",
+    "rate_limited": "Çok fazla istek gönderildi. Lütfen biraz bekleyin.",
+    "limit_exceeded": "Bunun için sınıra ulaştınız.",
+    "conflict": "Siz işlem yaparken bu değişti. Lütfen sayfayı yenileyip tekrar deneyin.",
+    "demo_busy": "Demo şu anda yoğun. Lütfen birazdan tekrar deneyin.",
+    "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin."
+  }
+}

@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Guest surface (direction A "Plum Salon"). Tokens are prefixed so they never collide with staff.
+   Wrap guest screens in <div class="theme-guest">. */
+@theme {
+  --color-guest-plum-deep: #24101e;
+  --color-guest-plum-mid: #3a1630;
+  --color-guest-plum: #4b1d3f;
+  --color-guest-red: #c8102e;
+  --color-guest-cream: #f8f4ee;
+  --color-guest-beige: #e7d7c2;
+  --color-guest-brass: #c9a46a;
+  --color-guest-black: #0e0c0d;
+  --font-guest-wordmark: "Bodoni Moda", Georgia, serif;
+  --font-guest-dish: "Cormorant Garamond", Georgia, serif;
+  --font-guest-body: "Manrope", system-ui, sans-serif;
+}
+
+.theme-guest {
+  --leo: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><rect width='72' height='72' fill='%23c79f6e'/><g fill='%232a1810'><path d='M10 8c4-3 9-1 9 3-2-1-5-2-9-3z'/><path d='M20 12c2 3 1 7-2 8 0-3 1-5 2-8z'/><path d='M8 20c-3-2-3-7 0-9 0 3 0 6 0 9z'/><path d='M13 22c3 1 6 0 7-2-2 0-5 1-7 2z'/><path d='M44 6c4-2 8 0 8 4-3-2-5-3-8-4z'/><path d='M54 12c1 4-1 7-4 7 1-3 2-5 4-7z'/><path d='M41 15c-2-2-1-6 2-8-1 3-1 5-2 8z'/><path d='M30 38c4-3 9-1 10 3-3-1-6-2-10-3z'/><path d='M41 43c1 4-1 7-4 8 1-3 2-5 4-8z'/><path d='M28 47c-3-2-3-6-1-9 0 3 0 6 1 9z'/><path d='M33 51c3 1 6 0 7-2-2 0-5 1-7 2z'/><path d='M58 40c3-2 7 0 8 3-3-1-5-2-8-3z'/><path d='M64 47c-1 3-3 5-6 4 2-1 4-2 6-4z'/><path d='M57 50c-2-1-3-4-1-7 0 2 0 5 1 7z'/><path d='M8 52c3-2 7-1 8 2-3 0-5-1-8-2z'/><path d='M14 60c-2 2-6 2-8-1 3 0 5 1 8 1z'/><circle cx='26' cy='28' r='2'/><circle cx='50' cy='28' r='1.6'/><circle cx='66' cy='22' r='1.8'/><circle cx='22' cy='66' r='1.6'/><circle cx='46' cy='64' r='2'/><circle cx='4' cy='36' r='1.5'/></g><g fill='%23a77c4c'><ellipse cx='14' cy='15' rx='4' ry='3'/><ellipse cx='47' cy='12' rx='3.5' ry='3'/><ellipse cx='34' cy='45' rx='4' ry='3'/><ellipse cx='61' cy='45' rx='3' ry='2.5'/><ellipse cx='11' cy='57' rx='3' ry='2'/></g></svg>");
+  background: var(--color-guest-plum-deep);
+  color: var(--color-guest-cream);
+  font-family: var(--font-guest-body);
+  min-height: 100dvh;
+}
+.theme-guest .leopard {
+  background-image: var(--leo);
+  background-size: 72px 72px;
+}
+.theme-guest :focus-visible {
+  outline: 2px solid var(--color-guest-brass);
+  outline-offset: 2px;
+}
