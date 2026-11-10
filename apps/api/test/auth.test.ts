@@ -237,7 +237,7 @@ describe("role matrix", () => {
           ? expect.objectContaining({ tickets: expect.any(Array) })
           : url === "/api/floor"
             ? expect.objectContaining({ tables: expect.any(Array), chips: expect.any(Array) })
-            : { ok: true };
+            : expect.objectContaining({ categories: expect.any(Array), items: expect.any(Array) });
         if (status === 200) expect(res.json()).toEqual(shape);
         else expect(res.json().error.code).toBe("forbidden");
       }

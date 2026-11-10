@@ -190,5 +190,40 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     for (const tb of before.tables) expect(text).not.toContain(String(tb._id));
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
-  it.todo("T11: A's manager session gets 404 on B's menu item ids (GET, PATCH, DELETE); B unchanged");
+  it("T11: A's manager session gets 404 on B's menu item, category, availability, table and token ids; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    const cats = await runWithTenant(b.tenantId, () => t.models.Category.find({}).lean());
+    const item = await runWithTenant(b.tenantId, () => t.models.MenuItem.findOne({}).lean().orFail());
+    const table = await t7(b.tenantId);
+    const call = (method: "GET" | "POST" | "PATCH" | "DELETE", url: string, payload?: object) =>
+      t.inject({ method, url, cookies: { lodos_sid: a.sid }, ...(payload ? { payload } : {}) });
+    const iid = String(item._id);
+    const tid = String(table._id);
+    const cid = String(cats[0]!._id);
+    const results = await Promise.all([
+      call("PATCH", `/api/manager/items/${iid}`, { price: 1 }),
+      call("DELETE", `/api/manager/items/${iid}`),
+      t.inject({
+        method: "POST",
+        url: `/api/manager/items/${iid}/photo`,
+        cookies: { lodos_sid: a.sid },
+        headers: { "content-type": "multipart/form-data; boundary=zz" },
+        payload: '--zz\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\n\x89PNG\r\n\x1a\n0000000\r\n--zz--\r\n',
+      }),
+      call("POST", `/api/manager/availability/${iid}`, { soldOut: true }),
+      call("PATCH", `/api/manager/categories/${cid}`, { sort: 5 }),
+      call("DELETE", `/api/manager/categories/${cid}`),
+      call("PATCH", `/api/manager/tables/${tid}`, { name: "T98" }),
+      call("POST", `/api/manager/tables/${tid}/token`),
+    ]);
+    expect(results.map((r) => r.statusCode)).toEqual([404, 404, 404, 404, 404, 404, 404, 404]);
+    // B's ids never leak through A's lists, and A cannot move an item into B's category.
+    const menu = JSON.stringify((await call("GET", "/api/manager/menu")).json());
+    expect(menu).not.toContain(iid);
+    expect(JSON.stringify((await call("GET", "/api/manager/tables")).json())).not.toContain(table.token);
+    const own = await runWithTenant(a.tenantId, () => t.models.Category.findOne({}).lean().orFail());
+    const mine = await runWithTenant(a.tenantId, () => t.models.MenuItem.findOne({ categoryId: own._id }).lean().orFail());
+    expect((await call("PATCH", `/api/manager/items/${String(mine._id)}`, { categoryId: cid })).statusCode).toBe(404);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
 });
