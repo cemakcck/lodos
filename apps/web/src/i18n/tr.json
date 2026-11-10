@@ -1,0 +1,854 @@
+{
+  "app": {
+    "name": "Lodos",
+    "loading": "Yükleniyor…",
+    "notFound": "Sayfa bulunamadı",
+    "comingSoon": "Çok yakında"
+  },
+  "conn": {
+    "reconnecting": "Yeniden bağlanılıyor…",
+    "lastUpdated": "Son güncelleme {{time}}"
+  },
+  "lang": {
+    "label": "Dil",
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "errors": {
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "network": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
+    "validation": "Lütfen bilgileri kontrol edip tekrar deneyin.",
+    "unauthorized": "Devam etmek için lütfen giriş yapın.",
+    "forbidden": "Bu işlem için yetkiniz yok.",
+    "not_found": "Aradığınız bulunamadı.",
+    "sold_out": "Üzgünüz, bu ürün az önce tükendi.",
+    "item_unavailable": "Bu ürün şu anda mevcut değil.",
+    "check_closed": "Bu hesap zaten kapatılmış.",
+    "rate_limited": "Çok fazla istek gönderildi. Lütfen biraz bekleyin.",
+    "limit_exceeded": "Bunun için sınıra ulaştınız.",
+    "conflict": "Siz işlem yaparken bu değişti. Lütfen sayfayı yenileyip tekrar deneyin.",
+    "demo_busy": "Demo şu anda yoğun. Lütfen birazdan tekrar deneyin.",
+    "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin."
+  },
+  "guest": {
+    "hero": {
+      "since": "Karaköy · 2026'dan beri",
+      "welcome": "{{table}} · hoş geldiniz",
+      "welcomeGeneric": "Hoş geldiniz"
+    },
+    "nav": {
+      "menu": "Menü",
+      "yourTable": "Masanız",
+      "menuSections": "Menü bölümleri",
+      "language": "Dil"
+    },
+    "menu": {
+      "loading": "Masanız hazırlanıyor…",
+      "loadFailed": "Menü yüklenemedi.",
+      "retry": "Tekrar deneyin",
+      "soldOut": "Bu akşam tükendi",
+      "remaining": "Son {{count}} adet",
+      "add": "{{name}} ekle",
+      "addUnavailable": "{{name}} bu akşam tükendi",
+      "details": ", {{price}}. Ayrıntılar",
+      "added": "{{name}} siparişinize eklendi",
+      "signature": "İmza"
+    },
+    "dietary": {
+      "vegetarian": "Vejetaryen",
+      "vegan": "Vegan",
+      "gluten-free": "Glutensiz"
+    },
+    "dietaryLong": {
+      "vegetarian": "Vejetaryen",
+      "vegan": "Vegan",
+      "gluten-free": "Glutensiz"
+    },
+    "allergens": {
+      "gluten": "Gluten",
+      "crustaceans": "Kabuklular",
+      "eggs": "Yumurta",
+      "fish": "Balık",
+      "peanuts": "Yer fıstığı",
+      "soybeans": "Soya",
+      "milk": "Süt",
+      "nuts": "Sert kabuklu yemişler",
+      "celery": "Kereviz",
+      "mustard": "Hardal",
+      "sesame": "Susam",
+      "sulphites": "Sülfitler",
+      "lupin": "Acı bakla",
+      "molluscs": "Yumuşakçalar"
+    },
+    "sheet": {
+      "close": "Kapat",
+      "story": "Hikâyesi",
+      "allergens": "Alerjenler",
+      "noAllergens": "14 temel alerjenden hiçbirini içermez",
+      "allergenHint": "Alerjiniz varsa lütfen garsonunuza söyleyin. Mutfağımızda 14 temel alerjenin tümü kullanılmaktadır.",
+      "required": "Zorunlu",
+      "optional": "İsteğe bağlı",
+      "chooseOne": "Birini seçin",
+      "chooseAny": "Dilediğinizi seçin",
+      "choose": "Lütfen seçin: {{group}}",
+      "note": "Mutfağa notunuz",
+      "notePlaceholder": "ör. sosu ayrı gelsin",
+      "noteCount": "{{count}}/{{max}}",
+      "quantity": "Adet",
+      "decrease": "Adedi azalt",
+      "increase": "Adedi artır",
+      "addToOrder": "Siparişe ekle",
+      "soldOut": "Bu akşam tükendi"
+    },
+    "cart": {
+      "view": "Siparişi gör · {{count}}",
+      "viewLabel": "Siparişinizi görün: {{count}} ürün, {{total}}",
+      "title": "Siparişiniz",
+      "empty": "Siparişiniz henüz boş.",
+      "remove": "{{name}} çıkar",
+      "decrease": "{{name}} adedini azalt",
+      "increase": "Bir {{name}} daha",
+      "lineQty": "{{name}} adedi",
+      "soldOut": "Bu akşam tükendi",
+      "unavailable": "Artık mevcut değil",
+      "removeToContinue": "Devam etmek için mevcut olmayan ürünleri çıkarın.",
+      "tooMany": "Bir siparişte en fazla {{max}} ürün olabilir. Bunu gönderip yeniden sipariş verebilirsiniz.",
+      "place": "Siparişi gönder",
+      "placing": "Gönderiliyor…",
+      "straightTo": "Siparişiniz doğrudan mutfağa ve bara iletilir.",
+      "rateLimited": "Kısa sürede çok sipariş verdiniz. Lütfen birkaç dakika bekleyin ya da garsonunuzu çağırın.",
+      "failed": "Siparişiniz gönderilemedi. Lütfen tekrar deneyin.",
+      "sent": "Siparişiniz yola çıktı."
+    },
+    "table": {
+      "title": "Masanız",
+      "subtitle": "Bu akşam {{table}} masasından verilen her şey, canlı.",
+      "nothingYet": "Henüz sipariş verilmedi.",
+      "browse": "Menüye göz atın",
+      "food": "Yemekler",
+      "drinks": "İçecekler",
+      "total": "Toplam",
+      "foodTotal": "Yemekler",
+      "drinksTotal": "İçecekler",
+      "noCancel": "Siparişi değiştirmek ya da iptal etmek için lütfen garsonunuzu çağırın.",
+      "status": {
+        "sent": "İletildi",
+        "preparing": "Hazırlanıyor",
+        "ready": "Hazır",
+        "served": "Servis edildi"
+      }
+    },
+    "call": {
+      "title": "Garsonu çağırın",
+      "reason": "Neden (isteğe bağlı)",
+      "reasons": {
+        "wine": "Şarap önerisi",
+        "problem": "Bir sorun var",
+        "other": "Diğer"
+      },
+      "send": "Garsonu çağır",
+      "sending": "Çağrılıyor…",
+      "onTheWay": "Garsonunuz geliyor.",
+      "alreadyCalled": "Garsonunuz zaten çağrıldı, yolda."
+    },
+    "bill": {
+      "title": "Hesabı isteyin",
+      "method": "Nasıl ödemek istersiniz?",
+      "card": "Kart",
+      "cash": "Nakit",
+      "send": "Hesabı iste",
+      "sending": "İsteniyor…",
+      "onTheWay": "Garsonunuz hesapla birlikte geliyor.",
+      "nothing": "Henüz hesabınızda bir şey yok."
+    },
+    "ended": {
+      "title": "Masanızın hesabı kapandı. Teşekkür ederiz!",
+      "body": "Sizi yeniden Lodos'ta ağırlamayı umuyoruz.",
+      "farewell": "Yine bekleriz"
+    },
+    "invalid": {
+      "title": "Bu QR kod geçerli değil.",
+      "body": "Lütfen garsonunuzdan yardım isteyin."
+    },
+    "footer": {
+      "address": "Karaköy · İstanbul",
+      "credits": "Fotoğraf kaynakları",
+      "creditsTitle": "Fotoğraf kaynakları",
+      "creditsIntro": "Menü fotoğrafları Wikimedia Commons'tan, özgür lisansları kapsamında kullanılmaktadır.",
+      "creditsFile": "Kaynak dosyasının tamamı",
+      "by": "{{author}}",
+      "source": "Kaynak"
+    }
+  },
+  "staff": {
+    "brand": "Lodos personel",
+    "retry": "Tekrar dene",
+    "nav": {
+      "label": "Personel",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "floor": "Salon",
+      "menu": "Menü",
+      "tables": "Masalar",
+      "tonight": "Bu akşam"
+    },
+    "roles": {
+      "waiter": "Garson",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "manager": "Yönetici"
+    },
+    "account": {
+      "open": "{{name}}, hesap menüsü",
+      "language": "Dil",
+      "signOut": "Çıkış yap",
+      "signingOut": "Çıkış yapılıyor…"
+    },
+    "live": {
+      "on": "Canlı",
+      "off": "Bağlantı yok"
+    },
+    "login": {
+      "title": "Personel girişi",
+      "pickName": "Kim çalışıyor?",
+      "pickHint": "Adınıza dokunun, sonra PIN'inizi girin.",
+      "enterPin": "PIN'inizi girin",
+      "pinHint": "4 ile 6 hane. Klavyeyle de girebilirsiniz.",
+      "notYou": "Siz değil misiniz?",
+      "pad": "PIN tuş takımı",
+      "entered_one": "{{count}} hane girildi",
+      "entered_other": "{{count}} hane girildi",
+      "delete": "Son haneyi sil",
+      "signIn": "Giriş yap",
+      "signingIn": "Giriş yapılıyor…",
+      "wrongPin": "PIN yanlış. Lütfen tekrar deneyin.",
+      "locked": "Çok fazla yanlış PIN girildi. Bu hesap 5 dakika kilitli.",
+      "loadError": "Personel listesi yüklenemedi.",
+      "noStaff": "Henüz personel hesabı yok. Eklemek için kurulum betiğini çalıştırın.",
+      "continueAs": "{{name}} olarak devam et",
+      "demoTitle": "Ya da bir rolü hemen deneyin",
+      "demoHint": "Demoda PIN gerekmez.",
+      "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin."
+    }
+  },
+  "demo": {
+    "banner": "Demo restoran, gerçek değil",
+    "controls": "Demo ayarları",
+    "tryAs": "Rol değiştir",
+    "roles": {
+      "guest": "T7'de misafir",
+      "waiter": "Garson",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "manager": "Yönetici"
+    },
+    "simulator": "Diğer masalardan canlı siparişler",
+    "on": "açık",
+    "off": "kapalı",
+    "phone": {
+      "button": "Telefonunuzdan sipariş vermek için okutun",
+      "title": "Telefonunuzdan sipariş verin",
+      "body": "Demo restoranınızın T7 masasını açmak için telefon kameranızla okutun. Siparişiniz buradaki mutfak ekranına düşer.",
+      "qrLabel": "{{url}} için QR kod",
+      "reach": "Telefonunuzun bu adrese erişebilmesi gerekir.",
+      "localhost": "Bu adres localhost, telefon açamaz. Uygulamayı bilgisayarınızın ağ adresinden açın, örneğin http://192.168.1.20:5180.",
+      "close": "Kapat"
+    },
+    "errors": {
+      "rate": "Ağınızdan çok fazla yeni demo açıldı. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+      "busy": "Demo şu anda dolu. Lütfen bir dakika sonra tekrar deneyin.",
+      "simulator": "Simülatör değiştirilemedi. Lütfen tekrar deneyin."
+    },
+    "landing": {
+      "eyebrow": "Karaköy · bir demo",
+      "title": "Lodos",
+      "subtitle": "bir restoran sistemi demosu",
+      "body": "Lodos, Karaköy'de hayali bir restoran; gerçek zamanlı bir restoran sistemini baştan sona göstermek için yapıldı. Misafirler QR menüden sipariş verir, mutfak ve bar ekranları o anda güncellenir, garsonlar salonu yönetir, müdür menüyü düzenler. Size özel bir kopya açılır; istediğinizi değiştirebilirsiniz. Cem Akçiçek'in bir portföy projesidir.",
+      "choose": "Nasıl gezmek istersiniz?",
+      "opening": "Açılıyor…",
+      "tip": "Şunu deneyin: T7'de misafir'i bir pencerede, Mutfak'ı başka bir pencerede açın ve sipariş verin.",
+      "fine": "Kayıt gerekmez. Kopyanız siz ayrıldıktan 30 dakika sonra silinir.",
+      "hints": {
+        "guest": "7 numaralı masada QR menüden sipariş verin, sonra canlı takip edin.",
+        "waiter": "Salon planı: açık masalar, çağrılar ve hesaplar.",
+        "kitchen": "Siparişler anında düşer. Kalemleri işaretleyin, hazır olanı gönderin.",
+        "bar": "Aynı canlı ekran, yalnızca içecekler.",
+        "manager": "Menüyü düzenleyin, bir yemeği kapatın, bu akşamın gidişatını görün."
+      },
+      "loadError": "Lodos'a ulaşılamadı. Lütfen bağlantınızı kontrol edin.",
+      "startHere": "Buradan başlayın",
+      "footer": "Lodos · Karaköy · İstanbul"
+    },
+    "callout": {
+      "label": "Siparişiniz alındı",
+      "cta": "Şimdi mutfak ekranını açın →",
+      "body": "Yeni bir pencerede açılır, siparişinizin düştüğünü izleyebilirsiniz.",
+      "blocked": "Tarayıcınız yeni pencereyi engelledi.",
+      "openLink": "Mutfak ekranını aç",
+      "dismiss": "Kapat"
+    }
+  },
+  "kds": {
+    "title": {
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "hotLine": "Sıcak hat"
+    },
+    "tabs": {
+      "label": "Fiş görünümü",
+      "active": "Aktif",
+      "held": "Bekleyen",
+      "done": "Biten"
+    },
+    "search": {
+      "label": "Masa veya yemek ara",
+      "placeholder": "Masa veya yemek ara",
+      "hint": "Aramak için / tuşuna basın"
+    },
+    "recall": {
+      "label": "Geri al",
+      "aria": "Son hazır fişi geri al",
+      "none": "Geri alınacak fiş yok",
+      "done": "{{table}} yeniden ekranda"
+    },
+    "sound": {
+      "enable": "Sesi aç",
+      "enableAria": "Sesi aç, yeni fişler için",
+      "activate": "Ses açık, etkinleştirmek için dokunun"
+    },
+    "stats": {
+      "open": "açık fiş",
+      "items": "ürün",
+      "avg": "ort. fiş süresi",
+      "over": "{{count}} dk üstü"
+    },
+    "allDay": {
+      "title": "Toplam",
+      "hint": "hazırlanacak",
+      "empty": "Hazırlanacak ürün yok"
+    },
+    "eightySix": {
+      "title": "Bu akşam tükenenler",
+      "left": "{{name}}: {{count}} kaldı",
+      "out": "{{name}}: tükendi",
+      "empty": "Tükenen ürün yok"
+    },
+    "empty": {
+      "active": "Açık fiş yok. Yeni siparişler burada görünür.",
+      "held": "Bekleyen fiş yok.",
+      "done": "Bugün henüz hazırlanan fiş yok.",
+      "search": "“{{query}}” ile eşleşen fiş yok."
+    },
+    "announce": {
+      "new_one": "Yeni fiş {{tables}}",
+      "new_other": "{{count}} yeni fiş: {{tables}}"
+    },
+    "conflict": "Bu fiş az önce değişti. Yenileniyor…",
+    "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
+    "loadError": "Fişler yüklenemedi.",
+    "minutes_one": "{{count}} dakika",
+    "minutes_other": "{{count}} dakika",
+    "seconds_one": "{{count}} saniye",
+    "seconds_other": "{{count}} saniye",
+    "ticket": {
+      "aria": {
+        "ok": "Fiş {{table}}, {{time}}",
+        "warn": "Fiş {{table}}, uzuyor, {{time}}",
+        "late": "Fiş {{table}}, gecikti, {{time}}",
+        "held": "Fiş {{table}}, beklemede, {{time}}",
+        "done": "Fiş {{table}}, {{time}} içinde hazırlandı"
+      },
+      "qr": "QR sipariş",
+      "new": "Yeni",
+      "covers_one": "{{count}} kişi",
+      "covers_other": "{{count}} kişi",
+      "sent": "Geliş {{time}}",
+      "readyAt": "Hazır {{time}}",
+      "bump": "Hazır",
+      "bumpAria": "{{table}} hazır",
+      "holdAria": "{{table}} beklet",
+      "resume": "Devam",
+      "resumeAria": "{{table}} devam",
+      "allergy": "Alerji",
+      "contains": "İçerir: {{list}}"
+    }
+  },
+  "floor": {
+    "title": "Masa planı",
+    "rooms": {
+      "label": "Bölümler",
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Teras",
+      "calling": "{{room}}, bir masa çağırıyor"
+    },
+    "state": {
+      "label": {
+        "free": "Boş",
+        "seated": "Dolu",
+        "ready": "Yemek hazır",
+        "calling": "Çağırıyor",
+        "bill": "Hesap"
+      },
+      "aria": {
+        "free": "boş",
+        "seated": "dolu",
+        "ready": "yemek hazır",
+        "calling": "çağırıyor",
+        "bill": "hesap istiyor"
+      }
+    },
+    "table": {
+      "seats": "{{count}} kişilik",
+      "covers_one": "{{count}} kişi",
+      "covers_other": "{{count}} kişi",
+      "noCovers": "kişi sayısı girilmedi",
+      "mine": "sizin bölümünüz"
+    },
+    "time": {
+      "underMinute": "bir dakikadan az",
+      "hours_one": "{{count}} saat",
+      "hours_other": "{{count}} saat",
+      "minutes_one": "{{count}} dakika",
+      "minutes_other": "{{count}} dakika",
+      "now": "şimdi",
+      "min": "{{count}}dk"
+    },
+    "chips": {
+      "label": "İlgi bekleyenler",
+      "calling": "{{table}} çağırıyor · {{time}}",
+      "ready": "{{table}} servise hazır",
+      "readyMany": "{{count}} masa servise hazır",
+      "readyManyAria": "{{count}} masa servise hazır: {{tables}}",
+      "bill": "{{table}} hesap istiyor",
+      "mine": "{{label}}, sizin masanız",
+      "more": "+{{count}}",
+      "moreAria": "{{count}} masa daha ilgi bekliyor: {{tables}}"
+    },
+    "newOrder": "Yeni sipariş",
+    "pickTable": "Yeni sipariş için bir masa seçin",
+    "cancel": "Vazgeç",
+    "myTables": "Masalarım",
+    "stats": {
+      "seated": "/ {{total}} masa dolu",
+      "covers": "kişi",
+      "avgTurn": "ort. masa süresi",
+      "open": "açık hesap",
+      "mySection": "Bölümüm:",
+      "tables_one": "{{count}} masa",
+      "tables_other": "{{count}} masa"
+    },
+    "canvas": {
+      "label": "Masa planı, {{room}}",
+      "legend": "Açıklama",
+      "zoomIn": "Yakınlaştır",
+      "zoomOut": "Uzaklaştır",
+      "zoomReset": "Yakınlaştırmayı sıfırla, %{{pct}}",
+      "zoomValue": "%{{pct}}",
+      "empty": "Bu bölümde masa yok."
+    },
+    "decor": {
+      "mirror": "Ayna duvarı · localar",
+      "serviceBar": "Servis barı",
+      "barCounter": "Bar tezgâhı · 8 tabure",
+      "railing": "Teras korkuluğu"
+    },
+    "loadError": "Masa planı yüklenemedi.",
+    "detail": {
+      "label": "Masa {{table}}",
+      "none": "Bir masa seçin",
+      "noneHint": "Hesabı ve işlemleri görmek için bir masaya dokunun.",
+      "server": "Garson {{name}}",
+      "kv": {
+        "covers": "Kişi",
+        "seated": "Süre",
+        "check": "Hesap",
+        "seats": "Kapasite"
+      },
+      "food": "Yemek",
+      "drinks": "İçecek",
+      "subtotal": "Ara toplam",
+      "total": "Açık hesap",
+      "seat": "{{n}}. koltuk",
+      "status": {
+        "sent": "İletildi",
+        "preparing": "Hazırlanıyor",
+        "ready": "Hazır",
+        "served": "Servis edildi"
+      },
+      "lines": "{{table}} hesabı",
+      "noLines": "Henüz sipariş yok.",
+      "freeHint": "{{table}} boş. Hesap açmak için misafirleri oturtun.",
+      "calling": "{{time}} süredir çağırıyor",
+      "billAsked": "{{time}} önce hesap istedi",
+      "billAskedBy": "{{time}} önce hesap istedi, {{method}}",
+      "reasons": {
+        "wine": "Şarap önerisi",
+        "problem": "Bir sorun var",
+        "other": "Garsonu çağırıyor"
+      },
+      "loadError": "Bu hesap yüklenemedi.",
+      "actions": {
+        "seat": "Masayı aç",
+        "setCovers": "Kişi sayısını gir",
+        "addItems": "Ürün ekle",
+        "pickedUp": "Alındı olarak işaretle",
+        "pickedUpAria": "Alındı olarak işaretle: {{items}}",
+        "answer": "Çağrıyı yanıtla",
+        "print": "Hesabı yazdır",
+        "close": "Hesabı kapat"
+      },
+      "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
+      "conflict": "Bu masa az önce değişti. Yenileniyor…",
+      "closed": "{{table}} kapatıldı: {{amount}}, {{method}}"
+    },
+    "seat": {
+      "title": "{{table}} masasını aç",
+      "titleSet": "Kişi sayısı · {{table}}",
+      "covers": "Kişi",
+      "fewer": "Kişi azalt",
+      "more": "Kişi artır",
+      "capacity": "Masa {{count}} kişilik.",
+      "over": "Masanın kapasitesinden fazla. Ek sandalye için sorun değil.",
+      "confirm_one": "{{count}} kişiyle aç",
+      "confirm_other": "{{count}} kişiyle aç",
+      "confirmSet_one": "{{count}} kişi olarak kaydet",
+      "confirmSet_other": "{{count}} kişi olarak kaydet",
+      "saving": "Kaydediliyor…",
+      "taken": "Bu masa az önce açıldı. Yenileniyor…"
+    },
+    "close": {
+      "title": "Hesabı kapat · {{table}}",
+      "total": "Toplam",
+      "method": "Ödeme yöntemi",
+      "card": "Kart",
+      "cash": "Nakit",
+      "methodWord": {
+        "card": "kart",
+        "cash": "nakit"
+      },
+      "confirm": "Hesabı kapat",
+      "confirmAria": "Hesabı kapat, {{amount}}, {{method}}",
+      "closing": "Kapatılıyor…",
+      "simulated": "Ödeme yalnızca kaydedilir. Bu sistem karttan çekim yapmaz.",
+      "asked": "Misafir {{method}} ile ödemek istedi."
+    },
+    "print": {
+      "title": "Hesap {{table}}",
+      "back": "Masa planına dön",
+      "print": "Yazdır",
+      "table": "Masa",
+      "date": "Tarih",
+      "time": "Saat",
+      "server": "Garson",
+      "covers": "Kişi",
+      "food": "Yemek",
+      "drinks": "İçecek",
+      "subtotal": "{{group}} ara toplamı",
+      "total": "Toplam",
+      "vat": "KDV dahil / VAT included",
+      "paidBy": "Ödeme: {{method}}",
+      "open": "Açık hesap, henüz ödenmedi",
+      "thanks": "Teşekkür ederiz",
+      "loadError": "Bu hesap yüklenemedi.",
+      "loading": "Hesap hazırlanıyor…"
+    }
+  },
+  "order": {
+    "title": "Yeni sipariş",
+    "back": "Masa planına dön",
+    "backShort": "Masa planı",
+    "covers_one": "{{count}} kişi",
+    "covers_other": "{{count}} kişi",
+    "noCovers": "Kişi sayısı girilmedi",
+    "server": "Garson",
+    "search": {
+      "label": "Menüde ara",
+      "placeholder": "Menüde ara",
+      "none": "“{{query}}” ile eşleşen bir şey yok.",
+      "results_one": "{{count}} sonuç",
+      "results_other": "{{count}} sonuç"
+    },
+    "categories": "Kategoriler",
+    "all": "Tüm ürünler",
+    "food": "Yemek",
+    "drinks": "İçecek",
+    "grid": "Menü ürünleri, {{label}}",
+    "tile": {
+      "food": "Yemek",
+      "drink": "İçecek",
+      "foodAria": "yemek",
+      "drinkAria": "içecek",
+      "options": "Seçenekli",
+      "optionsAria": "seçenek seçin",
+      "soldOut": "Tükendi",
+      "soldOutAria": "tükendi",
+      "left": "{{count}} kaldı",
+      "leftAria": "{{count}} kaldı",
+      "inOrder": "bu siparişte {{count}} adet"
+    },
+    "sheet": {
+      "required": "Zorunlu",
+      "optional": "İsteğe bağlı",
+      "one": "birini seçin",
+      "any": "istediğiniz kadar",
+      "choose": "Lütfen seçin: {{group}}",
+      "quantity": "Adet",
+      "less": "Bir azalt",
+      "more": "Bir artır",
+      "add": "Ekle",
+      "cancel": "Vazgeç"
+    },
+    "ticket": {
+      "label": "{{table}} siparişi",
+      "heading": "Bu sipariş",
+      "count_one": "{{count}} ürün",
+      "count_other": "{{count}} ürün",
+      "empty": "Eklemek için bir yemeğe veya içeceğe dokunun.",
+      "emptyHint": "Hepsi tek seferde mutfağa ve bara gider.",
+      "less": "{{name}} azalt",
+      "more": "{{name}} artır",
+      "remove": "{{name}} kaldır",
+      "qty": "Adet",
+      "seat": "Koltuk",
+      "seatFor": "{{name}} için koltuk",
+      "noSeat": "Koltuk –",
+      "seatN": "{{n}}. koltuk",
+      "noteFor": "{{name}} notu",
+      "addNoteFor": "{{name}} için not ekle",
+      "editNoteFor": "{{name}} notunu düzenle",
+      "noteCount": "{{count}}/{{max}}",
+      "notePlaceholder": "Alerji, buzsuz, sos ayrı…",
+      "soldOut": "Bu akşam tükendi. Göndermek için kaldırın.",
+      "unavailable": "Artık menüde yok. Göndermek için kaldırın.",
+      "cap": "Bir siparişte en fazla {{max}} ürün olabilir. Önce bunu gönderin, kalanını sonra ekleyin.",
+      "fixFirst": "Göndermek için tükenen satırları kaldırın."
+    },
+    "total": "Toplam",
+    "send": "Mutfağa ve bara gönder",
+    "sending": "Gönderiliyor…",
+    "sendFailed": "Gönderilemedi. Bağlantıyı kontrol edip tekrar deneyin; hiçbir şey iki kez gitmez.",
+    "added": "{{name}} eklendi",
+    "addedMany": "{{count}} × {{name}} eklendi",
+    "notSeated": {
+      "title": "{{table}} açık değil",
+      "body": "Önce masa planından masayı açın, sonra ürün ekleyin.",
+      "closed": "{{table}} artık açık değil. Hesabı kapatılmış ya da değişmiş."
+    },
+    "loadError": "Menü yüklenemedi.",
+    "tableError": "Bu masa yüklenemedi.",
+    "retry": "Tekrar dene",
+    "limitExceeded": "Bu hesap sipariş sınırına ulaştı. Bir yöneticiye danışın."
+  },
+  "manager": {
+    "menu": {
+      "title": "Menü",
+      "categories": "Kategoriler",
+      "all": "Tüm ürünler",
+      "addCategory": "Kategori ekle",
+      "rename": "{{name}} adını değiştir",
+      "moveUp": "{{name}} yukarı taşı",
+      "moveDown": "{{name}} aşağı taşı",
+      "moveFailed": "Kategoriler sıralanamadı. Yenileniyor…",
+      "newItem": "Yeni ürün",
+      "items": "Ürünler",
+      "itemsIn": "{{name}} ürünleri",
+      "search": "Ürün ara",
+      "noMatch": "“{{q}}” ile eşleşen ürün yok.",
+      "empty": "Bu kategoride henüz ürün yok.",
+      "loadError": "Menü yüklenemedi.",
+      "col": {
+        "photo": "Fotoğraf",
+        "name": "Ad",
+        "price": "Fiyat",
+        "station": "İstasyon",
+        "status": "Durum",
+        "eightySix": "86 · Kalan"
+      },
+      "edit": "{{name}} düzenle",
+      "noPhoto": "Fotoğraf yok",
+      "options_one": "{{count}} seçenek grubu",
+      "options_other": "{{count}} seçenek grubu",
+      "stats": {
+        "items": "ürün",
+        "soldOut": "tükendi",
+        "low": "sınırlı",
+        "hidden": "gizli"
+      },
+      "status": {
+        "available": "Satışta",
+        "soldOut": "Tükendi",
+        "left": "{{count}} kaldı",
+        "hidden": "Gizli"
+      },
+      "station": {
+        "kitchen": "Mutfak",
+        "bar": "Bar"
+      }
+    },
+    "category": {
+      "addTitle": "Yeni kategori",
+      "editTitle": "Kategoriyi düzenle",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "shown": "Menüde görünür",
+      "create": "Kategori ekle",
+      "save": "Kaydet",
+      "delete": "Kategoriyi sil",
+      "deleteConflict": "Bu kategoride hâlâ ürün var. Önce ürünleri taşıyın ya da gizleyin.",
+      "hiddenTag": "Gizli"
+    },
+    "avail": {
+      "switch": "{{name}}: bu akşam tükendi olarak işaretle",
+      "on": "Tükendi",
+      "off": "Satışta",
+      "left": "Kalan porsiyon, {{name}}",
+      "leftShort": "kaldı",
+      "leftHint": "Boş bırakırsanız sınır yok. Her sipariş bir düşer; 0'da ürün tükenir.",
+      "failed": "{{name}} güncellenemedi. Hiçbir şey değişmedi; tekrar deneyin."
+    },
+    "item": {
+      "newTitle": "Yeni ürün",
+      "editTitle": "{{name}} düzenle",
+      "details": "Bilgiler",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "descEn": "Açıklama (İngilizce)",
+      "descTr": "Açıklama (Türkçe)",
+      "category": "Kategori",
+      "price": "Fiyat",
+      "priceHint": "Lira olarak; ör. 640 ya da 640,50",
+      "station": "İstasyon",
+      "stationHint": "İçecekler bara gider.",
+      "dietary": "Beslenme",
+      "dietaryNames": {
+        "vegetarian": "Vejetaryen",
+        "vegan": "Vegan",
+        "gluten-free": "Glutensiz"
+      },
+      "allergens": "Alerjenler",
+      "allergensHint": "Misafire gösterilir, mutfak fişinde kırmızıyla işaretlenir.",
+      "photo": "Fotoğraf",
+      "photoHint": "JPEG, PNG ya da WebP, en fazla 2 MB",
+      "photoChoose": "Fotoğraf seç",
+      "photoReplace": "Fotoğrafı değiştir",
+      "photoCurrent": "Mevcut fotoğraf",
+      "photoNew": "Yeni fotoğraf, ürünle birlikte kaydedilir",
+      "photoDiscard": "Mevcut fotoğrafı koru",
+      "photoNone": "Henüz fotoğraf yok",
+      "photoTooBig": "Bu fotoğraf 2 MB'tan büyük. Daha küçük bir dosya seçin.",
+      "photoType": "JPEG, PNG ya da WebP bir fotoğraf kullanın.",
+      "photoFailed": "Ürün kaydedildi ama fotoğraf kabul edilmedi: {{reason}}",
+      "visibility": "Menüde görünür",
+      "visOn": "Görünür",
+      "visOff": "Gizli",
+      "visHint": "Gizli ürünler burada kalır ama misafir ve garson görmez.",
+      "create": "Ürünü oluştur",
+      "save": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor…",
+      "cancel": "Vazgeç",
+      "saved": "{{name}} kaydedildi.",
+      "created": "{{name}} menüye eklendi.",
+      "errors": {
+        "required": "Zorunlu",
+        "tooLong": "Çok uzun",
+        "price": "Fiyatı 640 ya da 640,50 gibi yazın",
+        "delta": "Tutarı 50 ya da -10 gibi yazın",
+        "noOptions": "En az bir seçenek ekleyin",
+        "invalid": "Bu alanı kontrol edin",
+        "summary": "İşaretli alanları düzeltip yeniden kaydedin."
+      }
+    },
+    "groups": {
+      "title": "Seçenek grupları",
+      "hint": "Misafir sipariş verirken seçer; ör. pişirme derecesi ya da ekstralar.",
+      "empty": "Seçenek grubu yok. Çoğu yemekte gerekmez.",
+      "add": "Seçenek grubu ekle",
+      "group": "Seçenek grubu {{n}}",
+      "nameEn": "Grup adı (İngilizce)",
+      "nameTr": "Grup adı (Türkçe)",
+      "type": "Seçim",
+      "single": "Tek seçim",
+      "multi": "Çoklu seçim",
+      "required": "Zorunlu",
+      "remove": "Seçenek grubu {{n}} kaldır",
+      "addOption": "Seçenek ekle",
+      "option": "Seçenek {{n}}",
+      "optNameEn": "Seçenek adı (İngilizce)",
+      "optNameTr": "Seçenek adı (Türkçe)",
+      "delta": "Fiyat farkı (₺)",
+      "removeOption": "Seçenek {{n}} kaldır"
+    },
+    "tables": {
+      "title": "Masalar",
+      "printSheet": "QR sayfasını yazdır",
+      "caption": "Masalar ve QR kodları",
+      "col": {
+        "name": "Masa",
+        "room": "Alan",
+        "capacity": "Kapasite",
+        "section": "Bölge",
+        "code": "QR kod",
+        "actions": "İşlemler"
+      },
+      "noSection": "Atanmamış",
+      "codeEnding": "Kodun sonu {{tail}}",
+      "edit": "{{name}} düzenle",
+      "editShort": "Düzenle",
+      "regenerate": "{{name}} için QR'ı yenile",
+      "regenerateShort": "QR'ı yenile",
+      "regenerating": "Yenileniyor…",
+      "confirmTitle": "QR'ı yenile · {{name}}",
+      "confirmBody": "{{name}} yeni bir kod alır. Eski basılı kod hemen çalışmaz olur; onu kullanan misafirler menüye erişemez.",
+      "confirmNext": "Yeni sayfayı yazdırıp masadaki kartı değiştirin.",
+      "regenerated": "{{name}} için yeni QR kod hazır. Yazdırıp eski kartın yerine koyun.",
+      "editTitle": "{{name}} düzenle",
+      "name": "Ad",
+      "nameHint": "T ya da B ve bir sayı; ör. T12, B2",
+      "capacity": "Kapasite",
+      "capacityHint": "1 ile 50 kişi arası",
+      "nameError": "T ya da B ve bir sayı kullanın; ör. T12.",
+      "capacityError": "1 ile 50 arasında bir sayı girin.",
+      "duplicate": "Bu ad başka bir masada kullanılıyor.",
+      "save": "Kaydet",
+      "saved": "{{name}} kaydedildi.",
+      "loadError": "Masalar yüklenemedi.",
+      "stats": {
+        "tables": "masa",
+        "seats": "kişilik kapasite",
+        "rooms": "alan"
+      }
+    },
+    "qr": {
+      "title": "QR sayfası",
+      "back": "Masalara dön",
+      "print": "Yazdır",
+      "allRooms": "Tüm alanlar",
+      "rooms": "Alanlar",
+      "summary": "{{cards}} kart · {{pages}} A4 sayfa, sayfa başına 6",
+      "localhost": "Bu kodlar {{origin}} adresine gider; yalnızca yayındaki adreste çalışır. Gerçek masalar için yayındaki siteden yazdırın.",
+      "qrLabel": "{{name}} masasının QR kodu",
+      "sheet": "A4 sayfa {{n}}",
+      "loading": "Masalar yükleniyor…",
+      "loadError": "Masalar yüklenemedi."
+    },
+    "tonight": {
+      "title": "Bu akşam",
+      "covers": "Kişi",
+      "coversHint": "Bu serviste oturan misafir",
+      "revenue": "Ciro",
+      "revenueHint": "Kapanan hesaplar, KDV dahil",
+      "open": "Açık hesaplar",
+      "openTotal": "hâlâ masalarda",
+      "avg": "Ortalama fiş süresi",
+      "avgHint": "Gönderimden hazıra, mutfak ve bar",
+      "none": "Henüz fiş yok",
+      "top": "Bu akşam en çok satanlar",
+      "topEmpty": "Bu akşam henüz sipariş yok.",
+      "sold": "adet",
+      "serviceDay": "Servis günü 06:00'da başlar",
+      "loadError": "Bu akşamın rakamları yüklenemedi."
+    },
+    "retry": "Tekrar dene"
+  }
+}

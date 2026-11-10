@@ -1,0 +1,854 @@
+{
+  "app": {
+    "name": "Lodos",
+    "loading": "Loading…",
+    "notFound": "Page not found",
+    "comingSoon": "Coming soon"
+  },
+  "conn": {
+    "reconnecting": "Reconnecting…",
+    "lastUpdated": "Last updated {{time}}"
+  },
+  "lang": {
+    "label": "Language",
+    "en": "English",
+    "tr": "Türkçe"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Can't reach the server. Check your connection.",
+    "validation": "Please check the details and try again.",
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You don't have permission to do that.",
+    "not_found": "We couldn't find that.",
+    "sold_out": "Sorry, that item just sold out.",
+    "item_unavailable": "That item isn't available right now.",
+    "check_closed": "This check is already closed.",
+    "rate_limited": "Too many requests. Please wait a moment.",
+    "limit_exceeded": "You've reached the limit for this.",
+    "conflict": "That changed while you were working. Please refresh and try again.",
+    "demo_busy": "The demo is busy right now. Please try again shortly.",
+    "internal": "Something went wrong on our side. Please try again."
+  },
+  "guest": {
+    "hero": {
+      "since": "Karaköy · since 2026",
+      "welcome": "{{table}} · welcome",
+      "welcomeGeneric": "Welcome"
+    },
+    "nav": {
+      "menu": "Menu",
+      "yourTable": "Your table",
+      "menuSections": "Menu sections",
+      "language": "Language"
+    },
+    "menu": {
+      "loading": "Setting your table…",
+      "loadFailed": "We couldn't load the menu.",
+      "retry": "Try again",
+      "soldOut": "Sold out tonight",
+      "remaining": "Only {{count}} left",
+      "add": "Add {{name}}",
+      "addUnavailable": "{{name}} is sold out tonight",
+      "details": ", {{price}}. See details",
+      "added": "{{name}} added to your order",
+      "signature": "Signature"
+    },
+    "dietary": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "gluten-free": "GF"
+    },
+    "dietaryLong": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "gluten-free": "Gluten-free"
+    },
+    "allergens": {
+      "gluten": "Gluten",
+      "crustaceans": "Crustaceans",
+      "eggs": "Eggs",
+      "fish": "Fish",
+      "peanuts": "Peanuts",
+      "soybeans": "Soy",
+      "milk": "Milk",
+      "nuts": "Tree nuts",
+      "celery": "Celery",
+      "mustard": "Mustard",
+      "sesame": "Sesame",
+      "sulphites": "Sulphites",
+      "lupin": "Lupin",
+      "molluscs": "Molluscs"
+    },
+    "sheet": {
+      "close": "Close",
+      "story": "The story",
+      "allergens": "Allergens",
+      "noAllergens": "None of the 14 major allergens",
+      "allergenHint": "Tell your waiter about any allergy. Our kitchen handles all 14 major allergens.",
+      "required": "Required",
+      "optional": "Optional",
+      "chooseOne": "Choose one",
+      "chooseAny": "Choose any",
+      "choose": "Please choose: {{group}}",
+      "note": "Note for the kitchen",
+      "notePlaceholder": "e.g. sauce on the side",
+      "noteCount": "{{count}}/{{max}}",
+      "quantity": "Quantity",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "addToOrder": "Add to order",
+      "soldOut": "Sold out tonight"
+    },
+    "cart": {
+      "view": "View order · {{count}}",
+      "viewLabel": "View your order: {{count}} items, {{total}}",
+      "title": "Your order",
+      "empty": "Your order is empty.",
+      "remove": "Remove {{name}}",
+      "decrease": "One less {{name}}",
+      "increase": "One more {{name}}",
+      "lineQty": "Quantity of {{name}}",
+      "soldOut": "Sold out tonight",
+      "unavailable": "No longer available",
+      "removeToContinue": "Remove the unavailable items to continue.",
+      "tooMany": "Up to {{max}} items per order. Place this one, then order more.",
+      "place": "Place order",
+      "placing": "Sending…",
+      "straightTo": "Your order goes straight to the kitchen and the bar.",
+      "rateLimited": "You've ordered a lot in a short time. Please wait a few minutes, or call your waiter.",
+      "failed": "We couldn't send your order. Please try again.",
+      "sent": "Your order is on its way."
+    },
+    "table": {
+      "title": "Your table",
+      "subtitle": "Everything ordered at {{table}} tonight, live.",
+      "nothingYet": "Nothing ordered yet.",
+      "browse": "Browse the menu",
+      "food": "Food",
+      "drinks": "Drinks",
+      "total": "Total",
+      "foodTotal": "Food",
+      "drinksTotal": "Drinks",
+      "noCancel": "To change or cancel an order, please call your waiter.",
+      "status": {
+        "sent": "Sent",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "served": "Served"
+      }
+    },
+    "call": {
+      "title": "Call the waiter",
+      "reason": "Reason (optional)",
+      "reasons": {
+        "wine": "Wine advice",
+        "problem": "Something's wrong",
+        "other": "Other"
+      },
+      "send": "Call the waiter",
+      "sending": "Calling…",
+      "onTheWay": "Your waiter is on the way.",
+      "alreadyCalled": "Your waiter has already been called and is on the way."
+    },
+    "bill": {
+      "title": "Request the bill",
+      "method": "How would you like to pay?",
+      "card": "Card",
+      "cash": "Cash",
+      "send": "Request the bill",
+      "sending": "Requesting…",
+      "onTheWay": "Your waiter is on the way with the bill.",
+      "nothing": "There's nothing on your bill yet."
+    },
+    "ended": {
+      "title": "This table's visit has ended. Thank you!",
+      "body": "We hope to see you again soon at Lodos.",
+      "farewell": "Until next time"
+    },
+    "invalid": {
+      "title": "This QR code isn't valid.",
+      "body": "Please ask your waiter for help."
+    },
+    "footer": {
+      "address": "Karaköy · İstanbul",
+      "credits": "Photo credits",
+      "creditsTitle": "Photo credits",
+      "creditsIntro": "Menu photos are from Wikimedia Commons, used under their free licences.",
+      "creditsFile": "Full credits file",
+      "by": "by {{author}}",
+      "source": "Source"
+    }
+  },
+  "staff": {
+    "brand": "Lodos staff",
+    "retry": "Try again",
+    "nav": {
+      "label": "Staff",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "floor": "Floor",
+      "menu": "Menu",
+      "tables": "Tables",
+      "tonight": "Tonight"
+    },
+    "roles": {
+      "waiter": "Waiter",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "manager": "Manager"
+    },
+    "account": {
+      "open": "{{name}}, account menu",
+      "language": "Language",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    },
+    "live": {
+      "on": "Live",
+      "off": "Offline"
+    },
+    "login": {
+      "title": "Staff sign-in",
+      "pickName": "Who's working?",
+      "pickHint": "Tap your name, then enter your PIN.",
+      "enterPin": "Enter your PIN",
+      "pinHint": "4 to 6 digits. The keyboard works too.",
+      "notYou": "Not you?",
+      "pad": "PIN pad",
+      "entered_one": "{{count}} digit entered",
+      "entered_other": "{{count}} digits entered",
+      "delete": "Delete last digit",
+      "signIn": "Sign in",
+      "signingIn": "Signing in…",
+      "wrongPin": "Wrong PIN. Please try again.",
+      "locked": "Too many wrong PINs. This account is locked for 5 minutes.",
+      "loadError": "Couldn't load the staff list.",
+      "noStaff": "No staff accounts yet. Run the setup script to add them.",
+      "continueAs": "Continue as {{name}}",
+      "demoTitle": "Or try a role instantly",
+      "demoHint": "No PIN needed in the demo.",
+      "demoStart": "Pick a role below to open your private copy of the demo restaurant."
+    }
+  },
+  "demo": {
+    "banner": "Demo restaurant, not real",
+    "controls": "Demo controls",
+    "tryAs": "Switch role",
+    "roles": {
+      "guest": "Guest at T7",
+      "waiter": "Waiter",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "manager": "Manager"
+    },
+    "simulator": "Live orders from other tables",
+    "on": "on",
+    "off": "off",
+    "phone": {
+      "button": "Scan to order from your phone",
+      "title": "Order from your phone",
+      "body": "Scan this with your phone's camera to open table T7 of your demo restaurant. Your order lands on the kitchen screen here.",
+      "qrLabel": "QR code for {{url}}",
+      "reach": "Your phone must be able to reach this address.",
+      "localhost": "This is localhost, so a phone can't open it. Open the app at your computer's network address instead, for example http://192.168.1.20:5180.",
+      "close": "Close"
+    },
+    "errors": {
+      "rate": "Too many new demos from your network. Please wait a few minutes and try again.",
+      "busy": "The demo is full right now. Please try again in a minute.",
+      "simulator": "Couldn't change the simulator. Please try again."
+    },
+    "landing": {
+      "eyebrow": "Karaköy · a demo",
+      "title": "Lodos",
+      "subtitle": "a restaurant system demo",
+      "body": "Lodos is a fictional restaurant in Karaköy, built to show a real-time restaurant system end to end. Guests order from a QR menu, the kitchen and bar screens update the moment they do, waiters run the floor and the manager edits the menu. You get your own private copy, so change anything you like. It's a portfolio project by Cem Akçiçek.",
+      "choose": "Choose how to look around",
+      "opening": "Opening…",
+      "tip": "Try this: open Guest at T7 in one window and Kitchen in another, then place an order.",
+      "fine": "No sign-up. Your copy is deleted 30 minutes after you leave.",
+      "hints": {
+        "guest": "Order from the QR menu at table 7, then follow it live.",
+        "waiter": "The floor plan: open tables, calls and bills.",
+        "kitchen": "Tickets arrive live. Tick items off and bump them.",
+        "bar": "The same live board, for drinks only.",
+        "manager": "Edit the menu, 86 a dish and see how tonight is going."
+      },
+      "loadError": "Couldn't reach Lodos. Please check your connection.",
+      "startHere": "Start here",
+      "footer": "Lodos · Karaköy · İstanbul"
+    },
+    "callout": {
+      "label": "Your order is in",
+      "cta": "Now open the kitchen screen →",
+      "body": "It opens in a new window, so you can watch your order arrive.",
+      "blocked": "Your browser blocked the new window.",
+      "openLink": "Open the kitchen screen",
+      "dismiss": "Dismiss"
+    }
+  },
+  "kds": {
+    "title": {
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "hotLine": "Hot line"
+    },
+    "tabs": {
+      "label": "Ticket view",
+      "active": "Active",
+      "held": "Held",
+      "done": "Done"
+    },
+    "search": {
+      "label": "Find table or dish",
+      "placeholder": "Find table or dish",
+      "hint": "Press / to search"
+    },
+    "recall": {
+      "label": "Recall",
+      "aria": "Recall the last bumped ticket",
+      "none": "Nothing to recall",
+      "done": "{{table}} is back on the board"
+    },
+    "sound": {
+      "enable": "Enable sound",
+      "enableAria": "Enable sound for new tickets",
+      "activate": "Sound on, tap to activate"
+    },
+    "stats": {
+      "open": "open tickets",
+      "items": "items",
+      "avg": "avg ticket time",
+      "over": "over {{count}} min"
+    },
+    "allDay": {
+      "title": "All day",
+      "hint": "items to fire",
+      "empty": "Nothing to fire"
+    },
+    "eightySix": {
+      "title": "86'd tonight",
+      "left": "{{name}}: {{count}} left",
+      "out": "{{name}}: out",
+      "empty": "Nothing 86'd"
+    },
+    "empty": {
+      "active": "No open tickets. New orders appear here.",
+      "held": "No tickets on hold.",
+      "done": "Nothing bumped yet today.",
+      "search": "No tickets match “{{query}}”."
+    },
+    "announce": {
+      "new_one": "New ticket {{tables}}",
+      "new_other": "{{count}} new tickets: {{tables}}"
+    },
+    "conflict": "This ticket just changed. Refreshing…",
+    "failed": "That didn't go through. Try again.",
+    "loadError": "Couldn't load the tickets.",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "seconds_one": "{{count}} second",
+    "seconds_other": "{{count}} seconds",
+    "ticket": {
+      "aria": {
+        "ok": "Ticket {{table}}, {{time}}",
+        "warn": "Ticket {{table}}, running long, {{time}}",
+        "late": "Ticket {{table}}, late, {{time}}",
+        "held": "Ticket {{table}}, on hold, {{time}}",
+        "done": "Ticket {{table}}, ready in {{time}}"
+      },
+      "qr": "QR order",
+      "new": "New",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "sent": "Sent {{time}}",
+      "readyAt": "Ready {{time}}",
+      "bump": "Bump",
+      "bumpAria": "Bump {{table}}",
+      "holdAria": "Hold {{table}}",
+      "resume": "Resume",
+      "resumeAria": "Resume {{table}}",
+      "allergy": "Allergy",
+      "contains": "Contains: {{list}}"
+    }
+  },
+  "floor": {
+    "title": "Floor",
+    "rooms": {
+      "label": "Rooms",
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Terrace",
+      "calling": "{{room}}, a table is calling"
+    },
+    "state": {
+      "label": {
+        "free": "Free",
+        "seated": "Seated",
+        "ready": "Food ready",
+        "calling": "Calling",
+        "bill": "Bill"
+      },
+      "aria": {
+        "free": "free",
+        "seated": "seated",
+        "ready": "food ready",
+        "calling": "calling",
+        "bill": "wants the bill"
+      }
+    },
+    "table": {
+      "seats": "seats {{count}}",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "noCovers": "covers not set",
+      "mine": "your section"
+    },
+    "time": {
+      "underMinute": "under a minute",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "now": "now",
+      "min": "{{count}}m"
+    },
+    "chips": {
+      "label": "Needs attention",
+      "calling": "{{table}} calling · {{time}}",
+      "ready": "{{table}} ready to run",
+      "readyMany": "{{count}} ready to run",
+      "readyManyAria": "{{count}} ready to run: {{tables}}",
+      "bill": "{{table}} wants the bill",
+      "mine": "{{label}}, your table",
+      "more": "+{{count}}",
+      "moreAria": "{{count}} more need attention: {{tables}}"
+    },
+    "newOrder": "New order",
+    "pickTable": "Pick a table for the new order",
+    "cancel": "Cancel",
+    "myTables": "My tables",
+    "stats": {
+      "seated": "of {{total}} tables seated",
+      "covers": "covers",
+      "avgTurn": "avg turn",
+      "open": "open checks",
+      "mySection": "My section:",
+      "tables_one": "{{count}} table",
+      "tables_other": "{{count}} tables"
+    },
+    "canvas": {
+      "label": "Floor plan, {{room}}",
+      "legend": "Legend",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset zoom, {{pct}}%",
+      "zoomValue": "{{pct}}%",
+      "empty": "No tables in this room."
+    },
+    "decor": {
+      "mirror": "Mirror wall · booths",
+      "serviceBar": "Service bar",
+      "barCounter": "Bar counter · 8 stools",
+      "railing": "Terrace railing"
+    },
+    "loadError": "Couldn't load the floor.",
+    "detail": {
+      "label": "Table {{table}}",
+      "none": "Select a table",
+      "noneHint": "Tap a table to see its check and actions.",
+      "server": "Server {{name}}",
+      "kv": {
+        "covers": "Covers",
+        "seated": "Seated",
+        "check": "Check",
+        "seats": "Seats"
+      },
+      "food": "Food",
+      "drinks": "Drinks",
+      "subtotal": "Subtotal",
+      "total": "Open check",
+      "seat": "Seat {{n}}",
+      "status": {
+        "sent": "Sent",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "served": "Served"
+      },
+      "noLines": "Nothing ordered yet.",
+      "lines": "Check for {{table}}",
+      "freeHint": "{{table}} is free. Seat guests to open a check.",
+      "calling": "Calling for {{time}}",
+      "billAsked": "Asked for the bill {{time}} ago",
+      "billAskedBy": "Asked for the bill {{time}} ago, by {{method}}",
+      "reasons": {
+        "wine": "Wine advice",
+        "problem": "Something's wrong",
+        "other": "Wants the waiter"
+      },
+      "loadError": "Couldn't load this check.",
+      "actions": {
+        "seat": "Seat table",
+        "setCovers": "Set covers",
+        "addItems": "Add items",
+        "pickedUp": "Mark picked up",
+        "pickedUpAria": "Mark picked up: {{items}}",
+        "answer": "Answer call",
+        "print": "Print check",
+        "close": "Close check"
+      },
+      "failed": "That didn't go through. Try again.",
+      "conflict": "This table just changed. Refreshing…",
+      "closed": "{{table}} closed: {{amount}} by {{method}}"
+    },
+    "seat": {
+      "title": "Seat {{table}}",
+      "titleSet": "Set covers · {{table}}",
+      "covers": "Covers",
+      "fewer": "Fewer covers",
+      "more": "More covers",
+      "capacity": "The table seats {{count}}.",
+      "over": "More than the table seats. That's fine for a pulled-up chair.",
+      "confirm_one": "Seat {{count}} cover",
+      "confirm_other": "Seat {{count}} covers",
+      "confirmSet_one": "Set {{count}} cover",
+      "confirmSet_other": "Set {{count}} covers",
+      "saving": "Saving…",
+      "taken": "Someone just seated this table. Refreshing…"
+    },
+    "close": {
+      "title": "Close check · {{table}}",
+      "total": "Total",
+      "method": "Payment method",
+      "card": "Card",
+      "cash": "Cash",
+      "methodWord": {
+        "card": "card",
+        "cash": "cash"
+      },
+      "confirm": "Close check",
+      "confirmAria": "Close check, {{amount}} by {{method}}",
+      "closing": "Closing…",
+      "simulated": "The payment is recorded only. No card is charged by this system.",
+      "asked": "The guest asked to pay by {{method}}."
+    },
+    "print": {
+      "title": "Check {{table}}",
+      "back": "Back to floor",
+      "print": "Print",
+      "table": "Table",
+      "date": "Date",
+      "time": "Time",
+      "server": "Server",
+      "covers": "Covers",
+      "food": "Food",
+      "drinks": "Drinks",
+      "subtotal": "{{group}} subtotal",
+      "total": "Total",
+      "vat": "KDV dahil / VAT included",
+      "paidBy": "Paid by {{method}}",
+      "open": "Open check, not yet paid",
+      "thanks": "Thank you",
+      "loadError": "Couldn't load this check.",
+      "loading": "Preparing the check…"
+    }
+  },
+  "order": {
+    "title": "New order",
+    "back": "Back to floor",
+    "backShort": "Floor",
+    "covers_one": "{{count}} cover",
+    "covers_other": "{{count}} covers",
+    "noCovers": "Covers not set",
+    "server": "Server",
+    "search": {
+      "label": "Search the menu",
+      "placeholder": "Search menu",
+      "none": "Nothing matches “{{query}}”.",
+      "results_one": "{{count}} result",
+      "results_other": "{{count}} results"
+    },
+    "categories": "Categories",
+    "all": "All items",
+    "food": "Food",
+    "drinks": "Drinks",
+    "grid": "Menu items, {{label}}",
+    "tile": {
+      "food": "Food",
+      "drink": "Drink",
+      "foodAria": "food",
+      "drinkAria": "drink",
+      "options": "Options",
+      "optionsAria": "choose options",
+      "soldOut": "Sold out",
+      "soldOutAria": "sold out",
+      "left": "{{count}} left",
+      "leftAria": "{{count}} left",
+      "inOrder": "{{count}} in this order"
+    },
+    "sheet": {
+      "required": "Required",
+      "optional": "Optional",
+      "one": "choose one",
+      "any": "choose any",
+      "choose": "Please choose: {{group}}",
+      "quantity": "Quantity",
+      "less": "One less",
+      "more": "One more",
+      "add": "Add",
+      "cancel": "Cancel"
+    },
+    "ticket": {
+      "label": "Order for {{table}}",
+      "heading": "This order",
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items",
+      "empty": "Tap a dish or drink to add it.",
+      "emptyHint": "Everything is sent to the kitchen and bar at once.",
+      "less": "Less {{name}}",
+      "more": "More {{name}}",
+      "remove": "Remove {{name}}",
+      "qty": "Quantity",
+      "seat": "Seat",
+      "seatFor": "Seat for {{name}}",
+      "noSeat": "No seat",
+      "seatN": "Seat {{n}}",
+      "noteFor": "Note for {{name}}",
+      "addNoteFor": "Add note for {{name}}",
+      "editNoteFor": "Edit note for {{name}}",
+      "noteCount": "{{count}}/{{max}}",
+      "notePlaceholder": "Allergy, no ice, sauce on the side…",
+      "soldOut": "Sold out tonight. Remove it to send.",
+      "unavailable": "No longer on the menu. Remove it to send.",
+      "cap": "An order holds up to {{max}} items. Send this one, then add the rest.",
+      "fixFirst": "Remove the sold-out lines to send."
+    },
+    "total": "Total",
+    "send": "Send to kitchen & bar",
+    "sending": "Sending…",
+    "sendFailed": "Couldn't send. Check the connection and try again; nothing was sent twice.",
+    "added": "Added {{name}}",
+    "addedMany": "Added {{count}} × {{name}}",
+    "notSeated": {
+      "title": "{{table}} isn't seated",
+      "body": "Seat the table on the floor first, then add items.",
+      "closed": "{{table}} isn't seated any more. Its check was closed or changed."
+    },
+    "loadError": "Couldn't load the menu.",
+    "tableError": "Couldn't load this table.",
+    "retry": "Try again",
+    "limitExceeded": "This check has reached its order limit. Ask a manager."
+  },
+  "manager": {
+    "menu": {
+      "title": "Menu",
+      "categories": "Categories",
+      "all": "All items",
+      "addCategory": "Add category",
+      "rename": "Rename {{name}}",
+      "moveUp": "Move {{name}} up",
+      "moveDown": "Move {{name}} down",
+      "moveFailed": "Couldn't reorder the categories. Refreshing…",
+      "newItem": "New item",
+      "items": "Items",
+      "itemsIn": "Items in {{name}}",
+      "search": "Search items",
+      "noMatch": "No items match “{{q}}”.",
+      "empty": "No items in this category yet.",
+      "loadError": "Couldn't load the menu.",
+      "col": {
+        "photo": "Photo",
+        "name": "Name",
+        "price": "Price",
+        "station": "Station",
+        "status": "Status",
+        "eightySix": "86 · N left"
+      },
+      "edit": "Edit {{name}}",
+      "noPhoto": "No photo",
+      "options_one": "{{count}} option group",
+      "options_other": "{{count}} option groups",
+      "stats": {
+        "items": "items",
+        "soldOut": "sold out",
+        "low": "with N left",
+        "hidden": "hidden"
+      },
+      "status": {
+        "available": "Available",
+        "soldOut": "Sold out",
+        "left": "{{count}} left",
+        "hidden": "Hidden"
+      },
+      "station": {
+        "kitchen": "Kitchen",
+        "bar": "Bar"
+      }
+    },
+    "category": {
+      "addTitle": "New category",
+      "editTitle": "Edit category",
+      "nameEn": "Name (English)",
+      "nameTr": "Name (Turkish)",
+      "shown": "Shown on the menu",
+      "create": "Add category",
+      "save": "Save",
+      "delete": "Delete category",
+      "deleteConflict": "This category still has items. Move or hide them first.",
+      "hiddenTag": "Hidden"
+    },
+    "avail": {
+      "switch": "Sold out tonight, {{name}}",
+      "on": "Sold out",
+      "off": "Available",
+      "left": "Portions left, {{name}}",
+      "leftShort": "left",
+      "leftHint": "Empty means no limit. Each order counts down; at 0 the item is sold out.",
+      "failed": "Couldn't update {{name}}. Nothing changed; try again."
+    },
+    "item": {
+      "newTitle": "New item",
+      "editTitle": "Edit {{name}}",
+      "details": "Details",
+      "nameEn": "Name (English)",
+      "nameTr": "Name (Turkish)",
+      "descEn": "Description (English)",
+      "descTr": "Description (Turkish)",
+      "category": "Category",
+      "price": "Price",
+      "priceHint": "In lira, e.g. 640 or 640,50",
+      "station": "Station",
+      "stationHint": "Drinks go to the bar.",
+      "dietary": "Dietary",
+      "dietaryNames": {
+        "vegetarian": "Vegetarian",
+        "vegan": "Vegan",
+        "gluten-free": "Gluten-free"
+      },
+      "allergens": "Allergens",
+      "allergensHint": "Shown to guests and flagged in red on kitchen tickets.",
+      "photo": "Photo",
+      "photoHint": "JPEG, PNG or WebP, up to 2 MB",
+      "photoChoose": "Choose photo",
+      "photoReplace": "Replace photo",
+      "photoCurrent": "Current photo",
+      "photoNew": "New photo, saved with the item",
+      "photoDiscard": "Keep the current photo",
+      "photoNone": "No photo yet",
+      "photoTooBig": "This photo is over 2 MB. Choose a smaller one.",
+      "photoType": "Use a JPEG, PNG or WebP photo.",
+      "photoFailed": "The item was saved, but the photo was refused: {{reason}}",
+      "visibility": "Shown on the menu",
+      "visOn": "Shown",
+      "visOff": "Hidden",
+      "visHint": "Hidden items stay here but guests and waiters don't see them.",
+      "create": "Create item",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saved": "{{name}} saved.",
+      "created": "{{name}} added to the menu.",
+      "errors": {
+        "required": "Required",
+        "tooLong": "Too long",
+        "price": "Enter a price like 640 or 640,50",
+        "delta": "Enter an amount like 50 or -10",
+        "noOptions": "Add at least one option",
+        "invalid": "Check this field",
+        "summary": "Fix the marked fields, then save again."
+      }
+    },
+    "groups": {
+      "title": "Option groups",
+      "hint": "Guests choose these when they order, e.g. doneness or extras.",
+      "empty": "No option groups. Most dishes don't need any.",
+      "add": "Add option group",
+      "group": "Option group {{n}}",
+      "nameEn": "Group name (English)",
+      "nameTr": "Group name (Turkish)",
+      "type": "Choice",
+      "single": "Pick one",
+      "multi": "Pick any",
+      "required": "Required",
+      "remove": "Remove option group {{n}}",
+      "addOption": "Add option",
+      "option": "Option {{n}}",
+      "optNameEn": "Option name (English)",
+      "optNameTr": "Option name (Turkish)",
+      "delta": "Price change (₺)",
+      "removeOption": "Remove option {{n}}"
+    },
+    "tables": {
+      "title": "Tables",
+      "printSheet": "Print QR sheet",
+      "caption": "Tables and their QR codes",
+      "col": {
+        "name": "Table",
+        "room": "Room",
+        "capacity": "Capacity",
+        "section": "Section",
+        "code": "QR code",
+        "actions": "Actions"
+      },
+      "noSection": "Unassigned",
+      "codeEnding": "Code ending {{tail}}",
+      "edit": "Edit {{name}}",
+      "editShort": "Edit",
+      "regenerate": "Regenerate QR for {{name}}",
+      "regenerateShort": "Regenerate QR",
+      "regenerating": "Regenerating…",
+      "confirmTitle": "Regenerate QR · {{name}}",
+      "confirmBody": "{{name}} gets a new code. The old printed code stops working right away, and guests still using it lose the menu.",
+      "confirmNext": "Print the new sheet and replace the card on the table.",
+      "regenerated": "{{name}} has a new QR code. Print it and replace the old card.",
+      "editTitle": "Edit {{name}}",
+      "name": "Name",
+      "nameHint": "T or B and a number, e.g. T12 or B2",
+      "capacity": "Capacity",
+      "capacityHint": "1 to 50 seats",
+      "nameError": "Use T or B and a number, e.g. T12.",
+      "capacityError": "Enter a number from 1 to 50.",
+      "duplicate": "Another table already has this name.",
+      "save": "Save",
+      "saved": "{{name}} saved.",
+      "loadError": "Couldn't load the tables.",
+      "stats": {
+        "tables": "tables",
+        "seats": "seats",
+        "rooms": "rooms"
+      }
+    },
+    "qr": {
+      "title": "QR sheet",
+      "back": "Back to tables",
+      "print": "Print",
+      "allRooms": "All rooms",
+      "rooms": "Rooms",
+      "summary": "{{cards}} cards · {{pages}} A4 pages, 6 per page",
+      "localhost": "These codes point to {{origin}}, so they only work on the deployed address. Print from the live site for real tables.",
+      "qrLabel": "QR code for table {{name}}",
+      "sheet": "A4 sheet {{n}}",
+      "loading": "Loading tables…",
+      "loadError": "Couldn't load the tables."
+    },
+    "tonight": {
+      "title": "Tonight",
+      "covers": "Covers",
+      "coversHint": "Guests seated this service",
+      "revenue": "Revenue",
+      "revenueHint": "Closed checks, VAT included",
+      "open": "Open checks",
+      "openTotal": "still on the tables",
+      "avg": "Average ticket time",
+      "avgHint": "From sent to ready, kitchen and bar",
+      "none": "No tickets yet",
+      "top": "Top items tonight",
+      "topEmpty": "No orders yet tonight.",
+      "sold": "sold",
+      "serviceDay": "Service day starts at 06:00",
+      "loadError": "Couldn't load tonight's numbers."
+    },
+    "retry": "Try again"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@lodos/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "node scripts/build.mjs",
+    "start": "node dist/main.js",
+    "setup": "tsx src/scripts/setup.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "mongodb-memory-server": "^11.3.0",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/cors": "^11.4.1",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/multipart": "^10.1.8",
+    "@lodos/shared": "^0.0.0",
+    "argon2": "^0.45.2",
+    "fastify": "^5.12.8",
+    "mongoose": "^9.12.1",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  }
+}
