@@ -25,7 +25,7 @@ type OrderSpec = {
   source: "qr" | "staff";
   minAgo: number;
   lines: LineSpec[];
-  /** Present only for orders still being worked on. A round without a ticket was already served. */
+  /** Present only for orders still being worked on. Without it, the order is a served round. */
   ticket?: { status: "new" | "started" | "ready"; startedMinAgo?: number; readyMinAgo?: number };
 };
 
@@ -42,7 +42,7 @@ const SEATED = [
 
 /**
  * Tickets: 2 late (18 and 16 min), 1 warn (9 min), 3 ok, 1 ready and not yet served.
- * Orders without a `ticket` are earlier rounds that were already served, so the checks carry realistic totals.
+ * Orders without a `ticket` are earlier rounds, already served (ticketed as ready + served).
  */
 const ORDERS: OrderSpec[] = [
   { table: "B4", source: "staff", minAgo: 90, lines: [{ slug: "sparkling", qty: 3, opts: ["size:12cl"] }, { slug: "burrata" }, { slug: "grilled-octopus" }] },
@@ -201,31 +201,38 @@ export async function seedRestaurant(
         idempotencyKey: `seed-${n}`,
         items,
       });
-      if (!spec.ticket) return;
-      const station = items[0]?.station;
-      tickets.push({
-        orderId,
-        checkId: check._id,
-        tableId: check.tableId,
-        tableName: spec.table,
-        station,
-        status: spec.ticket.status,
-        serverName: spec.source === "staff" ? staffName(check.serverStaffId) : null,
-        covers: seated.covers,
-        sentAt: placedAt,
-        startedAt: spec.ticket.startedMinAgo ? ago(spec.ticket.startedMinAgo) : null,
-        readyAt: spec.ticket.readyMinAgo ? ago(spec.ticket.readyMinAgo) : null,
-        servedAt: null,
-        items: items.map((l, i) => ({
-          orderItemIndex: i,
-          name: l.name,
-          qty: l.qty,
-          options: l.options.map((o) => o.name),
-          note: l.note,
-          allergens: l.allergens,
-          checked: spec.ticket?.status === "ready" || (spec.ticket?.status === "started" && i === 0),
-        })),
-      });
+      // One ticket per station the order uses. Orders without a `ticket` spec were served earlier:
+      // ready, then served, with realistic cook times after `sentAt` (all before `now`).
+      for (const station of ["kitchen", "bar"] as const) {
+        const lines = items.map((l, i) => ({ l, i })).filter(({ l }) => l.station === station);
+        if (lines.length === 0) continue;
+        const cookMin = station === "kitchen" ? 12 : 5;
+        const at = (min: number) => new Date(placedAt.getTime() + min * 60_000);
+        const t = spec.ticket;
+        tickets.push({
+          orderId,
+          checkId: check._id,
+          tableId: check.tableId,
+          tableName: spec.table,
+          station,
+          status: t ? t.status : "ready",
+          serverName: spec.source === "staff" ? staffName(check.serverStaffId) : null,
+          covers: seated.covers,
+          sentAt: placedAt,
+          startedAt: t ? (t.startedMinAgo ? ago(t.startedMinAgo) : null) : at(2),
+          readyAt: t ? (t.readyMinAgo ? ago(t.readyMinAgo) : null) : at(cookMin),
+          servedAt: t ? null : at(cookMin + 2),
+          items: lines.map(({ l, i }) => ({
+            orderItemIndex: i,
+            name: l.name,
+            qty: l.qty,
+            options: l.options.map((o) => o.name),
+            note: l.note,
+            allergens: l.allergens,
+            checked: !t || t.status === "ready" || (t.status === "started" && i === 0),
+          })),
+        });
+      }
     });
 
     const t2 = checkOf("T2").check;

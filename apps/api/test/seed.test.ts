@@ -111,18 +111,36 @@ describe("liveService: true", () => {
     expect(checks.some((c) => String(c.tableId) === liveRes.tables.T7?.id)).toBe(false);
   });
 
-  it("has exactly 2 late and 1 warn tickets and one ready, unserved ticket", async () => {
+  it("has exactly 2 late and 1 warn among active tickets, and one ready, unserved ticket", async () => {
     const tickets = await inTenant(live, () => t.models.Ticket.find().lean());
-    expect(tickets).toHaveLength(7);
-    const states = tickets.map((x) => ticketAgeState(x.sentAt, NOW));
+    const active = tickets.filter((x) => x.status === "new" || x.status === "started");
+    expect(active).toHaveLength(6);
+    const states = active.map((x) => ticketAgeState(x.sentAt, NOW));
     expect(states.filter((s) => s === "late")).toHaveLength(2);
     expect(states.filter((s) => s === "warn")).toHaveLength(1);
-    const late = tickets.filter((x) => ticketAgeState(x.sentAt, NOW) === "late").map((x) => Math.round((NOW.getTime() - x.sentAt.getTime()) / 60_000));
+    const late = active.filter((x) => ticketAgeState(x.sentAt, NOW) === "late").map((x) => Math.round((NOW.getTime() - x.sentAt.getTime()) / 60_000));
     expect(late.sort()).toEqual([16, 18]);
-    const ready = tickets.filter((x) => x.status === "ready");
-    expect(ready).toHaveLength(1);
-    expect(ready[0]?.readyAt).toBeInstanceOf(Date);
-    expect(ready[0]?.servedAt).toBeNull();
+    const readyUnserved = tickets.filter((x) => x.status === "ready" && x.servedAt === null);
+    expect(readyUnserved).toHaveLength(1);
+    expect(readyUnserved[0]?.readyAt).toBeInstanceOf(Date);
+    expect(readyUnserved[0]?.tableName).toBe("B2");
+    for (const x of tickets.filter((y) => y.servedAt)) {
+      expect(x.status).toBe("ready");
+      expect(x.readyAt && x.readyAt >= x.sentAt && x.servedAt && x.servedAt >= x.readyAt && x.servedAt < NOW).toBe(true);
+    }
+  });
+
+  it("gives every order one ticket per station it uses", async () => {
+    const [orders, tickets] = await inTenant(live, () => Promise.all([t.models.Order.find().lean(), t.models.Ticket.find().lean()]));
+    for (const o of orders) {
+      const mine = tickets.filter((x) => String(x.orderId) === String(o._id));
+      expect(mine.length).toBeGreaterThanOrEqual(1);
+      expect(mine.map((x) => x.station).sort()).toEqual([...new Set(o.items.map((l) => l.station))].sort());
+      for (const tk of mine) {
+        expect(tk.items.every((l) => o.items[l.orderItemIndex]?.station === tk.station)).toBe(true);
+      }
+      expect(mine.flatMap((x) => x.items.map((l) => l.orderItemIndex)).sort()).toEqual(o.items.map((_, i) => i));
+    }
   });
 
   it("keeps tickets, orders and checks consistent", async () => {
