@@ -41,6 +41,8 @@ export type TicketView = {
   items: TicketItemView[];
 };
 export type KdsView = {
+  now: string;
+  thresholds: { warnMin: number; lateMin: number };
   tickets: TicketView[];
   allDay: { itemName: Loc; qty: number }[];
   eightySix: { itemId: string; name: Loc; soldOut: boolean; remaining: number | null }[];
@@ -134,6 +136,8 @@ export async function kdsView(models: Models, station: Station, tab: Tab, now: D
 
   const cook = done.map((t) => (t.readyAt as Date).getTime() - t.sentAt.getTime());
   return {
+    now: now.toISOString(),
+    thresholds: th,
     tickets: shown.map((t) => view(t, now, th)),
     allDay,
     eightySix,
@@ -215,6 +219,10 @@ export async function recall(models: Models, station: Station, now: Date): Promi
       { returnDocument: "after" },
     ).lean();
     if (won) return { ticket: view(won, now, await thresholds(models)), changed: true };
+    // Lost the race for this ticket. If a concurrent recall already took it back, that is our answer (double tap):
+    // never fall through to the next ready ticket.
+    const cur = await models.Ticket.findOne({ _id: last._id }).lean();
+    if (cur && cur.status !== "ready") return { ticket: view(cur, now, await thresholds(models)), changed: false };
   }
   throw new ApiError(409, "conflict");
 }

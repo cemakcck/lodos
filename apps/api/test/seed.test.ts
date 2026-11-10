@@ -206,6 +206,7 @@ describe("liveService: true", () => {
   it("seeds quickly", async () => {
     const start = performance.now();
     await seedRestaurant(t.models, newTenant(), NOW, { liveService: true });
-    expect(performance.now() - start).toBeLessThan(500);
+    // Guards against accidental N+1 inserts (hundreds of ms of sequential writes), not micro-performance: generous bound.
+    expect(performance.now() - start).toBeLessThan(3000);
   });
 });

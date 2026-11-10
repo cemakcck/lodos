@@ -34,6 +34,8 @@ describe("GET /api/kds/:station", () => {
     expect(sent).toEqual([...sent].sort((a, b) => a - b));
     expect(body.tickets.every((x: { status: string }) => x.status === "new" || x.status === "started")).toBe(true);
     expect(body.stats.late).toBe(2);
+    expect(body.thresholds).toEqual({ warnMin: 8, lateMin: 15 });
+    expect(body.now).toBe(NOW.toISOString());
     expect(body.tickets.filter((x: { ageState: string }) => x.ageState === "late")).toHaveLength(2);
     expect(body.tickets[0].items[0].name).toHaveProperty("tr");
   });
@@ -138,6 +140,29 @@ describe("ticket actions", () => {
     const servedStill = await runWithTenant("main", () => t.models.Ticket.countDocuments({ station: "kitchen", status: "ready", servedAt: { $ne: null } }));
     expect(servedStill).toBeGreaterThan(0);
     expect((await call("kitchen", "POST", "/api/kds/kitchen/recall")).statusCode).toBe(404);
+  });
+
+  it("concurrent recalls un-ready exactly one ticket and emit once", async () => {
+    const ids = await runWithTenant("main", async () => {
+      const rs = await t.models.Ticket.find({ station: "bar", status: "ready", servedAt: null }).lean();
+      return rs.map((r) => String(r._id));
+    });
+    // Ensure at least two unserved ready bar tickets exist.
+    while (ids.length < 2) {
+      const x = await find({ station: "bar", status: { $in: ["new", "started"] } });
+      await call("bar", "POST", `/api/tickets/${x._id}/bump`);
+      ids.push(String(x._id));
+    }
+    const emit = vi.spyOn(t.app.realtime, "emit");
+    const rs = await Promise.all([call("bar", "POST", "/api/kds/bar/recall"), call("bar", "POST", "/api/kds/bar/recall")]);
+    expect(rs.map((r) => r.statusCode)).toEqual([200, 200]);
+    expect(emit).toHaveBeenCalledTimes(1);
+    expect(rs[0]!.json().ticket.id).toBe(rs[1]!.json().ticket.id);
+    const back = await runWithTenant("main", () => t.models.Ticket.countDocuments({ _id: { $in: ids }, status: "started" }));
+    const stillReady = await runWithTenant("main", () => t.models.Ticket.countDocuments({ _id: { $in: ids }, status: "ready" }));
+    expect(back).toBe(1);
+    expect(stillReady).toBe(ids.length - 1);
+    emit.mockRestore();
   });
 
   it("hold and unhold round trip; invalid transitions and served tickets give 409", async () => {
