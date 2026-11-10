@@ -42,3 +42,9 @@ export function acquireSocket(o: LiveAudience): { socket: Socket; release: () =>
     },
   };
 }
+
+/** After the staff cookie changes (PIN login, demo role switch), make the open staff socket re-handshake. */
+export function reconnectStaffSocket(): void {
+  const entry = entries.get("staff");
+  if (entry) entry.socket.disconnect().connect();
+}

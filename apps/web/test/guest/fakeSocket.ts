@@ -13,6 +13,7 @@ export class FakeSocket {
   emit(ev: string, ...a: unknown[]) {
     (this.handlers.get(ev) ?? []).forEach((f) => f(...a));
   }
+  connect() { return this; }
   close() { this.connected = false; }
 }
 

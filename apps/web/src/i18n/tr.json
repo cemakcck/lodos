@@ -179,5 +179,114 @@
       "by": "{{author}}",
       "source": "Kaynak"
     }
+  },
+  "staff": {
+    "brand": "Lodos personel",
+    "retry": "Tekrar dene",
+    "nav": {
+      "label": "Personel",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "floor": "Salon",
+      "menu": "Menü",
+      "tables": "Masalar",
+      "tonight": "Bu akşam"
+    },
+    "roles": {
+      "waiter": "Garson",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "manager": "Müdür"
+    },
+    "account": {
+      "open": "{{name}}, hesap menüsü",
+      "language": "Dil",
+      "signOut": "Çıkış yap",
+      "signingOut": "Çıkış yapılıyor…"
+    },
+    "live": {
+      "on": "Canlı",
+      "off": "Bağlantı yok"
+    },
+    "login": {
+      "title": "Personel girişi",
+      "pickName": "Kim çalışıyor?",
+      "pickHint": "Adınıza dokunun, sonra PIN'inizi girin.",
+      "enterPin": "PIN'inizi girin",
+      "pinHint": "4 ile 6 hane. Klavyeyle de girebilirsiniz.",
+      "notYou": "Siz değil misiniz?",
+      "pad": "PIN tuş takımı",
+      "entered_one": "{{count}} hane girildi",
+      "entered_other": "{{count}} hane girildi",
+      "delete": "Son haneyi sil",
+      "signIn": "Giriş yap",
+      "signingIn": "Giriş yapılıyor…",
+      "wrongPin": "PIN yanlış. Lütfen tekrar deneyin.",
+      "locked": "Çok fazla yanlış PIN girildi. Bu hesap 5 dakika kilitli.",
+      "loadError": "Personel listesi yüklenemedi.",
+      "noStaff": "Henüz personel hesabı yok. Eklemek için kurulum betiğini çalıştırın.",
+      "continueAs": "{{name}} olarak devam et",
+      "demoTitle": "Ya da bir rolü hemen deneyin",
+      "demoHint": "Demoda PIN gerekmez.",
+      "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin."
+    },
+    "placeholder": "Bu ekran sonraki bir adımda gelecek."
+  },
+  "demo": {
+    "banner": "Demo restoran, gerçek değil",
+    "controls": "Demo ayarları",
+    "tryAs": "Rol değiştir",
+    "roles": {
+      "guest": "T7'de misafir",
+      "waiter": "Garson",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "manager": "Müdür"
+    },
+    "simulator": "Diğer masalardan canlı siparişler",
+    "on": "açık",
+    "off": "kapalı",
+    "phone": {
+      "button": "Telefonunuzdan okutup sipariş verin",
+      "title": "Telefonunuzdan sipariş verin",
+      "body": "Demo restoranınızın T7 masasını açmak için telefon kameranızla okutun. Siparişiniz buradaki mutfak ekranına düşer.",
+      "qrLabel": "{{url}} için QR kod",
+      "reach": "Telefonunuzun bu adrese erişebilmesi gerekir.",
+      "localhost": "Bu adres localhost, telefon açamaz. Uygulamayı bilgisayarınızın ağ adresinden açın, örneğin http://192.168.1.20:5180.",
+      "close": "Kapat"
+    },
+    "errors": {
+      "rate": "Ağınızdan çok fazla yeni demo açıldı. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+      "busy": "Demo şu anda dolu. Lütfen bir dakika sonra tekrar deneyin.",
+      "simulator": "Simülatör değiştirilemedi. Lütfen tekrar deneyin."
+    },
+    "landing": {
+      "eyebrow": "Karaköy · bir demo",
+      "title": "Lodos",
+      "subtitle": "bir restoran sistemi demosu",
+      "body": "Lodos, Karaköy'de hayali bir restoran; gerçek zamanlı bir restoran sistemini baştan sona göstermek için yapıldı. Misafirler QR menüden sipariş verir, mutfak ve bar ekranları o anda güncellenir, garsonlar salonu yönetir, müdür menüyü düzenler. Size özel bir kopya açılır; istediğinizi değiştirebilirsiniz. Cem Akçiçek'in bir portföy projesidir.",
+      "choose": "Nasıl gezmek istersiniz?",
+      "opening": "Açılıyor…",
+      "tip": "Şunu deneyin: T7'de misafir'i bir pencerede, Mutfak'ı başka bir pencerede açın ve sipariş verin.",
+      "fine": "Kayıt gerekmez. Kopyanız siz ayrıldıktan 30 dakika sonra silinir.",
+      "hints": {
+        "guest": "7 numaralı masada QR menüden sipariş verin, sonra canlı takip edin.",
+        "waiter": "Salon planı: açık masalar, çağrılar ve hesaplar.",
+        "kitchen": "Siparişler anında düşer. Kalemleri işaretleyin, hazır olanı gönderin.",
+        "bar": "Aynı canlı ekran, yalnızca içecekler.",
+        "manager": "Menüyü düzenleyin, bir yemeği kapatın, bu akşamın gidişatını görün."
+      },
+      "loadError": "Lodos'a ulaşılamadı. Lütfen bağlantınızı kontrol edin.",
+      "startHere": "Buradan başlayın",
+      "footer": "Lodos · Karaköy · İstanbul"
+    },
+    "callout": {
+      "label": "Siparişiniz alındı",
+      "cta": "Şimdi mutfak ekranını açın →",
+      "body": "Yeni bir pencerede açılır, siparişinizin düştüğünü izleyebilirsiniz.",
+      "blocked": "Tarayıcınız yeni pencereyi engelledi.",
+      "openLink": "Mutfak ekranını aç",
+      "dismiss": "Kapat"
+    }
   }
 }

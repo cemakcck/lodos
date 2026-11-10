@@ -1,0 +1,115 @@
+/* Demo-mode chrome: the banner (guest and staff looks), the landing role cards and the kitchen callout. */
+@layer components {
+  /* ---------- Banner, shared structure ---------- */
+  .demo-row { display: flex; align-items: center; gap: 12px; padding: 4px 12px 4px 14px; min-height: 46px; flex-wrap: wrap; position: relative; }
+  .demo-text { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; white-space: nowrap; margin-right: auto; }
+  .demo-more {
+    display: inline-flex; align-items: center; gap: 4px; height: 38px; padding: 0 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 600;
+  }
+  .demo-controls { display: none; width: 100%; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0 8px; }
+  .demo-controls.is-open { display: flex; }
+  @media (min-width: 1024px) {
+    .demo-more { display: none; }
+    .demo-controls { display: flex; width: auto; padding: 0; flex-wrap: nowrap; }
+  }
+  .demo-switch { gap: 8px; }
+  .demo-switch-track {
+    width: 26px; height: 16px; border-radius: 999px; position: relative; flex: none; transition: background-color 0.15s;
+  }
+  .demo-switch-thumb {
+    position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); transition: transform 0.15s;
+  }
+  .demo-switch[aria-checked="true"] .demo-switch-thumb { transform: translateX(10px); }
+  @media (prefers-reduced-motion: reduce) { .demo-switch-thumb, .demo-switch-track { transition: none; } }
+
+  /* ---------- Staff look ---------- */
+  .demo-staff {
+    background: var(--color-staff-plum-50); border-bottom: 1px solid var(--color-staff-plum-100);
+    color: var(--color-staff-fg); font-family: var(--font-staff-ui); font-size: 12px; flex: none;
+  }
+  .demo-staff .demo-text { color: var(--color-staff-rail); }
+  .demo-staff .demo-more { color: var(--color-staff-rail); }
+  .demo-staff .demo-more:hover { background: var(--color-staff-plum-100); }
+  .demo-staff .staff-btn { font-size: 12px; border-color: var(--color-staff-plum-100); }
+  .demo-staff .staff-seg { background: var(--color-staff-plum-100); }
+  .demo-staff .staff-seg button { font-size: 12px; color: #5a2a4c; }
+  .demo-staff .staff-seg button:hover:not([aria-pressed="true"]) { color: var(--color-staff-rail); background: rgba(255, 255, 255, 0.45); }
+  .demo-staff .demo-switch-track { background: var(--color-staff-line-2); }
+  .demo-staff .demo-switch[aria-checked="true"] .demo-switch-track { background: var(--color-staff-ok); }
+  .demo-staff .demo-switch b { font-weight: 600; }
+
+  /* ---------- Guest look (Plum Salon) ---------- */
+  .demo-guest {
+    background: #1a0b15; border-bottom: 1px solid rgba(201, 164, 106, 0.35);
+    color: var(--color-guest-beige); font-family: var(--font-guest-body); font-size: 12px;
+  }
+  .demo-guest .demo-row { max-width: 1120px; margin: 0 auto; }
+  .demo-guest .demo-text { color: var(--color-guest-beige); letter-spacing: 0.01em; }
+  .demo-guest .demo-text svg { color: var(--color-guest-brass); }
+  .demo-guest .demo-more { color: var(--color-guest-beige); box-shadow: inset 0 0 0 1px rgba(201, 164, 106, 0.45); border-radius: 999px; padding: 0 12px; }
+  .demo-guest :focus-visible { outline: 2px solid var(--color-guest-brass); outline-offset: 2px; }
+  .demo-guest-role, .demo-guest-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 12px;
+    border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+    color: var(--color-guest-beige); box-shadow: inset 0 0 0 1px var(--g-line-2, #5d3150);
+  }
+  .demo-guest-role:hover:not(:disabled), .demo-guest-btn:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--color-guest-brass); }
+  .demo-guest-role[aria-pressed="true"] { background: var(--color-guest-red); color: var(--color-guest-cream); box-shadow: none; }
+  .demo-guest-role:disabled { opacity: 0.7; }
+  .demo-guest .demo-switch-track { background: #5d3150; }
+  .demo-guest .demo-switch[aria-checked="true"] .demo-switch-track { background: var(--color-guest-brass); }
+  .demo-guest .demo-switch-thumb { background: var(--color-guest-cream); }
+  .demo-guest-popover {
+    background: var(--color-guest-plum-deep); color: var(--color-guest-cream); border-radius: 16px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(201, 164, 106, 0.45);
+    font-family: var(--font-guest-body);
+  }
+  .demo-guest-popover:focus { outline: none; }
+  .demo-guest-alert {
+    padding: 10px 12px; border-radius: 12px; font-size: 12.5px; line-height: 1.5;
+    background: rgba(200, 16, 46, 0.14); box-shadow: inset 0 0 0 1px rgba(200, 16, 46, 0.55); color: var(--color-guest-cream);
+  }
+
+  /* ---------- Landing ---------- */
+  .demo-landing { max-width: 560px; }
+  .demo-role-card {
+    width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px;
+    background: rgba(58, 22, 48, 0.55); box-shadow: inset 0 0 0 1px var(--g-line-2);
+    transition: box-shadow 0.15s, background-color 0.15s, transform 0.15s;
+  }
+  .demo-role-card:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--color-guest-brass); background: rgba(58, 22, 48, 0.85); }
+  .demo-role-card:active:not(:disabled) { transform: translateY(1px); }
+  .demo-role-card:disabled { cursor: progress; }
+  .demo-role-card.is-first { background: rgba(200, 16, 46, 0.14); box-shadow: inset 0 0 0 1.5px rgba(200, 16, 46, 0.75); }
+  .demo-role-card.is-first:hover:not(:disabled) { background: rgba(200, 16, 46, 0.22); }
+  .demo-role-icon {
+    width: 42px; height: 42px; flex: none; border-radius: 999px; display: grid; place-items: center;
+    color: var(--color-guest-brass); box-shadow: inset 0 0 0 1px rgba(201, 164, 106, 0.55); background: rgba(36, 16, 30, 0.6);
+  }
+  .demo-role-title { font-family: var(--font-guest-dish); font-size: 21px; font-weight: 600; line-height: 1.15; color: var(--color-guest-cream); }
+  .demo-role-hint { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: var(--g-muted); }
+  .demo-start-tag {
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--color-guest-cream); background: var(--color-guest-red); padding: 2px 7px; border-radius: 999px;
+  }
+
+  /* ---------- Kitchen callout ---------- */
+  .demo-callout {
+    position: fixed; z-index: 40; left: 50%; transform: translateX(-50%);
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 70px);
+    width: calc(100% - 24px); max-width: 456px; padding: 14px 16px 16px; border-radius: 18px;
+    background: rgba(26, 11, 21, 0.97); backdrop-filter: blur(10px);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(201, 164, 106, 0.55);
+    animation: demo-rise 0.35s ease-out;
+  }
+  .demo-callout-cta {
+    margin-top: 4px; width: 100%; min-height: 48px; padding: 0 16px; border-radius: 14px;
+    background: var(--color-guest-red); color: var(--color-guest-cream); font-size: 15px; font-weight: 600; text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .demo-callout-cta:disabled { opacity: 0.75; cursor: progress; }
+  @keyframes demo-rise { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (prefers-reduced-motion: reduce) { .demo-callout { animation: none; } }
+}

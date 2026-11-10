@@ -179,5 +179,114 @@
       "by": "by {{author}}",
       "source": "Source"
     }
+  },
+  "staff": {
+    "brand": "Lodos staff",
+    "retry": "Try again",
+    "nav": {
+      "label": "Staff",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "floor": "Floor",
+      "menu": "Menu",
+      "tables": "Tables",
+      "tonight": "Tonight"
+    },
+    "roles": {
+      "waiter": "Waiter",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "manager": "Manager"
+    },
+    "account": {
+      "open": "{{name}}, account menu",
+      "language": "Language",
+      "signOut": "Sign out",
+      "signingOut": "Signing out…"
+    },
+    "live": {
+      "on": "Live",
+      "off": "Offline"
+    },
+    "login": {
+      "title": "Staff sign-in",
+      "pickName": "Who's working?",
+      "pickHint": "Tap your name, then enter your PIN.",
+      "enterPin": "Enter your PIN",
+      "pinHint": "4 to 6 digits. The keyboard works too.",
+      "notYou": "Not you?",
+      "pad": "PIN pad",
+      "entered_one": "{{count}} digit entered",
+      "entered_other": "{{count}} digits entered",
+      "delete": "Delete last digit",
+      "signIn": "Sign in",
+      "signingIn": "Signing in…",
+      "wrongPin": "Wrong PIN. Please try again.",
+      "locked": "Too many wrong PINs. This account is locked for 5 minutes.",
+      "loadError": "Couldn't load the staff list.",
+      "noStaff": "No staff accounts yet. Run the setup script to add them.",
+      "continueAs": "Continue as {{name}}",
+      "demoTitle": "Or try a role instantly",
+      "demoHint": "No PIN needed in the demo.",
+      "demoStart": "Pick a role below to open your private copy of the demo restaurant."
+    },
+    "placeholder": "This screen arrives in a later step."
+  },
+  "demo": {
+    "banner": "Demo restaurant, not real",
+    "controls": "Demo controls",
+    "tryAs": "Switch role",
+    "roles": {
+      "guest": "Guest at T7",
+      "waiter": "Waiter",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "manager": "Manager"
+    },
+    "simulator": "Live orders from other tables",
+    "on": "on",
+    "off": "off",
+    "phone": {
+      "button": "Scan to order from your phone",
+      "title": "Order from your phone",
+      "body": "Scan this with your phone's camera to open table T7 of your demo restaurant. Your order lands on the kitchen screen here.",
+      "qrLabel": "QR code for {{url}}",
+      "reach": "Your phone must be able to reach this address.",
+      "localhost": "This is localhost, so a phone can't open it. Open the app at your computer's network address instead, for example http://192.168.1.20:5180.",
+      "close": "Close"
+    },
+    "errors": {
+      "rate": "Too many new demos from your network. Please wait a few minutes and try again.",
+      "busy": "The demo is full right now. Please try again in a minute.",
+      "simulator": "Couldn't change the simulator. Please try again."
+    },
+    "landing": {
+      "eyebrow": "Karaköy · a demo",
+      "title": "Lodos",
+      "subtitle": "a restaurant system demo",
+      "body": "Lodos is a fictional restaurant in Karaköy, built to show a real-time restaurant system end to end. Guests order from a QR menu, the kitchen and bar screens update the moment they do, waiters run the floor and the manager edits the menu. You get your own private copy, so change anything you like. It's a portfolio project by Cem Akçiçek.",
+      "choose": "Choose how to look around",
+      "opening": "Opening…",
+      "tip": "Try this: open Guest at T7 in one window and Kitchen in another, then place an order.",
+      "fine": "No sign-up. Your copy is deleted 30 minutes after you leave.",
+      "hints": {
+        "guest": "Order from the QR menu at table 7, then follow it live.",
+        "waiter": "The floor plan: open tables, calls and bills.",
+        "kitchen": "Tickets arrive live. Tick items off and bump them.",
+        "bar": "The same live board, for drinks only.",
+        "manager": "Edit the menu, 86 a dish and see how tonight is going."
+      },
+      "loadError": "Couldn't reach Lodos. Please check your connection.",
+      "startHere": "Start here",
+      "footer": "Lodos · Karaköy · İstanbul"
+    },
+    "callout": {
+      "label": "Your order is in",
+      "cta": "Now open the kitchen screen →",
+      "body": "It opens in a new window, so you can watch your order arrive.",
+      "blocked": "Your browser blocked the new window.",
+      "openLink": "Open the kitchen screen",
+      "dismiss": "Dismiss"
+    }
   }
 }

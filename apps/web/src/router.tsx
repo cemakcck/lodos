@@ -1,38 +1,71 @@
-import { createBrowserRouter, useParams, Outlet } from "react-router";
+import { createBrowserRouter, useParams, Outlet, type RouteObject } from "react-router";
 import { useTranslation } from "react-i18next";
 import { guestRoutes } from "./guest/routes";
+import { GuestFrame, StaffFrame } from "./frames";
+import { DemoLanding } from "./demo/DemoLanding";
+import { Login } from "./staff/Login";
+import { RequireStaff, StaffHome } from "./staff/RequireStaff";
+import { Shell } from "./staff/Shell";
+import type { StaffRole } from "./staff/auth";
 
-function Placeholder({ name, surface }: { name: string; surface: "guest" | "staff" }) {
+/** A staff screen still to be built: the real Shell around a quiet note. Later tasks replace these. */
+function StaffPlaceholder({ titleKey }: { titleKey: string }) {
   const { t } = useTranslation();
   const params = useParams();
   return (
-    <main className={surface === "guest" ? "theme-guest p-6" : "theme-staff p-6"}>
-      <h1 className="text-lg">{t("app.name")}</h1>
-      <p data-testid="placeholder">{name} · {t("app.comingSoon")}</p>
-      {Object.keys(params).length > 0 && <code>{JSON.stringify(params)}</code>}
+    <Shell title={t(titleKey)} stats={null}>
+      <div className="p-4">
+        <p data-testid="placeholder" className="text-[13px] text-staff-fg-3">
+          {t("staff.placeholder")}
+          {Object.keys(params).length > 0 && <code className="ml-2 font-mono text-xs">{JSON.stringify(params)}</code>}
+        </p>
+      </div>
+    </Shell>
+  );
+}
+
+function NotFound() {
+  const { t } = useTranslation();
+  return (
+    <main className="theme-staff grid place-items-center p-6">
+      <p className="text-[13px] text-staff-fg-2">{t("app.notFound")}</p>
     </main>
   );
 }
 
-const ph = (name: string, surface: "guest" | "staff" = "staff") => <Placeholder name={name} surface={surface} />;
+const guarded = (roles: readonly StaffRole[], children: RouteObject[]): RouteObject => ({
+  element: <RequireStaff roles={roles} />,
+  children,
+});
+const ph = (path: string, titleKey: string): RouteObject => ({ path, element: <StaffPlaceholder titleKey={titleKey} /> });
 
-export const routes = [
+export const routes: RouteObject[] = [
   {
     element: <Outlet />,
     children: [
-      { path: "/", element: ph("landing", "guest") },
-      ...guestRoutes,
-      { path: "/staff/login", element: ph("login") },
-      { path: "/staff/kitchen", element: ph("kitchen") },
-      { path: "/staff/bar", element: ph("bar") },
-      { path: "/staff/floor", element: ph("floor") },
-      { path: "/staff/order/:tableId", element: ph("order entry") },
-      { path: "/staff/check/:id/print", element: ph("check print") },
-      { path: "/staff/menu", element: ph("menu editor") },
-      { path: "/staff/tables", element: ph("tables") },
-      { path: "/staff/tables/qr", element: ph("table QR codes") },
-      { path: "/staff/tonight", element: ph("tonight") },
-      { path: "*", element: ph("not found") },
+      { path: "/", element: <DemoLanding /> },
+      { element: <GuestFrame />, children: guestRoutes },
+      {
+        element: <StaffFrame />,
+        children: [
+          { path: "/staff/login", element: <Login /> },
+          { path: "/staff", element: <RequireStaff><StaffHome /></RequireStaff> },
+          guarded(["kitchen"], [ph("/staff/kitchen", "staff.nav.kitchen")]),
+          guarded(["bar"], [ph("/staff/bar", "staff.nav.bar")]),
+          guarded(["waiter"], [
+            ph("/staff/floor", "staff.nav.floor"),
+            ph("/staff/order/:tableId", "staff.nav.floor"),
+            ph("/staff/check/:id/print", "staff.nav.floor"),
+          ]),
+          guarded(["manager"], [
+            ph("/staff/menu", "staff.nav.menu"),
+            ph("/staff/tables", "staff.nav.tables"),
+            ph("/staff/tables/qr", "staff.nav.tables"),
+            ph("/staff/tonight", "staff.nav.tonight"),
+          ]),
+        ],
+      },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ];

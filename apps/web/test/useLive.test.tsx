@@ -20,6 +20,7 @@ class FakeSocket {
     (this.handlers.get(ev) ?? []).forEach((f) => f(...a));
   }
   close = vi.fn(() => { this.connected = false; });
+  connect = vi.fn(() => this);
 }
 
 const sockets: FakeSocket[] = [];
@@ -97,5 +98,37 @@ describe("useLive", () => {
     expect(ioMock).toHaveBeenCalledTimes(2);
     expect(ioMock.mock.calls[0]![0]).toMatchObject({ path: "/socket.io", auth: { tableToken: "tok" } });
     expect(ioMock.mock.calls[1]![0]).toMatchObject({ withCredentials: true });
+  });
+
+  it("surfaces connect_error unauthorized as authFailed", () => {
+    const { result } = renderHook(() => useLive({ audience: "staff" }), { wrapper });
+    const s = sockets[0]!;
+    expect(result.current.authFailed).toBe(false);
+    act(() => s.emit("connect_error", new Error("xhr poll error")));
+    expect(result.current.authFailed).toBe(false);
+    act(() => s.emit("connect_error", new Error("unauthorized")));
+    expect(result.current.authFailed).toBe(true);
+  });
+
+  it("reconnects once after a server-initiated disconnect, then reports", () => {
+    const { result } = renderHook(() => useLive({ audience: "staff" }), { wrapper });
+    const s = sockets[0]!;
+    act(() => s.emit("connect"));
+    act(() => s.emit("disconnect", "io server disconnect"));
+    expect(s.connect).toHaveBeenCalledTimes(1);
+    expect(result.current.authFailed).toBe(false);
+    act(() => s.emit("connect"));
+    act(() => s.emit("disconnect", "io server disconnect"));
+    expect(s.connect).toHaveBeenCalledTimes(1);
+    expect(result.current.authFailed).toBe(true);
+  });
+
+  it("does not reconnect by hand for ordinary transport drops", () => {
+    const { result } = renderHook(() => useLive({ audience: "staff" }), { wrapper });
+    const s = sockets[0]!;
+    act(() => s.emit("connect"));
+    act(() => s.emit("disconnect", "transport close"));
+    expect(s.connect).not.toHaveBeenCalled();
+    expect(result.current.authFailed).toBe(false);
   });
 });
