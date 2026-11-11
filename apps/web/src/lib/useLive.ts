@@ -12,7 +12,8 @@ export function invalidationsFor(e: LiveEvent): QueryKey[] {
   if (e.type === "split.updated" || e.type === "adjustment.changed") return [["split"], ["floor"], ...check];
   if (e.type.startsWith("call.")) return [["floor"], ...check];
   if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
-  if (e.type === "tables.changed") return [["floor"], ["manager"]];
+  // A saved floor plan moves, adds and removes tables: waiter floors refetch it.
+  if (e.type === "tables.changed" || e.type === "layout.saved") return [["floor"], ["manager"]];
   return [];
 }
 

@@ -38,7 +38,8 @@
     "pin_required": "Waiters and managers need a PIN.",
     "shift_too_long": "A shift can be at most 16 hours",
     "shift_overlap": "Overlaps another shift for {{name}}",
-    "station": "Station accounts can't be put on the schedule."
+    "station": "Station accounts can't be put on the schedule.",
+    "room_not_empty": "Move or delete this room's tables first."
   },
   "guest": {
     "hero": {
@@ -200,6 +201,7 @@
       "floor": "Floor",
       "menu": "Menu",
       "tables": "Tables",
+      "floorPlan": "Floor plan",
       "sales": "Sales",
       "people": "Staff",
       "schedule": "Schedule",
@@ -1221,5 +1223,103 @@
     "total": "Total",
     "pdf": "Download PDF",
     "none": "No shifts this week."
+  },
+  "floorPlan": {
+    "title": "Floor plan",
+    "rooms": "Rooms",
+    "unsaved_one": "{{count}} unsaved change",
+    "unsaved_other": "{{count}} unsaved changes",
+    "discard": "Discard",
+    "save": "Save layout",
+    "saving": "Saving…",
+    "saved": "Layout saved",
+    "conflict": "Someone else saved this room. Reloading their version.",
+    "invalid": "The layout wasn't saved. Fix these tables:",
+    "loading": "Loading the floor plan…",
+    "loadError": "Couldn't load this room.",
+    "noRooms": "No rooms yet. Add one to start.",
+    "add": "Add a table",
+    "shape": {
+      "round": "Round",
+      "square": "Square",
+      "booth": "Booth"
+    },
+    "canvas": {
+      "label": "{{room}} floor plan",
+      "hint": "Drag a table to move it, or tab to it and use the arrow keys (Shift moves further). Delete removes it. Nothing changes for waiters until you save.",
+      "empty": "No tables in this room yet. Add one below."
+    },
+    "table": {
+      "label": "{{name}}, {{seats}}, {{shape}}, x {{x}}, y {{y}}",
+      "seats_one": "{{count}} seat",
+      "seats_other": "{{count}} seats",
+      "openCheck": "open check",
+      "new": "not saved yet",
+      "invalid": "problem: {{problems}}"
+    },
+    "moved": "{{name}} moved to x {{x}}, y {{y}}",
+    "added": "{{name}} added",
+    "duplicated": "{{name}} duplicated as {{copy}}",
+    "removed": "{{name}} removed",
+    "cantRemove": "{{name}} has an open check and can't be removed",
+    "problem": {
+      "name_invalid": "name must be T or B and a number",
+      "name_taken": "name is already used by another table",
+      "out_of_bounds": "is outside the room",
+      "overlap": "overlaps another table",
+      "capacity": "seats must be 1 to 12",
+      "open_check_rename": "has an open check, so it can't be renamed",
+      "open_check_delete": "has an open check, so it can't be removed",
+      "unknown": "is no longer in this room; reload the page",
+      "waiter": "that waiter can't take a section"
+    },
+    "problemItem": "{{name}}: {{problem}}",
+    "inspector": {
+      "label": "Table {{name}}",
+      "empty": "Select a table to edit it, or add one.",
+      "openCheck": "Open check",
+      "name": "Name",
+      "nameInvalid": "Use T or B and a number, like T12.",
+      "nameTaken": "Another table here is already called {{name}}.",
+      "shape": "Shape",
+      "seats": "Seats",
+      "fewer": "Fewer seats",
+      "more": "More seats",
+      "waiter": "Waiter",
+      "noWaiter": "No waiter",
+      "formerWaiter": "{{name}} (no longer a waiter)",
+      "position": "Position",
+      "moveLeft": "Move left",
+      "moveRight": "Move right",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "qr": "QR code for this table",
+      "qrAfterSave": "Save the layout to get this table's QR code.",
+      "openCheckReason": "Has an open check: it can move, but not be renamed or removed"
+    },
+    "room": {
+      "add": "Add room",
+      "addShort": "Room",
+      "rename": "Rename",
+      "addTitle": "Add room",
+      "renameTitle": "Rename room",
+      "name": "Room name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete room",
+      "deleteHint": "Only a room without tables can be deleted.",
+      "added": "{{name}} added",
+      "renamed": "Room renamed to {{name}}",
+      "deleted": "{{name}} deleted"
+    },
+    "leave": {
+      "title": "Leave without saving?",
+      "body_one": "{{count}} unsaved change will be lost.",
+      "body_other": "{{count}} unsaved changes will be lost.",
+      "stay": "Stay",
+      "go": "Leave"
+    }
   }
 }

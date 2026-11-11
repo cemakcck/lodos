@@ -21,14 +21,16 @@ const chunk = <T,>(xs: T[], n: number): T[][] => Array.from({ length: Math.ceil(
 /**
  * `/staff/tables/qr`: the printable QR sheet. A4 portrait, 2 × 3 cards per page, each with the Lodos wordmark,
  * the table name, the QR (an SVG of `origin + "/t/" + token`) and the bilingual scan line. `?room=<id>` limits it
- * to one room. On a localhost origin an on-screen note (never printed) says the codes only work on the deployed address.
+ * to one room, `?table=<id>` to one table (the floor plan editor's "QR code for this table"). On a localhost origin
+ * an on-screen note (never printed) says the codes only work on the deployed address.
  */
 export function QrSheet() {
   const { t } = useTranslation();
   const { tables, rooms, rows, roomOf } = useTableRows();
   const [params, setParams] = useSearchParams();
   const room = rooms.find((r) => r.id === params.get("room")) ?? null;
-  const shown = room ? rows.filter((r) => r.roomId === room.id) : rows;
+  const single = params.get("table");
+  const shown = single ? rows.filter((r) => r.id === single) : room ? rows.filter((r) => r.roomId === room.id) : rows;
   const pages = chunk(shown, CARDS_PER_PAGE);
   const origin = window.location.origin;
   const local = isLocalOrigin(window.location.hostname);
@@ -48,7 +50,7 @@ export function QrSheet() {
           {t("manager.qr.back")}
         </Link>
         <h1 className="staff-title">{t("manager.qr.title")}</h1>
-        {rooms.length > 1 && (
+        {rooms.length > 1 && !single && (
           <div className="staff-seg" role="group" aria-label={t("manager.qr.rooms")}>
             <button type="button" aria-pressed={!room} onClick={() => setRoom(null)}>{t("manager.qr.allRooms")}</button>
             {rooms.map((r) => (

@@ -34,7 +34,7 @@ describe("Shell", () => {
   it("the manager sees every rail item", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("manager") });
     renderApp("/staff/menu");
-    expect(await railNames()).toEqual(["Kitchen", "Bar", "Floor", "Menu", "Tables", "Sales", "Staff", "Schedule", "My shifts"]);
+    expect(await railNames()).toEqual(["Kitchen", "Bar", "Floor", "Menu", "Tables", "Floor plan", "Sales", "Staff", "Schedule", "My shifts"]);
   });
 
   it("the waiter sees the Floor and My shifts", async () => {
@@ -52,7 +52,7 @@ describe("Shell", () => {
     expect(avatar.textContent).toBe("SK");
     await user.click(avatar);
     await user.click(screen.getByRole("button", { name: "Türkçe" }));
-    expect(await railNames("Personel")).toEqual(["Mutfak", "Bar", "Salon", "Menü", "Masalar", "Satış", "Personel", "Vardiya planı", "Vardiyalarım"]);
+    expect(await railNames("Personel")).toEqual(["Mutfak", "Bar", "Salon", "Menü", "Masalar", "Kat planı", "Satış", "Personel", "Vardiya planı", "Vardiyalarım"]);
   });
 
   it("sends a role to its own screen when it opens another role's page", async () => {

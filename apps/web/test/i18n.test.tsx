@@ -82,6 +82,9 @@ describe("invalidationsFor", () => {
     expect(invalidationsFor({ type: "tables.changed", ids: [], at })).toEqual([["floor"], ["manager"]]);
     expect(invalidationsFor({ type: "call.answered", ids: [], at })).toEqual([["floor"]]);
   });
+  it("maps layout.saved so waiter floors refetch the new layout", () => {
+    expect(invalidationsFor({ type: "layout.saved", ids: ["salon"], at })).toEqual([["floor"], ["manager"]]);
+  });
   it("ignores unknown events", () => {
     expect(invalidationsFor({ type: "nope", ids: [], at })).toEqual([]);
   });

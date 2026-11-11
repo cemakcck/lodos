@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, CalendarClock, CalendarDays, ChartLine, Flame, LayoutGrid, LogOut, QrCode, Users, Wine, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarClock, CalendarDays, ChartLine, Flame, LayoutGrid, LogOut, PanelsTopLeft, QrCode, Users, Wine, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useFormat } from "../lib/format";
 import { useLive } from "../lib/useLive";
@@ -11,7 +11,7 @@ import { setLanguage } from "../i18n";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { canAccess, endSession, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
 
-export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "sales" | "people" | "schedule" | "myShifts";
+export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "floorPlan" | "sales" | "people" | "schedule" | "myShifts";
 
 interface RailItem {
   key: RailKey;
@@ -29,6 +29,7 @@ export const RAIL: readonly RailItem[] = [
   { key: "floor", to: "/staff/floor", icon: LayoutGrid, roles: ["waiter"], match: ["/staff/floor", "/staff/order", "/staff/check"] },
   { key: "menu", to: "/staff/menu", icon: BookOpen, roles: [], match: ["/staff/menu"] },
   { key: "tables", to: "/staff/tables", icon: QrCode, roles: [], match: ["/staff/tables"] },
+  { key: "floorPlan", to: "/staff/floor-plan", icon: PanelsTopLeft, roles: [], match: ["/staff/floor-plan"] },
   { key: "sales", to: "/staff/sales", icon: ChartLine, roles: [], match: ["/staff/sales", "/staff/tonight"] },
   { key: "people", to: "/staff/people", icon: Users, roles: [], match: ["/staff/people"] },
   { key: "schedule", to: "/staff/schedule", icon: CalendarDays, roles: [], match: ["/staff/schedule"] },

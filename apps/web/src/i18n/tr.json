@@ -38,7 +38,8 @@
     "pin_required": "Garson ve yöneticiler için PIN gerekli.",
     "shift_too_long": "Bir vardiya en fazla 16 saat olabilir",
     "shift_overlap": "{{name}} için başka bir vardiyayla çakışıyor",
-    "station": "İstasyon hesapları vardiya planına eklenemez."
+    "station": "İstasyon hesapları vardiya planına eklenemez.",
+    "room_not_empty": "Önce bu odadaki masaları taşıyın ya da silin."
   },
   "guest": {
     "hero": {
@@ -200,6 +201,7 @@
       "floor": "Salon",
       "menu": "Menü",
       "tables": "Masalar",
+      "floorPlan": "Kat planı",
       "sales": "Satış",
       "people": "Personel",
       "schedule": "Vardiya planı",
@@ -1221,5 +1223,103 @@
     "total": "Toplam",
     "pdf": "PDF indir",
     "none": "Bu hafta vardiya yok."
+  },
+  "floorPlan": {
+    "title": "Kat planı",
+    "rooms": "Odalar",
+    "unsaved_one": "{{count}} kaydedilmemiş değişiklik",
+    "unsaved_other": "{{count}} kaydedilmemiş değişiklik",
+    "discard": "Vazgeç",
+    "save": "Düzeni kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Düzen kaydedildi",
+    "conflict": "Bu odayı başka biri kaydetti. Onun sürümü yükleniyor.",
+    "invalid": "Düzen kaydedilmedi. Şu masaları düzeltin:",
+    "loading": "Kat planı yükleniyor…",
+    "loadError": "Bu oda yüklenemedi.",
+    "noRooms": "Henüz oda yok. Başlamak için bir oda ekleyin.",
+    "add": "Masa ekle",
+    "shape": {
+      "round": "Yuvarlak",
+      "square": "Kare",
+      "booth": "Loca"
+    },
+    "canvas": {
+      "label": "{{room}} kat planı",
+      "hint": "Taşımak için masayı sürükleyin ya da Sekme tuşuyla masaya gelip ok tuşlarını kullanın (Shift ile daha uzağa). Delete masayı kaldırır. Kaydedene kadar garsonlar için hiçbir şey değişmez.",
+      "empty": "Bu odada henüz masa yok. Aşağıdan ekleyin."
+    },
+    "table": {
+      "label": "{{name}}, {{seats}}, {{shape}}, x {{x}}, y {{y}}",
+      "seats_one": "{{count}} kişilik",
+      "seats_other": "{{count}} kişilik",
+      "openCheck": "açık hesap",
+      "new": "henüz kaydedilmedi",
+      "invalid": "sorun: {{problems}}"
+    },
+    "moved": "{{name}} taşındı: x {{x}}, y {{y}}",
+    "added": "{{name}} eklendi",
+    "duplicated": "{{name}} çoğaltıldı: {{copy}}",
+    "removed": "{{name}} kaldırıldı",
+    "cantRemove": "{{name}} masasının açık hesabı var, kaldırılamaz",
+    "problem": {
+      "name_invalid": "ad T ya da B ve bir sayı olmalı",
+      "name_taken": "bu ad başka bir masada kullanılıyor",
+      "out_of_bounds": "odanın dışında",
+      "overlap": "başka bir masayla çakışıyor",
+      "capacity": "kişi sayısı 1 ile 12 arasında olmalı",
+      "open_check_rename": "açık hesabı olduğu için yeniden adlandırılamaz",
+      "open_check_delete": "açık hesabı olduğu için silinemez",
+      "unknown": "artık bu odada değil; sayfayı yenileyin",
+      "waiter": "bu garsona bölüm atanamaz"
+    },
+    "problemItem": "{{name}}: {{problem}}",
+    "inspector": {
+      "label": "Masa {{name}}",
+      "empty": "Düzenlemek için bir masa seçin ya da yeni masa ekleyin.",
+      "openCheck": "Açık hesap",
+      "name": "Ad",
+      "nameInvalid": "T ya da B ve bir sayı kullanın, örneğin T12.",
+      "nameTaken": "Bu odada zaten {{name}} adlı bir masa var.",
+      "shape": "Biçim",
+      "seats": "Kişi",
+      "fewer": "Daha az kişi",
+      "more": "Daha fazla kişi",
+      "waiter": "Garson",
+      "noWaiter": "Garson yok",
+      "formerWaiter": "{{name}} (artık garson değil)",
+      "position": "Konum",
+      "moveLeft": "Sola taşı",
+      "moveRight": "Sağa taşı",
+      "moveUp": "Yukarı taşı",
+      "moveDown": "Aşağı taşı",
+      "duplicate": "Çoğalt",
+      "delete": "Sil",
+      "qr": "Bu masanın QR kodu",
+      "qrAfterSave": "QR kodu için önce düzeni kaydedin.",
+      "openCheckReason": "Açık hesabı var: taşınabilir ama yeniden adlandırılamaz ya da silinemez"
+    },
+    "room": {
+      "add": "Oda ekle",
+      "addShort": "Oda",
+      "rename": "Yeniden adlandır",
+      "addTitle": "Oda ekle",
+      "renameTitle": "Odayı yeniden adlandır",
+      "name": "Oda adı",
+      "save": "Kaydet",
+      "cancel": "İptal",
+      "delete": "Odayı sil",
+      "deleteHint": "Yalnızca masası olmayan bir oda silinebilir.",
+      "added": "{{name}} eklendi",
+      "renamed": "Odanın yeni adı: {{name}}",
+      "deleted": "{{name}} silindi"
+    },
+    "leave": {
+      "title": "Kaydetmeden çıkılsın mı?",
+      "body_one": "{{count}} kaydedilmemiş değişiklik kaybolacak.",
+      "body_other": "{{count}} kaydedilmemiş değişiklik kaybolacak.",
+      "stay": "Kal",
+      "go": "Çık"
+    }
   }
 }

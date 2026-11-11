@@ -17,6 +17,7 @@ import { Sales } from "./staff/sales/Sales";
 import { Staff } from "./staff/people/Staff";
 import { Schedule } from "./staff/schedule/Schedule";
 import { MyShifts } from "./staff/schedule/MyShifts";
+import { FloorPlan } from "./staff/floorplan/FloorPlan";
 import type { StaffRole } from "./staff/auth";
 
 function NotFound() {
@@ -59,6 +60,7 @@ export const routes: RouteObject[] = [
             { path: "/staff/menu", element: <MenuEditor /> },
             { path: "/staff/tables", element: <Tables /> },
             { path: "/staff/tables/qr", element: <QrSheet /> },
+            { path: "/staff/floor-plan", element: <FloorPlan /> },
             { path: "/staff/sales", element: <Sales /> },
             { path: "/staff/people", element: <Staff /> },
             { path: "/staff/schedule", element: <Schedule /> },
