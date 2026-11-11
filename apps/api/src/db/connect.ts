@@ -9,6 +9,7 @@ export async function connectDb(uri: string, opts: { dbName?: string } = {}): Pr
   const conn = mongoose.createConnection(uri, { dbName: opts.dbName, autoIndex: false, autoCreate: true });
   await conn.asPromise();
   const models = registerModels(conn);
-  for (const model of Object.values(models)) await model.syncIndexes();
+  // Each collection builds its own indexes; independent, so they run concurrently.
+  await Promise.all(Object.values(models).map((model) => model.syncIndexes()));
   return { conn, models };
 }
