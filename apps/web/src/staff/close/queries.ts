@@ -16,8 +16,9 @@ export const putSplit = (checkId: string, body: SplitBody) =>
 export const payShare = (checkId: string, label: string, method: PayMethod, amount: number) =>
   api<PayShareResult>(`/api/checks/${checkId}/shares/${label}/pay`, { method: "POST", body: JSON.stringify({ method, amount }) });
 
-export const closeInFull = (checkId: string, method: PayMethod) =>
-  api(`/api/checks/${checkId}/close`, { method: "POST", body: JSON.stringify({ method }) });
+/** `amount` is the total the dialog showed: the server refuses it (`409 amount_changed`) if the bill moved on. */
+export const closeInFull = (checkId: string, method: PayMethod, amount: number) =>
+  api(`/api/checks/${checkId}/close`, { method: "POST", body: JSON.stringify({ method, amount }) });
 
 /**
  * The table's side of the check: covers (the first Evenly count) and the guest's requested bill method (preselected

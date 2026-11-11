@@ -9,7 +9,8 @@ import type { Audience } from "../realtime/emit";
 import { answerCall, closeCheck, floorSnapshot, markServed, seatTable, tableCheck } from "./service";
 
 const SeatBody = z.object({ covers: z.number().int().min(1).max(20) });
-const CloseBody = z.object({ method: z.enum(["card", "cash"]) });
+// `amount` is the total the waiter showed; when sent and the bill moved on (a comp, a void, an order) → 409 amount_changed.
+const CloseBody = z.object({ method: z.enum(["card", "cash"]), amount: z.number().int().nonnegative().optional() });
 
 /** Everyone who follows a table: the floor, managers, and the table's guests. */
 const TABLE_AUDIENCE: readonly Audience[] = ["floor", "manager", "table"];
@@ -93,8 +94,8 @@ export function registerFloorRoutes(app: FastifyInstance): void {
     "/api/checks/:id/close",
     staffRoute(WAITER, async (req) => {
       if (!isOid(req.params.id)) throw notFound();
-      const { method } = CloseBody.parse(req.body);
-      const r = await closeCheck(req.server.models, { checkId: req.params.id, method, staffId: req.staff.id, now: req.server.clock.now() });
+      const { method, amount } = CloseBody.parse(req.body);
+      const r = await closeCheck(req.server.models, { checkId: req.params.id, method, amount, staffId: req.staff.id, now: req.server.clock.now() });
       if (r.changed) {
         const { tenantId } = req.staff;
         const tableId = r.check.tableId;

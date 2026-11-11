@@ -158,6 +158,21 @@ describe("close the check", () => {
     expect(again.json().check.payment).toEqual({ ...check.payment, at: check.payment!.at.toISOString() });
   });
 
+  it("a stale confirmed amount → 409 amount_changed with the bill total, nothing written; the right amount closes", async () => {
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
+    const { w, burrata, spritz, checkId } = await seatedT7WithOrder(s);
+    const total = burrata.price + 2 * spritz.price;
+    const stale = await w("POST", `/api/checks/${checkId}/close`, { method: "card", amount: total + 5000 });
+    expect(stale.statusCode).toBe(409);
+    expect(stale.json().error).toMatchObject({ code: "amount_changed", details: { amount: total } });
+    const still = await runWithTenant(s.tenantId, () => t.models.Check.findById(checkId).lean().orFail());
+    expect(still).toMatchObject({ status: "open", payment: null });
+    expect((await w("POST", `/api/checks/${checkId}/close`, { method: "card", amount: -1 })).statusCode).toBe(400);
+    const ok = await w("POST", `/api/checks/${checkId}/close`, { method: "card", amount: total });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().check.payment).toMatchObject({ amount: total });
+  });
+
   it("validation and ids: bad method → 400; malformed or unknown check → 404", async () => {
     const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, checkId } = await seatedT7WithOrder(s);

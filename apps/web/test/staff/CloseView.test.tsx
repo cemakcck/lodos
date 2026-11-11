@@ -184,7 +184,29 @@ describe("CloseView", () => {
     await userEvent.click(within(dialog).getByRole("radio", { name: "Cash" }));
     await userEvent.click(within(dialog).getByRole("button", { name: `Close check, ${money(TOTAL)} by cash` }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/staff/floor"));
-    expect(calls.find((c) => c.path === "/api/checks/c1/close")?.body).toEqual({ method: "cash" });
+    expect(calls.find((c) => c.path === "/api/checks/c1/close")?.body).toEqual({ method: "cash", amount: TOTAL });
+  });
+
+  it("In full: a 409 amount_changed shows the new total and the next try confirms it", async () => {
+    let attempt = 0;
+    const { router } = setup(fullView(), {
+      "POST /api/checks/c1/close": () => {
+        attempt += 1;
+        if (attempt === 1) return { status: 409, body: { error: { code: "amount_changed", message: "changed", details: { amount: 350000 } } } };
+        return { status: 200, body: { check: { id: "c1", tableId: "t4", status: "paid" } } };
+      },
+    });
+    await userEvent.click(await screen.findByRole("button", { name: `Take payment, ${money(TOTAL)}` }));
+    const dialog = screen.getByRole("dialog", { name: "Close check · T4" });
+    await userEvent.click(within(dialog).getByRole("button", { name: `Close check, ${money(TOTAL)} by card` }));
+    await waitFor(() => expect(within(dialog).getByRole("alert").textContent).toBe(`The amount changed to ${money(350000)}`));
+    expect(within(dialog).getByTestId("close-total").textContent).toBe(money(350000));
+    await userEvent.click(within(dialog).getByRole("button", { name: `Close check, ${money(350000)} by card` }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/staff/floor"));
+    expect(calls.filter((c) => c.path === "/api/checks/c1/close").map((c) => c.body)).toEqual([
+      { method: "card", amount: TOTAL },
+      { method: "card", amount: 350000 },
+    ]);
   });
 
   it("the pay dialog traps focus, closes on Escape and gives focus back", async () => {

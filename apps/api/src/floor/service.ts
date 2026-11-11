@@ -369,7 +369,8 @@ export async function markPaid(
  * snapshots minus active comps and voids) read in the same transaction, the check moves `open → paid` conditionally,
  * and the table's open calls are answered. Already paid → `changed: false` with the stored payment (never charged
  * twice, amount never changed). A split with any paid share → `split_locked` (pay the shares instead); an unpaid split
- * is dropped. A card payment gets a random "last 4".
+ * is dropped. A card payment gets a random "last 4". An `amount` (the total
+ * the waiter confirmed) that differs from the bill total → `amount_changed` with the current total, nothing written.
  *
  * Concurrency: `placeOrder` writes the check (`$inc orderCount` conditional on `open`) and so do we, so an order and
  * a close that overlap write-conflict and `withTransaction` re-runs the loser on a fresh snapshot. An order that
@@ -378,7 +379,7 @@ export async function markPaid(
  */
 export async function closeCheck(
   models: Models,
-  input: { checkId: string; method: "card" | "cash"; staffId: string; now: Date },
+  input: { checkId: string; method: "card" | "cash"; amount?: number; staffId: string; now: Date },
 ): Promise<CloseResult> {
   const { checkId, method, staffId, now } = input;
   if (!isOid(checkId)) throw notFound();
@@ -388,6 +389,7 @@ export async function closeCheck(
     if (check.status === "paid") return { check: closedView(check), changed: false, answeredCallIds: [] };
     if (check.split?.shares.some((x) => x.payment != null)) throw new ApiError(409, "split_locked", "Part of this check is already paid");
     const amount = (await billOf(models, check._id, session)).total;
+    if (input.amount !== undefined && input.amount !== amount) throw new ApiError(409, "amount_changed", "The total of this check changed", { amount });
     // Paying in full drops an unpaid split.
     const r = await markPaid(models, session, { checkId: check._id, tableId: check.tableId, staffId, now, set: { payment: newPayment(method, amount, now), split: null } });
     return { ...r, changed: true };

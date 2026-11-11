@@ -97,7 +97,7 @@ export function CloseView() {
   });
 
   const full = useMutation({
-    mutationFn: (method: PayMethod) => closeInFull(id, method),
+    mutationFn: (v: { method: PayMethod; amount: number }) => closeInFull(id, v.method, v.amount),
     onSuccess: () => {
       setPaying(null);
       refresh();
@@ -247,7 +247,7 @@ export function CloseView() {
           onCancel={() => setPaying(null)}
           onConfirm={(method) => {
             if (pay.isPending || full.isPending) return;
-            if (paying.label === null) full.mutate(method);
+            if (paying.label === null) full.mutate({ method, amount: paying.amount });
             else pay.mutate({ label: paying.label, method, amount: paying.amount });
           }}
         />
