@@ -160,13 +160,18 @@ async function setSection(models: Models, staffId: Types.ObjectId, found: Sectio
   fx.unassignedTables.push(...dropped.map((t) => t.name));
 }
 
-/** Unassigns every table of the person and ends their sessions (deactivation, or a move to a schedule-only role). */
-async function cutOff(models: Models, staffId: Types.ObjectId, fx: StaffEffects): Promise<void> {
+/** Unassigns every table of the person (reported as `unassignedTables`): only waiters hold a section. */
+async function unassignAll(models: Models, staffId: Types.ObjectId, fx: StaffEffects): Promise<void> {
   const tables = await models.Table.find({ sectionStaffId: staffId }, { name: 1, active: 1 }).lean();
   if (tables.length > 0) await models.Table.updateMany({ sectionStaffId: staffId }, { $set: { sectionStaffId: null } });
-  await models.Session.deleteMany({ staffId });
   fx.changedTableIds.push(...tables.map((t) => String(t._id)));
   fx.unassignedTables.push(...tables.filter((t) => t.active).map((t) => t.name));
+}
+
+/** Unassigns every table of the person and ends their sessions (deactivation, or a move to a schedule-only role). */
+async function cutOff(models: Models, staffId: Types.ObjectId, fx: StaffEffects): Promise<void> {
+  await unassignAll(models, staffId, fx);
+  await models.Session.deleteMany({ staffId });
   fx.sessionsEnded = true;
 }
 
@@ -220,6 +225,8 @@ export async function updateStaff(
   await models.Staff.updateOne({ _id: s._id }, { $set: set, ...(isScheduleRole(to) ? { $unset: { pinHash: 1 } } : {}) });
 
   if (isScheduleRole(to) && isLoginRole(from)) await cutOff(models, s._id, fx);
+  // A waiter moving to another sign-in role (manager) gives up their section, as a move to a schedule role does.
+  else if (from === "waiter" && to !== "waiter") await unassignAll(models, s._id, fx);
   else if (section && !isScheduleRole(to)) await setSection(models, s._id, section, fx);
   if (to !== from && isLoginRole(from) && isLoginRole(to)) fx.roleMoved = { from, to };
   return { row: await rowFor(models, s._id, ctx), fx };

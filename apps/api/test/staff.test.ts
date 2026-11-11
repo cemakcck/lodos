@@ -208,6 +208,21 @@ describe("edit", () => {
     expect(left).toBe(0);
   });
 
+  it("a waiter promoted to manager gives up their tables (reported), keeps PIN and session", async () => {
+    const f = await fresh();
+    const sid = await createSession(t.models, f.seed.staff.waiter2, f.tenantId, "person", NOW);
+    const mert = await staffNamed(f.tenantId, "Mert");
+    const had = await runWithTenant(f.tenantId, () => t.models.Table.find({ sectionStaffId: mert._id, active: true }).lean());
+    expect(had.length).toBeGreaterThan(0);
+    const res = await f.call("PATCH", `/api/staff/${f.seed.staff.waiter2}`, { role: "manager" });
+    expect(res.statusCode).toBe(200);
+    expect([...res.json().unassignedTables].sort()).toEqual(had.map((x) => x.name).sort());
+    expect(res.json().staff).toMatchObject({ role: "manager", tables: [], tableRanges: "" });
+    expect(await runWithTenant(f.tenantId, () => t.models.Table.countDocuments({ sectionStaffId: mert._id }))).toBe(0);
+    expect((await staffNamed(f.tenantId, "Mert")).pinHash).toBeTruthy();
+    expect((await t.inject({ method: "GET", url: "/api/auth/me", cookies: { lodos_sid: sid } })).statusCode).toBe(200);
+  });
+
   it("a manager resets a PIN", async () => {
     const f = await fresh();
     expect((await f.call("POST", `/api/staff/${f.seed.staff.waiter}/pin`, { pin: "6543" })).statusCode).toBe(200);

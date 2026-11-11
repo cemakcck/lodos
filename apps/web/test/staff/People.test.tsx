@@ -143,6 +143,19 @@ describe("StaffForm", () => {
     expect([...b.tableIds].sort()).toEqual(["b1", "b2", "t1", "t5"]);
   });
 
+  it("Waiter to Manager sends no tables and reports the tables the server unassigned", async () => {
+    const user = userEvent.setup();
+    const { calls } = setup({ "PATCH /api/staff/id-deniz": { staff: { ...PEOPLE[0], role: "manager", tables: [], tableRanges: "" }, unassignedTables: ["T5", "T6", "T7"] } });
+    await user.click(await screen.findByRole("button", { name: "Deniz Kaya" }));
+    const form = screen.getByRole("form", { name: "Deniz Kaya" });
+    await user.click(within(form).getByRole("radio", { name: "Manager" }));
+    await user.click(within(form).getByRole("button", { name: "Save changes" }));
+    expect(await screen.findByText(/T5–T7 are now unassigned/)).toBeTruthy();
+    const b = body(calls, "PATCH", "/api/staff/id-deniz");
+    expect(b).toMatchObject({ role: "manager" });
+    expect(b.tableIds).toBeUndefined();
+  });
+
   it("Save is disabled until something changes", async () => {
     const user = userEvent.setup();
     setup();
