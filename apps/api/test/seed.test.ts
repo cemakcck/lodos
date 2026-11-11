@@ -263,10 +263,20 @@ describe("liveService: true", () => {
     expect(await counts(id)).toEqual(await counts(live));
   });
 
-  it("seeds quickly", async () => {
-    const start = performance.now();
-    await seedRestaurant(t.models, newTenant(), NOW, { liveService: true });
-    // Guards against accidental N+1 inserts (hundreds of ms of sequential writes), not micro-performance: generous bound.
-    expect(performance.now() - start).toBeLessThan(3000);
+  it("seeds quickly: a bounded number of batched writes, never one insert per document", async () => {
+    // Counts database operations instead of timing the seed, so load on the machine cannot fail it.
+    const ops: string[] = [];
+    const conn = t.models.Tenant.db;
+    conn.set("debug", (collection: string, method: string) => void ops.push(`${collection}.${method}`));
+    try {
+      await seedRestaurant(t.models, newTenant(), NOW, { liveService: true });
+    } finally {
+      conn.set("debug", false);
+    }
+    expect(ops.every((op) => /\.insert(One|Many)$/.test(op))).toBe(true);
+    expect(ops.length).toBeLessThanOrEqual(24); // 20 today: one or two batches per collection
+    const perCollection = new Map<string, number>();
+    for (const op of ops) perCollection.set(op.split(".")[0]!, (perCollection.get(op.split(".")[0]!) ?? 0) + 1);
+    expect(Math.max(...perCollection.values())).toBeLessThanOrEqual(2);
   });
 });
