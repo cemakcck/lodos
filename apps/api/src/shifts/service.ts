@@ -236,7 +236,7 @@ export async function copyLastWeek(models: Models, week: string): Promise<{ copi
   const from = new Date(Math.min(...copies.map((c) => c.start.getTime())));
   const to = new Date(Math.max(...copies.map((c) => c.end.getTime())));
   const existing = await models.Shift.find(
-    { staffId: { $in: [...new Set(copies.map((c) => c.staffId))] }, start: { $lt: to }, end: { $gt: from } },
+    { staffId: { $in: [...new Set(copies.map((c) => String(c.staffId)))] }, start: { $lt: to }, end: { $gt: from } },
     { staffId: 1, start: 1, end: 1 },
   ).lean();
   const taken = existing.map((s) => ({ staffId: String(s.staffId), start: s.start, end: s.end }));
