@@ -13,6 +13,8 @@ import { roomSchema } from "./room";
 import { sandboxSchema } from "./sandbox";
 import { sessionSchema } from "./session";
 import { settingSchema } from "./setting";
+import { shiftSchema } from "./shift";
+import { shiftTemplateSchema } from "./shiftTemplate";
 import { staffSchema } from "./staff";
 import { tableSchema } from "./table";
 import { tenantSchema } from "./tenant";
@@ -39,6 +41,8 @@ export function registerModels(conn: Connection) {
     Setting: conn.model("Setting", settingSchema),
     Adjustment: conn.model("Adjustment", adjustmentSchema),
     DailySummary: conn.model("DailySummary", dailySummarySchema),
+    Shift: conn.model("Shift", shiftSchema),
+    ShiftTemplate: conn.model("ShiftTemplate", shiftTemplateSchema),
   };
 }
 
@@ -63,6 +67,8 @@ export type PhotoDoc = InstanceType<Models["Photo"]>;
 export type SettingDoc = InstanceType<Models["Setting"]>;
 export type AdjustmentDoc = InstanceType<Models["Adjustment"]>;
 export type DailySummaryDoc = InstanceType<Models["DailySummary"]>;
+export type ShiftDoc = InstanceType<Models["Shift"]>;
+export type ShiftTemplateDoc = InstanceType<Models["ShiftTemplate"]>;
 
 /** Model names whose collections are tenant-scoped (everything except Sandbox and RateEvent). */
 export const TENANT_SCOPED_MODELS = [
@@ -82,6 +88,8 @@ export const TENANT_SCOPED_MODELS = [
   "Setting",
   "Adjustment",
   "DailySummary",
+  "Shift",
+  "ShiftTemplate",
 ] as const satisfies readonly (keyof Models)[];
 
 /**

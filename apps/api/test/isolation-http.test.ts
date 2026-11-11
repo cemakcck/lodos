@@ -40,6 +40,8 @@ const snapshot = (tenantId: string) =>
     calls: await t.models.Call.find({}).sort({ _id: 1 }).lean(),
     availability: await t.models.Availability.find({}).sort({ _id: 1 }).lean(),
     adjustments: await t.models.Adjustment.find({}).sort({ _id: 1 }).lean(),
+    shifts: await t.models.Shift.find({}).sort({ _id: 1 }).lean(),
+    shiftTemplates: await t.models.ShiftTemplate.find({}).sort({ _id: 1 }).lean(),
   }));
 
 const t7 = (tenantId: string) => runWithTenant(tenantId, () => t.models.Table.findOne({ name: "T7" }).lean().orFail());
@@ -289,6 +291,40 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect((await call("PATCH", `/api/staff/${String(aMert._id)}`, { tableIds: [bTable] })).statusCode).toBe(404);
     expect(await snapshot(b.tenantId)).toEqual(before);
   }, 20_000);
+
+  it("Phase 2 Task 18: A's manager gets 404 on B's shifts, templates and people, and never sees them; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    expect(before.shifts.length).toBeGreaterThan(0);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const call = (method: "GET" | "POST" | "PATCH" | "DELETE", url: string, payload?: object) =>
+      t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
+    for (const sh of before.shifts) {
+      const id = String(sh._id);
+      expect((await call("PATCH", `/api/shifts/${id}`, { note: "Hacked" })).statusCode).toBe(404);
+      expect((await call("DELETE", `/api/shifts/${id}`)).statusCode).toBe(404);
+    }
+    for (const tpl of before.shiftTemplates) {
+      const id = String(tpl._id);
+      expect((await call("PATCH", `/api/shift-templates/${id}`, { name: "Hacked" })).statusCode).toBe(404);
+      expect((await call("DELETE", `/api/shift-templates/${id}`)).statusCode).toBe(404);
+    }
+    // B's people can't be scheduled from A, nor can A's shifts be moved onto them.
+    const bPerson = String(before.staff.find((s) => s.role === "cook")!._id);
+    const shift = { serviceDay: "2026-11-10", start: "08:00", end: "10:00", area: "salon" };
+    expect((await call("POST", "/api/shifts", { ...shift, staffId: bPerson })).statusCode).toBe(404);
+    const aShift = await runWithTenant(a.tenantId, () => t.models.Shift.findOne({}).lean().orFail());
+    expect((await call("PATCH", `/api/shifts/${String(aShift._id)}`, { staffId: bPerson })).statusCode).toBe(404);
+    for (const url of ["/api/shifts", "/api/shifts?week=2026-11-16", "/api/shift-templates", "/api/me/shifts"]) {
+      const res = await call("GET", url);
+      expect(res.statusCode, url).toBe(200);
+      for (const sh of before.shifts) expect(res.body).not.toContain(String(sh._id));
+      for (const tpl of before.shiftTemplates) expect(res.body).not.toContain(String(tpl._id));
+      for (const st of before.staff) expect(res.body).not.toContain(String(st._id));
+    }
+    // Copying last week works inside A only.
+    expect((await call("POST", "/api/shifts/copy-last-week", { week: "2026-11-16" })).statusCode).toBe(200);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  }, 30_000);
 
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";

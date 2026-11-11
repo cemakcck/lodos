@@ -1,5 +1,5 @@
 /** Seed content for Lodos: data only. Prices are written in lira (VAT-inclusive) and converted to kuruş by `seed.ts`. */
-import type { ALLERGENS } from "@lodos/shared";
+import type { ALLERGENS, ShiftArea } from "@lodos/shared";
 
 type Allergen = (typeof ALLERGENS)[number];
 export type Txt = { en: string; tr: string };
@@ -531,3 +531,40 @@ export const SCHEDULE_TEAM = [
   { name: "İpek Aydın", role: "host" },
   { name: "Hasan Kılıç", role: "dishwasher" },
 ] as const;
+
+/** Shift presets (spec §6.2), in display order. */
+export const SHIFT_TEMPLATES: readonly { name: string; start: string; end: string; area: ShiftArea }[] = [
+  { name: "Dinner", start: "17:00", end: "01:00", area: "salon" },
+  { name: "Prep", start: "12:00", end: "17:00", area: "kitchen" },
+  { name: "Double", start: "12:00", end: "01:00", area: "salon" },
+  { name: "Bar", start: "18:00", end: "02:00", area: "bar" },
+];
+
+/**
+ * The demo schedule: this week (0) and next (1), relative to `now`. `days` are offsets from Monday. Everyone works
+ * 4-5 shifts a week, one per service day at the same times, so rest is always over 11 h (also across the two weeks).
+ * The one deliberate warning (spec §6.5): Ece Demir works 47 h this week (4 × 10 h + 7 h). Nobody else is warned.
+ */
+export const SEED_SHIFTS: readonly {
+  name: string;
+  weeks: readonly (0 | 1)[];
+  days: readonly number[];
+  start: string;
+  end: string;
+  area: ShiftArea;
+  note?: string;
+}[] = [
+  { name: "Deniz", weeks: [0, 1], days: [0, 1, 3, 4, 5], start: "17:00", end: "01:00", area: "salon" },
+  { name: "Mert", weeks: [0, 1], days: [2, 3, 4, 5, 6], start: "17:00", end: "01:00", area: "terrace" },
+  { name: "İpek Aydın", weeks: [0, 1], days: [3, 4, 5, 6], start: "18:00", end: "23:00", area: "salon" },
+  { name: "Emre Yıldız", weeks: [0, 1], days: [0, 1, 2, 3, 4], start: "13:00", end: "21:00", area: "kitchen" },
+  { name: "Zeynep Arslan", weeks: [0, 1], days: [2, 3, 4, 5, 6], start: "16:00", end: "00:00", area: "kitchen" },
+  { name: "Burak Şahin", weeks: [0, 1], days: [1, 2, 4, 5], start: "12:00", end: "17:00", area: "kitchen" },
+  { name: "Ece Demir", weeks: [0], days: [2, 3, 4, 5], start: "16:00", end: "02:00", area: "bar" },
+  { name: "Ece Demir", weeks: [0], days: [6], start: "18:00", end: "01:00", area: "bar" },
+  { name: "Ece Demir", weeks: [1], days: [1, 2, 4, 5, 6], start: "18:00", end: "02:00", area: "bar" },
+  { name: "Can Özkan", weeks: [0, 1], days: [0, 1, 3, 6], start: "18:00", end: "02:00", area: "bar" },
+  { name: "Hasan Kılıç", weeks: [0, 1], days: [0, 2, 4, 5, 6], start: "17:00", end: "01:00", area: "kitchen" },
+  { name: "Selin", weeks: [0, 1], days: [0, 1, 3, 5], start: "15:00", end: "23:00", area: "salon" },
+  { name: "Selin", weeks: [0, 1], days: [4], start: "15:00", end: "23:00", area: "salon", note: "Stock count" },
+];

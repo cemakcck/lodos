@@ -24,7 +24,9 @@ export type ErrorCode =
   | "last_manager"
   | "self"
   | "station"
-  | "demo_protected";
+  | "demo_protected"
+  | "shift_too_long"
+  | "shift_overlap";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

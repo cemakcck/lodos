@@ -1,11 +1,23 @@
 import { randomBytes } from "node:crypto";
-import { lineTotal, serviceDayOf, serviceDayStartOf } from "@lodos/shared";
+import { addDays, lineTotal, mondayOf, serviceDayOf, serviceDayStartOf, shiftSpan } from "@lodos/shared";
 import argon2 from "argon2";
 import { Types } from "mongoose";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
 import { generateHistory, mulberry32 } from "../sales/history";
-import { CATEGORIES, ITEMS, ROOMS, SCHEDULE_TEAM, STAFF, TABLES, vatRateOf, type SeedItem, type Station } from "./content";
+import {
+  CATEGORIES,
+  ITEMS,
+  ROOMS,
+  SCHEDULE_TEAM,
+  SEED_SHIFTS,
+  SHIFT_TEMPLATES,
+  STAFF,
+  TABLES,
+  vatRateOf,
+  type SeedItem,
+  type Station,
+} from "./content";
 
 export type SeedResult = {
   /** Keyed by table name. `token` is the raw guest QR token. */
@@ -66,7 +78,7 @@ const LOW_STOCK = { slug: "dry-aged-ribeye", remaining: 2 };
 
 /**
  * Seeds one tenant with the Lodos restaurant: menu, floor, staff (sign-in accounts and, unless `scheduleTeam: false`,
- * the schedule-only team) and settings, plus (with `liveService`) a
+ * the schedule-only team and two weeks of shifts), shift templates and settings, plus (with `liveService`) a
  * mid-service snapshot where tickets, orders and checks agree. Everything is relative to `now`.
  */
 export async function seedRestaurant(
@@ -79,6 +91,8 @@ export async function seedRestaurant(
   const pinHashes = await Promise.all(STAFF.map((s) => hashPin(s.pin)));
 
   const staffIds = Object.fromEntries(STAFF.map((s) => [s.key, oid()])) as Record<(typeof STAFF)[number]["key"], Types.ObjectId>;
+  const withTeam = opts.scheduleTeam !== false;
+  const teamIds = Object.fromEntries(SCHEDULE_TEAM.map((s) => [s.name, oid()])) as Record<string, Types.ObjectId>;
   const roomIds = Object.fromEntries(ROOMS.map((r) => [r.key, oid()]));
   const catIds = Object.fromEntries(CATEGORIES.map((c) => [c.key, oid()]));
   const tableIds = Object.fromEntries(TABLES.map((t) => [t.name, oid()]));
@@ -121,8 +135,11 @@ export async function seedRestaurant(
       m.Setting.create({ warnMin: 8, lateMin: 15 }),
       m.Staff.insertMany([
         ...STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i], demoProtected: s.demoProtected })),
-        ...(opts.scheduleTeam === false ? [] : SCHEDULE_TEAM.map((s) => ({ name: s.name, role: s.role }))),
+        ...(withTeam ? SCHEDULE_TEAM.map((s) => ({ _id: teamIds[s.name], name: s.name, role: s.role })) : []),
       ]),
+      m.ShiftTemplate.insertMany(SHIFT_TEMPLATES.map((x, i) => ({ ...x, sort: i }))),
+      // A real install (no schedule team) starts with an empty schedule.
+      withTeam ? m.Shift.insertMany(demoShifts()) : Promise.resolve(),
       m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort }))),
       m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i, defaultVatRate: vatRateOf(c.key) }))),
       m.MenuItem.insertMany(menuItems),
@@ -151,6 +168,23 @@ export async function seedRestaurant(
       items: ITEMS.map((i) => ({ id: itemIds[i.slug] as Types.ObjectId, slug: i.slug, name: i.name, price: kurus(i.price), station: stationOf[i.category] as Station })),
       tables: TABLES.map((x) => x.name),
       staff: STAFF.map((x) => ({ id: staffIds[x.key], name: x.name })),
+    });
+  }
+
+  /** SEED_SHIFTS for the week of `now` and the next one. */
+  function demoShifts() {
+    const idOf = (name: string) => STAFF.find((x) => x.name === name)?.key;
+    const monday = mondayOf(serviceDayOf(now));
+    return SEED_SHIFTS.flatMap((p) => {
+      const key = idOf(p.name);
+      const staffId = key ? staffIds[key] : teamIds[p.name];
+      if (!staffId) throw new Error(`unknown person ${p.name}`);
+      return p.weeks.flatMap((w) =>
+        p.days.map((d) => {
+          const serviceDay = addDays(monday, w * 7 + d);
+          return { staffId, serviceDay, ...shiftSpan(serviceDay, p.start, p.end), area: p.area, note: p.note ?? null };
+        }),
+      );
     });
   }
 

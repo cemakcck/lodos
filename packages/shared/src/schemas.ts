@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { COMP_REASONS, VOID_REASONS } from "./adjustments";
 import { ALLERGENS } from "./allergens";
+import { isMonday, SHIFT_AREAS } from "./shifts";
 import { LOGIN_ROLES, SCHEDULE_ROLES } from "./staff";
 import { TABLE_NAME_RE } from "./tables";
 
@@ -180,3 +181,52 @@ export const AdjustBody = z
     if (b.reason === "other" && !b.note) ctx.addIssue({ code: "custom", path: ["note"], message: "A note is required for Other" });
   });
 export type AdjustBody = z.infer<typeof AdjustBody>;
+
+/** "YYYY-MM-DD" that is a real calendar date. */
+export const ServiceDaySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD")
+  .refine((d) => {
+    const ms = Date.parse(`${d}T00:00:00Z`);
+    return !Number.isNaN(ms) && new Date(ms).toISOString().slice(0, 10) === d;
+  }, "Invalid date");
+/** A week is named by its Monday service day. */
+export const WeekSchema = ServiceDaySchema.refine(isMonday, "A week starts on a Monday");
+/** Wall-clock "HH:MM" (Istanbul). */
+export const ClockSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected HH:MM");
+const ShiftArea = z.enum(SHIFT_AREAS);
+
+/** GET /api/shifts?week=<monday>. Without `week`: the week of today's service day. */
+export const ShiftWeekQuery = z.object({ week: WeekSchema.optional() });
+
+/** POST /api/shifts. A start before 06:00 is the next morning of `serviceDay`; an end at or before the start is the next day. */
+export const ShiftBody = z.object({
+  staffId: ObjectIdString,
+  serviceDay: ServiceDaySchema,
+  start: ClockSchema,
+  end: ClockSchema,
+  area: ShiftArea,
+  note: z.string().trim().max(140).nullish(),
+});
+export type ShiftBody = z.infer<typeof ShiftBody>;
+
+/** PATCH /api/shifts/:id: any subset, including a move to another person or day. */
+export const ShiftPatchBody = ShiftBody.partial();
+export type ShiftPatchBody = z.infer<typeof ShiftPatchBody>;
+
+/** POST /api/shifts/copy-last-week. */
+export const CopyWeekBody = z.object({ week: WeekSchema });
+
+/** POST /api/shift-templates. */
+export const ShiftTemplateBody = z.object({
+  name: z.string().trim().min(1).max(40),
+  start: ClockSchema,
+  end: ClockSchema,
+  area: ShiftArea,
+  sort: z.number().int().min(0).max(999).optional(),
+});
+export type ShiftTemplateBody = z.infer<typeof ShiftTemplateBody>;
+
+/** PATCH /api/shift-templates/:id. */
+export const ShiftTemplatePatchBody = ShiftTemplateBody.partial();
+export type ShiftTemplatePatchBody = z.infer<typeof ShiftTemplatePatchBody>;
