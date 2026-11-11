@@ -11,6 +11,9 @@ export interface Approver {
 
 export interface ApproverPadProps {
   approvers: Approver[];
+  /** The manager list's query: while loading or after a failure, say so (with a retry) instead of "no manager". */
+  status: "pending" | "error" | "success";
+  onRetry: () => void;
   managerId: string | null;
   onManager: (id: string) => void;
   pin: string;
@@ -25,7 +28,7 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
  * Manager approval on another person's tablet: manager name tiles (a radio group), then a 10-key pad. The digits are
  * never shown, only dots; a polite status says how many were entered.
  */
-export function ApproverPad({ approvers, managerId, onManager, pin, onPin, demo }: ApproverPadProps) {
+export function ApproverPad({ approvers, status, onRetry, managerId, onManager, pin, onPin, demo }: ApproverPadProps) {
   const { t } = useTranslation();
   const labelId = useId();
   const add = (d: string) => pin.length < PIN_MAX && onPin(pin + d);
@@ -54,7 +57,18 @@ export function ApproverPad({ approvers, managerId, onManager, pin, onPin, demo 
       <p className="staff-label mb-2" id={labelId}>
         {t("adjust.approval")}
       </p>
-      {approvers.length === 0 ? (
+      {status === "pending" ? (
+        <p className="fl-dialog-note" role="status">
+          {t("adjust.approversLoading")}
+        </p>
+      ) : status === "error" ? (
+        <div className="fl-dialog-note" role="alert">
+          <p>{t("adjust.approversError")}</p>
+          <button type="button" className="staff-btn" onClick={onRetry}>
+            {t("staff.retry")}
+          </button>
+        </div>
+      ) : approvers.length === 0 ? (
         <p className="fl-dialog-note">{t("adjust.noApprovers")}</p>
       ) : (
         <div className="ad-who" role="radiogroup" aria-labelledby={labelId}>

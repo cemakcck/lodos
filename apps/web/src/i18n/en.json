@@ -956,6 +956,8 @@
     "approvalHint": "Pick a manager and enter their PIN. Nothing is stored.",
     "approverLabel": "Manager",
     "noApprovers": "No manager is available to approve.",
+    "approversLoading": "Loading managers…",
+    "approversError": "Couldn't load the managers.",
     "pin": {
       "label": "PIN",
       "entered_one": "{{count}} digit entered",

@@ -74,6 +74,36 @@ describe("AdjustDialog", () => {
     expect(selin.getAttribute("aria-checked")).toBe("true");
   });
 
+  it("while the managers load it says so (not 'No manager is available')", async () => {
+    setup();
+    const real = globalThis.fetch;
+    vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => (String(input) === "/api/approvers" ? new Promise(() => {}) : real(input, init)));
+    cleanup();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <AdjustDialog checkId="c1" tableName="T4" line={LINE} isManager={false} initialKind="comp" onDone={vi.fn()} onCancel={vi.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("Loading managers…")).toBeTruthy();
+    expect(screen.queryByText("No manager is available to approve.")).toBeNull();
+  });
+
+  it("a failed manager list shows an error with Try again, which reloads it", async () => {
+    let attempt = 0;
+    setup({ routes: { "GET /api/approvers": () => (++attempt === 1 ? reply(500, "internal") : { status: 200, body: APPROVERS }) } });
+    expect(await screen.findByText("Couldn't load the managers.")).toBeTruthy();
+    expect(screen.queryByText("No manager is available to approve.")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("radio", { name: "Selin Kaya" })).toBeTruthy();
+    expect(attempt).toBe(2);
+  });
+
+  it("an empty manager list says no manager is available", async () => {
+    setup({ approvers: [] });
+    expect(await screen.findByText("No manager is available to approve.")).toBeTruthy();
+  });
+
   it("a manager sees a plain Confirm and no pad", async () => {
     setup({ manager: true });
     const dlg = await screen.findByRole("dialog");

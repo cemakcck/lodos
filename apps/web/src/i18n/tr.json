@@ -956,6 +956,8 @@
     "approvalHint": "Bir yönetici seçin ve PIN'ini girin. PIN kaydedilmez.",
     "approverLabel": "Yönetici",
     "noApprovers": "Onaylayabilecek yönetici yok.",
+    "approversLoading": "Yöneticiler yükleniyor…",
+    "approversError": "Yöneticiler yüklenemedi.",
     "pin": {
       "label": "PIN",
       "entered_one": "{{count}} hane girildi",
