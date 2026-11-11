@@ -180,6 +180,19 @@ describe("Floor plan editor", () => {
     await waitFor(() => expect(document.activeElement?.getAttribute("aria-label")).toMatch(/^T1,/));
   });
 
+  it("an arrow press snaps only the axis it moves along: an off-grid table pressed right keeps its y", async () => {
+    const user = userEvent.setup();
+    setup({ "GET /api/rooms/salon/layout": { ...LAYOUT, tables: [tb({ id: "t7", name: "T7", x: 200, y: 298 })] } });
+    (await tableBtn("T7")).focus();
+    await user.keyboard("{ArrowRight}");
+    expect((await tableBtn("T7")).getAttribute("aria-label")).toContain("x 224, y 298");
+    await user.click(await tableBtn("T7"));
+    await user.click(screen.getByRole("button", { name: "Move right" }));
+    expect((await tableBtn("T7")).getAttribute("aria-label")).toContain("x 240, y 298");
+    await user.click(screen.getByRole("button", { name: "Move down" }));
+    expect((await tableBtn("T7")).getAttribute("aria-label")).toContain("x 240, y 320"); // 298 + 16 = 314, snapped to 320
+  });
+
   it("an arrow press clamped at the edge doesn't move or announce", async () => {
     const user = userEvent.setup();
     setup({ "GET /api/rooms/salon/layout": { ...LAYOUT, tables: [tb({ id: "t1", name: "T1", x: 32, y: 0 })] } });

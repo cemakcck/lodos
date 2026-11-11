@@ -33,8 +33,9 @@ test("a saved layout change reaches the waiter floor live", async ({ page, brows
     await page.getByRole("button", { name: "Save layout" }).click();
     await expect(page.getByText("Layout saved")).toBeVisible();
 
-    // Two 16 px grid steps: exactly 32 to the right in plan units, and no vertical move.
-    await expect(t7).toHaveAttribute("data-x", String(before.x + 32));
+    // Two 16 px grid steps right, each snapped to the grid (the seeded spot may be off it), and no vertical move.
+    const snap = (v: number) => Math.round(v / 16) * 16;
+    await expect(t7).toHaveAttribute("data-x", String(snap(snap(before.x + 16) + 16)));
     expect(await planY()).toBe(before.y);
   } finally {
     await waiterCtx.close();

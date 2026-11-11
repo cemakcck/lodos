@@ -110,7 +110,8 @@ export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId
     if (dir) {
       e.preventDefault();
       const step = e.shiftKey ? GRID * 4 : GRID;
-      onMove(tb.key, snap(tb.x + dir[0] * step), snap(tb.y + dir[1] * step));
+      // Only the axis moved along snaps: pressing Right never shifts an off-grid table up or down.
+      onMove(tb.key, dir[0] ? snap(tb.x + dir[0] * step) : tb.x, dir[1] ? snap(tb.y + dir[1] * step) : tb.y);
     } else if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
       const i = sorted.findIndex((x) => x.key === tb.key);

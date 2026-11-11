@@ -63,7 +63,8 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce, 
 
   const nudge = (dx: number, dy: number) => {
     if (!draft.room) return;
-    const at = clampInto({ ...table, x: snap(table.x + dx * GRID), y: snap(table.y + dy * GRID) }, draft.room);
+    // Only the axis moved along snaps (as with the arrow keys on the canvas).
+    const at = clampInto({ ...table, x: dx ? snap(table.x + dx * GRID) : table.x, y: dy ? snap(table.y + dy * GRID) : table.y }, draft.room);
     if (at.x === table.x && at.y === table.y) return; // against the edge: nothing moved, nothing to announce
     draft.move(table.key, at.x, at.y);
     announce(t("floorPlan.moved", { name: table.name, x: at.x, y: at.y }));
