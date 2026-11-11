@@ -70,10 +70,12 @@ export function findFree(size: { w: number; h: number }, taken: readonly Rect[],
   const y0 = snap(start.y);
   for (let y = y0; y + size.h <= room.height; y += GRID) {
     for (let x = y === y0 ? x0 : 0; x + size.w <= room.width; x += GRID) {
-      const r = { x, y, ...size };
+      // Only the size: `size` may be a whole table (Duplicate), whose own x/y must not replace the candidate's.
+      const r = { x, y, w: size.w, h: size.h };
       if (!taken.some((t) => overlaps(r, t))) return { x, y };
     }
   }
   if (y0 !== 0 || x0 !== 0) return findFree(size, taken, room, { x: 0, y: 0 });
-  return clampInto({ ...start, ...size }, room);
+  const at = clampInto({ x: start.x, y: start.y, w: size.w, h: size.h }, room);
+  return { x: at.x, y: at.y };
 }

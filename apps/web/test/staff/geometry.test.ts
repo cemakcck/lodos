@@ -81,4 +81,11 @@ describe("findFree", () => {
     expect(spot.x % 16).toBe(0);
     expect(spot.y % 16).toBe(0);
   });
+
+  it("takes a whole table as the size (Duplicate) and returns only the new spot, not the table's own place", () => {
+    const room = { width: 800, height: 480 };
+    const t1 = { key: "t1", name: "T1", ...r(32, 32) };
+    const spot = findFree(t1, [t1], room, { x: 112, y: 32 });
+    expect(spot).toEqual({ x: 112, y: 32 });
+  });
 });
