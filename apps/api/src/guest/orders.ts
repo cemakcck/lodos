@@ -28,21 +28,18 @@ export async function openVisit(models: Models, tableId: string): Promise<GuestV
 
 /**
  * "Your table": every line on the table's open check, oldest order first, grouped as Food (kitchen) and Drinks (bar).
- * Each line's status comes from its station's ticket for that order. Totals are summed from the stored snapshots.
+ * Each line's status comes from its station's ticket for that order. Totals are the bill's (net of comps and voids).
  * Built on `checkLines` (shared with the waiter's check detail), without the staff-only fields.
  */
 export async function guestOrdersView(models: Models, tableId: string): Promise<GuestOrdersView> {
   const visit = await openVisit(models, tableId);
   if (!visit) return { visit: null };
   const { food, drinks, totals } = await checkLines(models, visit.checkId);
-  const guestLine = ({ orderId, qty, name, options, note, status, lineTotal }: CheckLine): GuestOrderLine => ({
-    orderId,
-    qty,
-    name,
-    options,
-    note,
-    status,
-    lineTotal,
-  });
-  return { visit, food: food.map(guestLine), drinks: drinks.map(guestLine), totals };
+  // Voided units were never served: the guest sees what is still coming (a fully voided line drops out). Comped units
+  // stay, at ₺0 (`lineTotal` is already net of comps and voids).
+  const guestLines = (lines: CheckLine[]): GuestOrderLine[] =>
+    lines
+      .filter((l) => l.qty - l.voidedQty > 0)
+      .map(({ orderId, qty, voidedQty, name, options, note, status, lineTotal }) => ({ orderId, qty: qty - voidedQty, name, options, note, status, lineTotal }));
+  return { visit, food: guestLines(food), drinks: guestLines(drinks), totals };
 }

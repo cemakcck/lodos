@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { billOf } from "../src/checks/bill";
 import { runWithTenant } from "../src/db/tenancy";
-import { itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 const SELIN_PIN = "9999";
@@ -199,6 +199,24 @@ describe("voids", () => {
     expect(await c.adjustmentCount()).toBe(0);
     // A comp is still allowed.
     expect((await c.adjust(c.m, { name: GELATO, kind: "comp" })).statusCode).toBe(201);
+  });
+});
+
+describe("the guest's view", () => {
+  it("voided units leave the guest's lines (a fully voided line disappears); comped units stay at ₺0", async () => {
+    const c = await setup([{ name: GELATO, qty: 3 }, { name: FRIES }, { name: "Burrata" }]);
+    expect((await c.adjust(c.m, { name: GELATO, kind: "void" })).statusCode).toBe(201);
+    expect((await c.adjust(c.m, { name: FRIES, kind: "void" })).statusCode).toBe(201);
+    expect((await c.adjust(c.m, { name: "Burrata", kind: "comp" })).statusCode).toBe(201);
+    const view = (await guest(t, c.s.seed.tables.T7!.token).get("/api/guest/orders")).json();
+    const lines = [...view.food, ...view.drinks] as { qty: number; name: { en: string }; lineTotal: number }[];
+    const gelato = c.items[GELATO]!;
+    expect(lines.map((l) => [l.name.en.slice(0, 7), l.qty, l.lineTotal]).sort()).toEqual(
+      [
+        ["Burrata", 1, 0],
+        [GELATO.slice(0, 7), 2, 2 * gelato.price],
+      ].sort(),
+    );
   });
 });
 
