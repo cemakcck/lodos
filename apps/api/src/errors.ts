@@ -13,7 +13,9 @@ export type ErrorCode =
   | "rate_limited"
   | "limit_exceeded"
   | "conflict"
-  | "demo_busy";
+  | "demo_busy"
+  | "approval_required"
+  | "not_a_manager";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

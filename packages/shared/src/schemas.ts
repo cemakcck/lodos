@@ -104,3 +104,13 @@ export const TableEdit = z.object({
   capacity: z.number().int().min(1).max(50).optional(),
 });
 export type TableEdit = z.infer<typeof TableEdit>;
+
+/** 4 to 6 digits. The one PIN rule: the API's login and approval both use it. */
+export const PinSchema = z.string().regex(/^\d{4,6}$/, "PIN must be 4 to 6 digits");
+
+/** A manager's PIN entered on someone else's tablet (comps, voids). */
+export const ApprovalBody = z.object({
+  managerId: z.string().refine((s) => /^[0-9a-f]{24}$/i.test(s), "Invalid manager id"),
+  pin: PinSchema,
+});
+export type ApprovalBody = z.infer<typeof ApprovalBody>;

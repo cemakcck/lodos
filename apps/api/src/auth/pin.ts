@@ -1,8 +1,7 @@
 import argon2 from "argon2";
-import { z } from "zod";
+import { PinSchema } from "@lodos/shared";
 
-/** 4 to 6 digits. */
-export const PinSchema = z.string().regex(/^\d{4,6}$/, "PIN must be 4 to 6 digits");
+export { PinSchema };
 
 /** OWASP-minimum argon2id parameters. */
 export const hashPin = (pin: string): Promise<string> =>
