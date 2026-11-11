@@ -5,7 +5,7 @@ import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
 import type { Realtime } from "../src/realtime/emit";
 import { placeOrder } from "../src/orders/place";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -35,7 +35,7 @@ async function mixedOrder(tenantId: string) {
 
 describe("POST /api/guest/orders", () => {
   it("a QR order at free T7 opens a check, one ticket per station, server-side totals, serverName null", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const { ribeye, fries, negroni, body } = await mixedOrder(tenantId);
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", body);
     expect(res.statusCode).toBe(201);
@@ -93,7 +93,7 @@ describe("POST /api/guest/orders", () => {
   });
 
   it("a second order lands on the same open check", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     expect((await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
@@ -106,7 +106,7 @@ describe("POST /api/guest/orders", () => {
   });
 
   it("an order at a table whose check was paid opens a new check (the next party)", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
@@ -119,7 +119,7 @@ describe("POST /api/guest/orders", () => {
   });
 
   it("emits ticket.created per ticket and check.updated for the new check, after commit", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const { body } = await mixedOrder(tenantId);
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", body);
     expect(res.statusCode).toBe(201);
@@ -137,7 +137,7 @@ describe("POST /api/guest/orders", () => {
   });
 
   it("emits nothing when the order fails with sold_out", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const prawns = await itemNamed(t, tenantId, "King prawns");
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", orderBody([{ itemId: prawns.id }]));
     expect(res.statusCode).toBe(409);
@@ -147,7 +147,7 @@ describe("POST /api/guest/orders", () => {
   });
 
   it("validates the body and rejects an unknown or missing token with 404", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const bad = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", { idempotencyKey: "nope", items: [] });
     expect(bad.statusCode).toBe(400);
@@ -160,7 +160,7 @@ describe("POST /api/guest/orders", () => {
 
 describe("expectedCheckId: a stale guest page cannot order onto the next party's check", () => {
   it("a stale id after close → 409 check_closed, no order, no new check", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.T7!.id;
     const g = guest(t, seed.tables.T7!.token);
@@ -180,7 +180,7 @@ describe("expectedCheckId: a stale guest page cannot order onto the next party's
   });
 
   it("a stale id while another party's check is open → check_closed", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
@@ -193,7 +193,7 @@ describe("expectedCheckId: a stale guest page cannot order onto the next party's
   });
 
   it("the matching id is accepted; absent at a free table opens a check", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     expect((await g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
@@ -207,7 +207,7 @@ describe("expectedCheckId: a stale guest page cannot order onto the next party's
   });
 
   it("an expectedCheckId at a free table → check_closed (the page belongs to an ended visit)", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", {
       ...orderBody([{ itemId: fries.id }]),
@@ -219,7 +219,7 @@ describe("expectedCheckId: a stale guest page cannot order onto the next party's
   });
 
   it("an idempotent replay returns the old order even after its check closed", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     const body = orderBody([{ itemId: fries.id }]);
@@ -236,7 +236,7 @@ describe("placeOrder for staff orders", () => {
   const req = (itemId: string): OrderRequest => ({ idempotencyKey: randomUUID(), items: [{ itemId, qty: 1, options: [] }] });
 
   it("requires an open check (the waiter seats the table first)", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const run = runWithTenant(tenantId, () =>
       placeOrder(t.models, { tableId: seed.tables.T7!.id, source: "staff", placedBy: seed.staff.waiter, req: req(fries.id), now: NOW }),
@@ -245,7 +245,7 @@ describe("placeOrder for staff orders", () => {
   });
 
   it("uses the open check and names the check's server on tickets", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     // B1 is seated in Deniz's section.
     const result = await runWithTenant(tenantId, () =>
@@ -264,7 +264,7 @@ describe("placeOrder for staff orders", () => {
 
 describe("VAT rate snapshot", () => {
   it("a placed line keeps the item's rate after the manager changes it", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const staffSid = await createSession(t.models, s.seed.staff.waiter, s.tenantId, "person", NOW);
     const mgrSid = await createSession(t.models, s.seed.staff.manager, s.tenantId, "person", NOW);
     const T7 = s.seed.tables.T7!.id;

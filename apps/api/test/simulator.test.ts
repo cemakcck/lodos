@@ -19,7 +19,7 @@ const seq = () => {
 };
 const mkSandbox = async (extra: object = {}) => {
   const id = newTenant();
-  await seedRestaurant(t.models, id, NOW, { liveService: true });
+  await seedRestaurant(t.models, id, NOW, { liveService: true, history: false });
   await unscoped("test", () => t.models.Sandbox.create({ _id: id, createdAt: NOW, lastSeenAt: NOW, ...extra }));
   return id;
 };

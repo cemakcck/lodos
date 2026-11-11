@@ -4,7 +4,7 @@ import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
 import { closeCheck } from "../src/floor/service";
 import { placeOrder } from "../src/orders/place";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 import { closeSockets, connect, listen } from "./sockets";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
@@ -41,7 +41,7 @@ async function seatedT7WithOrder(s: Seeded) {
 
 describe("seat, order and check detail", () => {
   it("seat T7 with 2 covers, staff order 1 food + 1 drink → /check has one Food line and one Drinks line; totals add up", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, T7, burrata, spritz, checkId } = await seatedT7WithOrder(s);
     const res = await w("GET", `/api/tables/${T7}/check`);
     expect(res.statusCode).toBe(200);
@@ -60,7 +60,7 @@ describe("seat, order and check detail", () => {
   });
 
   it("a free table's /check is { check: null }; an order on an unseated table → conflict", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const w = await staff(s);
     const T7 = s.seed.tables.T7!.id;
     const res = await w("GET", `/api/tables/${T7}/check`);
@@ -73,7 +73,7 @@ describe("seat, order and check detail", () => {
   });
 
   it("seating twice → conflict; covers are validated", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const w = await staff(s);
     const T7 = s.seed.tables.T7!.id;
     expect((await w("POST", `/api/tables/${T7}/seat`, { covers: 0 })).statusCode).toBe(400);
@@ -88,7 +88,7 @@ describe("seat, order and check detail", () => {
   });
 
   it("seating a QR-opened check sets its covers instead of opening another", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const T7 = s.seed.tables.T7!.id;
     const fries = await itemNamed(t, s.tenantId, "Truffle fries");
     expect((await guest(t, s.seed.tables.T7!.token).post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
@@ -105,7 +105,7 @@ describe("seat, order and check detail", () => {
 
 describe("close the check", () => {
   it("close (card) → paid, amount = total, T7 free on /floor, calls answered; a guest order then opens a new check", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, T7, burrata, spritz, checkId } = await seatedT7WithOrder(s);
     await runWithTenant(s.tenantId, () => t.models.Call.create({ tableId: T7, checkId, reason: "other", openedAt: NOW }));
     const res = await w("POST", `/api/checks/${checkId}/close`, { method: "card" });
@@ -129,7 +129,7 @@ describe("close the check", () => {
   });
 
   it("a guest socket for T7 receives check.updated on close", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, checkId } = await seatedT7WithOrder(s);
     const g = await connect(url, { tableToken: s.seed.tables.T7!.token });
     expect((await w("POST", `/api/checks/${checkId}/close`, { method: "cash" })).statusCode).toBe(200);
@@ -138,7 +138,7 @@ describe("close the check", () => {
   });
 
   it("a double tap is 200 both times with the same amount, one paid write and one event", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, checkId } = await seatedT7WithOrder(s);
     const emit = vi.spyOn(t.app.realtime, "emit");
     try {
@@ -159,7 +159,7 @@ describe("close the check", () => {
   });
 
   it("validation and ids: bad method → 400; malformed or unknown check → 404", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, checkId } = await seatedT7WithOrder(s);
     expect((await w("POST", `/api/checks/${checkId}/close`, { method: "bitcoin" })).statusCode).toBe(400);
     for (const path of ["/api/checks/nope/close", "/api/checks/aaaaaaaaaaaaaaaaaaaaaaaa/close"]) {
@@ -175,7 +175,7 @@ describe("close the check", () => {
   });
 
   it("print data works for open and paid checks", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { w, checkId, burrata, spritz } = await seatedT7WithOrder(s);
     const open = (await w("GET", `/api/checks/${checkId}/print`)).json();
     expect(open).toMatchObject({ table: { name: "T7" }, paid: false, closedAt: null, openedAt: NOW.toISOString(), covers: 2, payment: null });
@@ -193,7 +193,7 @@ describe("an order racing the close (deterministic interleavings)", () => {
     placeOrder(t.models, { tableId, source: "staff", placedBy: s.seed.staff.waiter, req: { idempotencyKey: randomUUID(), items: [{ itemId, qty: 1, options: [] }] }, now: NOW });
 
   it("an order committed after close read the lines is included: close retries and charges it", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { T7, checkId } = await seatedT7WithOrder(s);
     const f = await fries(s);
     const Order = t.models.Order;
@@ -226,7 +226,7 @@ describe("an order racing the close (deterministic interleavings)", () => {
   });
 
   it("a close committed inside an order's transaction makes the staff order fail; the amount is unchanged", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { T7, checkId } = await seatedT7WithOrder(s);
     const f = await fries(s);
     const Check = t.models.Check;
@@ -251,7 +251,7 @@ describe("an order racing the close (deterministic interleavings)", () => {
   });
 
   it("free-running: concurrent orders and closes never leave an order outside the charged amount", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const { T7, checkId } = await seatedT7WithOrder(s);
     const f = await fries(s);
     await Promise.allSettled([
@@ -268,7 +268,7 @@ describe("an order racing the close (deterministic interleavings)", () => {
 
 describe("profanity in guest notes", () => {
   it("staff check detail masks a listed word; the guest's own view keeps their words", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const T7 = s.seed.tables.T7!;
     const burrata = await itemNamed(t, s.tenantId, "Burrata");
     const g = guest(t, T7.token, "10.6.0.1");

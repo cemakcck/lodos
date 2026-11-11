@@ -92,13 +92,14 @@ const LOW_STOCK = { slug: "dry-aged-ribeye", remaining: 2 };
 /**
  * Seeds one tenant with the Lodos restaurant: menu, floor, staff (sign-in accounts and, unless `scheduleTeam: false`,
  * the schedule-only team and two weeks of shifts), shift templates and settings, plus (with `liveService`) a
- * mid-service snapshot where tickets, orders and checks agree. Everything is relative to `now`.
+ * mid-service snapshot where tickets, orders and checks agree and 60 days of generated sales history. Everything is
+ * relative to `now`. `history: false` skips the generated history (for tests that never read sales or the comp log).
  */
 export async function seedRestaurant(
   models: Models,
   tenantId: string,
   now: Date,
-  opts: { liveService: boolean; scheduleTeam?: boolean },
+  opts: { liveService: boolean; scheduleTeam?: boolean; history?: boolean },
 ): Promise<SeedResult> {
   const ago = (min: number) => new Date(now.getTime() - min * 60_000);
   const pinHashes = await Promise.all(STAFF.map((s) => demoPinHash(s.pin)));
@@ -175,7 +176,7 @@ export async function seedRestaurant(
     ]);
     if (opts.liveService) await Promise.all([seedLiveService(), seedPaidTonight()]);
   });
-  if (opts.liveService) {
+  if (opts.liveService && opts.history !== false) {
     await generateHistory(models, {
       tenantId,
       now,

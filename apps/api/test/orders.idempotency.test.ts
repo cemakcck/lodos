@@ -2,7 +2,7 @@ import { serviceDayOf } from "@lodos/shared";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
 import type { Realtime } from "../src/realtime/emit";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -22,7 +22,7 @@ const ribeyeLine = (itemId: string) => ({ itemId, options: [{ groupId: "doneness
 
 describe("idempotency", () => {
   it("the same key posted twice → one order, the same id, decremented once, events once", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const ribeye = await itemNamed(t, tenantId, "Dry-aged ribeye");
     const body = orderBody([ribeyeLine(ribeye.id)]);
     const g = guest(t, seed.tables.T7!.token);
@@ -41,7 +41,7 @@ describe("idempotency", () => {
   });
 
   it("concurrent requests with the same key → one order, every response carries its id", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const ribeye = await itemNamed(t, tenantId, "Dry-aged ribeye");
     const body = orderBody([ribeyeLine(ribeye.id)]);
     const g = guest(t, seed.tables.T7!.token);
@@ -60,7 +60,7 @@ describe("idempotency", () => {
   });
 
   it("a key already used at another table → 409 conflict, no new order", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const body = orderBody([{ itemId: fries.id }]);
     expect((await guest(t, seed.tables.T7!.token).post("/api/guest/orders", body)).statusCode).toBe(201);

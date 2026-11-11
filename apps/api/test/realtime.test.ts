@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { createSession } from "../src/auth/sessions";
 import { runWithTenant, unscoped } from "../src/db/tenancy";
 import { createPresence } from "../src/realtime/presence";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 import { closeSockets, connect, connectError, listen, until, type WireEvent } from "./sockets";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
@@ -31,7 +31,7 @@ async function order(s: Seeded, table: string, items: { name: string; options?: 
 
 describe("handshake", () => {
   it("rejects a socket without credentials, with an unknown token, an inactive table or a bad cookie", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     expect(await connectError(url, {})).toBe("unauthorized");
     expect(await connectError(url, { tableToken: "nope" })).toBe("unauthorized");
     expect(await connectError(url, { tableToken: "" })).toBe("unauthorized");
@@ -41,7 +41,7 @@ describe("handshake", () => {
   });
 
   it("joins rooms by role, and every socket of the tenant also joins <t>:all", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const T = s.tenantId;
     const roomsOf = async (id: string) => {
       const [sock] = await t.io.in(id).fetchSockets();
@@ -63,7 +63,7 @@ describe("handshake", () => {
   });
 
   it("a table token wins over a staff cookie in the same browser: the socket joins only the table room", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const g = await connect(url, { sid: await sid(s, "manager"), tableToken: s.seed.tables.T7!.token });
     const [sock] = await t.io.in(g.socket.id!).fetchSockets();
     expect([...sock!.rooms].filter((r) => r !== g.socket.id).sort()).toEqual([
@@ -73,14 +73,14 @@ describe("handshake", () => {
   });
 
   it("a table token that is bad does not fall back to the staff cookie", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     expect(await connectError(url, { sid: await sid(s, "manager"), tableToken: "nope" })).toBe("unauthorized");
   });
 });
 
 describe("events after commit", () => {
   it("a food order reaches the kitchen within 1 s, and never the bar", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const kitchen = await connect(url, { sid: await sid(s, "kitchen") });
     const bar = await connect(url, { sid: await sid(s, "bar") });
     const T7 = s.seed.tables.T7!.id;
@@ -99,7 +99,7 @@ describe("events after commit", () => {
   });
 
   it("a manager socket gets each event once, though it sits in several audience rooms", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const manager = await connect(url, { sid: await sid(s, "manager") });
     expect((await order(s, "T7", [{ name: "Truffle fries" }])).statusCode).toBe(201);
     await manager.next((e) => e.type === "check.updated");
@@ -107,7 +107,7 @@ describe("events after commit", () => {
   });
 
   it("a T7 guest gets T7's ticket and check, nothing of T3's", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const g7 = await connect(url, { tableToken: s.seed.tables.T7!.token });
     const T7 = s.seed.tables.T7!.id;
     expect((await order(s, "T3", [{ name: "Truffle fries" }])).statusCode).toBe(201);
@@ -118,7 +118,7 @@ describe("events after commit", () => {
   });
 
   it("availability.changed reaches guests of every table and the staff", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const g3 = await connect(url, { tableToken: s.seed.tables.T3!.token });
     const kitchen = await connect(url, { sid: await sid(s, "kitchen") });
     const ribeye = await itemNamed(t, s.tenantId, "Dry-aged ribeye");
@@ -131,7 +131,7 @@ describe("events after commit", () => {
   });
 
   it("emits nothing when placeOrder throws sold_out", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const manager = await connect(url, { sid: await sid(s, "manager") });
     const g7 = await connect(url, { tableToken: s.seed.tables.T7!.token });
     const res = await order(s, "T7", [{ name: "King prawns" }]);
@@ -146,7 +146,7 @@ describe("events after commit", () => {
   });
 
   it("call.opened reaches the floor and the table, not the kitchen", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const waiter = await connect(url, { sid: await sid(s, "waiter") });
     const kitchen = await connect(url, { sid: await sid(s, "kitchen") });
     const g7 = await connect(url, { tableToken: s.seed.tables.T7!.token });
@@ -200,7 +200,7 @@ describe("presence", () => {
   });
 
   it("a non-sandbox tenant counts as connected but writes no Sandbox record", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const k = await connect(url, { sid: await sid(s, "kitchen") });
     expect(t.app.presence.isConnected(s.tenantId)).toBe(true);
     await t.app.presence.heartbeat();

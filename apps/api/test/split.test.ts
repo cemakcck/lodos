@@ -3,7 +3,7 @@ import { createSession } from "../src/auth/sessions";
 import type { Bill, BillLine } from "../src/checks/bill";
 import { splitView } from "../src/checks/split";
 import { runWithTenant } from "../src/db/tenancy";
-import { makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -36,7 +36,7 @@ async function session(s: Seeded, who: keyof Seeded["seed"]["staff"]): Promise<R
 
 /** A fresh tenant with a manager-created menu of exact prices, and T7 seated with one order of `lines`. */
 async function setup(prices: Record<string, number>, lines: { name: string; qty?: number }[]) {
-  const s = await seedTenant(t);
+  const s = await seedTenant(t, LIVE_NO_HISTORY);
   const w = await session(s, "waiter");
   const m = await session(s, "manager");
   const cat = await runWithTenant(s.tenantId, () => t.models.Category.findOne({}).lean().orFail());

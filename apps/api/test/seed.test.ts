@@ -248,6 +248,21 @@ describe("liveService: true", () => {
     expect(await inTenant(id, () => t.models.Check.countDocuments({ status: "paid" }))).toBe(0);
   });
 
+  it("history: false (tests only) keeps the live service and paid checks but skips the generated history", async () => {
+    const id = newTenant();
+    await seedRestaurant(t.models, id, NOW, { liveService: true, history: false });
+    expect(await inTenant(id, () => t.models.DailySummary.countDocuments({}))).toBe(0);
+    expect(await inTenant(id, () => t.models.Adjustment.countDocuments({ checkId: null }))).toBe(0);
+    const counts = async (tenant: string) => ({
+      open: await inTenant(tenant, () => t.models.Check.countDocuments({ status: "open" })),
+      paid: await inTenant(tenant, () => t.models.Check.countDocuments({ status: "paid" })),
+      tickets: await inTenant(tenant, () => t.models.Ticket.countDocuments({})),
+      staff: await inTenant(tenant, () => t.models.Staff.countDocuments({})),
+      shifts: await inTenant(tenant, () => t.models.Shift.countDocuments({})),
+    });
+    expect(await counts(id)).toEqual(await counts(live));
+  });
+
   it("seeds quickly", async () => {
     const start = performance.now();
     await seedRestaurant(t.models, newTenant(), NOW, { liveService: true });

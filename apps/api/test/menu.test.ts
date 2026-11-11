@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
-import { guest, itemNamed, makeTestApp, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -21,7 +21,7 @@ async function getMenu(s: Seeded, who: Role) {
 
 describe("GET /api/menu (staff)", () => {
   it("has the guest menu's shape: active categories, active items with availability", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, s.tenantId, "Burrata");
     const prawns = await itemNamed(t, s.tenantId, "King prawns");
     const ribeye = await itemNamed(t, s.tenantId, "Dry-aged ribeye");
@@ -49,7 +49,7 @@ describe("GET /api/menu (staff)", () => {
   });
 
   it("hides items of an inactive category", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const cat = await runWithTenant(s.tenantId, () => t.models.Category.findOne({ "name.en": "Wine" }).lean().orFail());
     await runWithTenant(s.tenantId, () => t.models.Category.updateOne({ _id: cat._id }, { active: false }));
     const body = (await getMenu(s, "waiter")).json() as { categories: { id: string }[]; items: { categoryId: string }[] };
@@ -58,7 +58,7 @@ describe("GET /api/menu (staff)", () => {
   });
 
   it("role matrix: waiter and manager 200, kitchen and bar 403, no cookie 401", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     expect((await getMenu(s, "waiter")).statusCode).toBe(200);
     expect((await getMenu(s, "manager")).statusCode).toBe(200);
     const kitchen = await getMenu(s, "kitchen");
@@ -71,8 +71,8 @@ describe("GET /api/menu (staff)", () => {
   });
 
   it("cross-tenant: A's session only sees A's menu", async () => {
-    const a = await seedTenant(t);
-    const b = await seedTenant(t);
+    const a = await seedTenant(t, LIVE_NO_HISTORY);
+    const b = await seedTenant(t, LIVE_NO_HISTORY);
     // Make B's menu distinguishable: rename one of B's items.
     const bFries = await itemNamed(t, b.tenantId, "Truffle fries");
     await runWithTenant(b.tenantId, () => t.models.MenuItem.updateOne({ _id: bFries.id }, { "name.en": "B-only fries" }));
@@ -89,7 +89,7 @@ describe("GET /api/menu (staff)", () => {
 
 describe("seeded VAT rates", () => {
   it("cocktails and wine carry 20, food and zero-proof drinks 10", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const rate = (name: string) =>
       runWithTenant(s.tenantId, async () => (await t.models.MenuItem.findOne({ "name.en": new RegExp(`^${name}`) }).lean())?.vatRate);
     expect(await rate("Lodos Negroni")).toBe(20);

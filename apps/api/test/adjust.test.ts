@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { billOf } from "../src/checks/bill";
 import { runWithTenant } from "../src/db/tenancy";
-import { itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 const SELIN_PIN = "9999";
@@ -32,7 +32,7 @@ const code = (res: { statusCode: number; json: () => { error?: { code: string } 
 
 /** A fresh tenant with T7 seated (by Deniz) and one order of `lines` (seeded items by English name prefix). */
 async function setup(lines: { name: string; qty?: number }[]) {
-  const s = await seedTenant(t);
+  const s = await seedTenant(t, LIVE_NO_HISTORY);
   const w = await session(s, "waiter");
   const m = await session(s, "manager");
   const T7 = s.seed.tables.T7!.id;

@@ -11,7 +11,7 @@ let ip = 0;
 
 beforeAll(async () => {
   t = await makeTestApp({ now: NOW });
-  seed = await seedRestaurant(t.models, "main", NOW, { liveService: true });
+  seed = await seedRestaurant(t.models, "main", NOW, { liveService: true, history: false });
   for (const role of ["kitchen", "bar", "manager", "waiter"] as const) {
     const pin = { kitchen: "3333", bar: "4444", manager: "9999", waiter: "1111" }[role];
     const res = await t.inject({ method: "POST", url: "/api/auth/pin", payload: { staffId: seed.staff[role], pin }, remoteAddress: `10.9.0.${++ip}` });

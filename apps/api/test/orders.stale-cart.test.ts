@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 /** Review Focus 2: a dish hidden, deleted or repriced while it sits in a guest's cart. */
 let t: TestApp;
@@ -11,7 +11,7 @@ afterAll(() => t.close());
 
 describe("stale carts", () => {
   it("a hidden item → 409 item_unavailable with its id; nothing written", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     await runWithTenant(tenantId, () => t.models.MenuItem.updateOne({ _id: burrata.id }, { active: false }));
@@ -22,7 +22,7 @@ describe("stale carts", () => {
   });
 
   it("a deleted item, or an id that is not an ObjectId → item_unavailable with that id", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     await runWithTenant(tenantId, () => t.models.MenuItem.deleteOne({ _id: burrata.id }));
     const g = guest(t, seed.tables.T7!.token);
@@ -35,7 +35,7 @@ describe("stale carts", () => {
   });
 
   it("an item in an inactive or deleted category → item_unavailable with its id; nothing written", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const catOf = async (id: string) => (await runWithTenant(tenantId, () => t.models.MenuItem.findById(id).lean().orFail())).categoryId;
@@ -54,7 +54,7 @@ describe("stale carts", () => {
   });
 
   it("an item repriced after the cart was built is charged at the new price", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     const body = orderBody([{ itemId: burrata.id, qty: 2 }]);
     await runWithTenant(tenantId, () => t.models.MenuItem.updateOne({ _id: burrata.id }, { price: 61_000 }));
@@ -66,7 +66,7 @@ describe("stale carts", () => {
   });
 
   it("client-sent price fields are ignored", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     const body = orderBody([{ itemId: burrata.id }]);
     const tampered = {

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 /** Review Focus 1: a tampered client's invalid option selections are rejected with 400, never accepted. */
 let t: TestApp;
@@ -12,7 +12,7 @@ let negroni: { id: string };
 
 beforeAll(async () => {
   t = await makeTestApp({ now: new Date("2026-11-10T17:00:00Z") });
-  const s = await seedTenant(t);
+  const s = await seedTenant(t, LIVE_NO_HISTORY);
   tenantId = s.tenantId;
   token = s.seed.tables.T7!.token;
   tableId = s.seed.tables.T7!.id;

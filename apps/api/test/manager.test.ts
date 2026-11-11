@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 import { closeSockets, connect, listen, until } from "./sockets";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
@@ -54,7 +54,7 @@ const upload = async (s: Seeded, itemId: string, filename: string, ct: string, d
 
 describe("auth", () => {
   it("non-managers get 403, anonymous 401", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     expect((await (await mgr(s, "waiter"))("GET", "/api/manager/menu")).statusCode).toBe(403);
     expect((await t.inject({ method: "GET", url: "/api/manager/menu" })).statusCode).toBe(401);
   });
@@ -62,7 +62,7 @@ describe("auth", () => {
 
 describe("menu editor", () => {
   it("GET /menu lists categories and items including inactive ones", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     await runWithTenant(s.tenantId, () => t.models.MenuItem.updateOne({ _id: item.id }, { active: false }));
@@ -72,7 +72,7 @@ describe("menu editor", () => {
   });
 
   it("creating an item with a missing TR name -> 400; price/allergen/station validation", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const cat = await anyCategory(s);
     const c = String(cat._id);
@@ -88,7 +88,7 @@ describe("menu editor", () => {
   });
 
   it("a price edit appears on /guest/menu and the guest socket gets menu.changed", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const g = await connect(url, { tableToken: s.seed.tables.T7!.token });
@@ -100,7 +100,7 @@ describe("menu editor", () => {
   });
 
   it("PATCH is partial, keeps option ids; invalid patch -> 400; bad id -> 404", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const before = await runWithTenant(s.tenantId, () => t.models.MenuItem.findById(item.id).lean().orFail());
@@ -115,7 +115,7 @@ describe("menu editor", () => {
   });
 
   it("DELETE item is a soft delete and emits menu.changed", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const g = await connect(url, { tableToken: s.seed.tables.T7!.token });
@@ -128,7 +128,7 @@ describe("menu editor", () => {
   });
 
   it("category CRUD; deleting a category with active items -> 409, empty -> 200", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const created = await m("POST", "/api/manager/categories", { name: { en: "Desserts 2", tr: "Tatlilar 2" } });
     expect(created.statusCode).toBe(201);
@@ -156,14 +156,14 @@ describe("option groups", () => {
     options: opts.map((o) => ({ ...(o ? { id: o } : {}), name: { en: "o", tr: "o" }, priceDelta: 0 })),
   });
   it("duplicate group ids and duplicate option ids -> 400", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const c = String((await anyCategory(s))._id);
     expect((await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("a", ["x"]), grp("a", ["y"])] }))).statusCode).toBe(400);
     expect((await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("a", ["x", "x"])] }))).statusCode).toBe(400);
   });
   it("new groups and options get ids; a PATCH echoing ids keeps them", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const c = String((await anyCategory(s))._id);
     const made = (await m("POST", "/api/manager/items", validItem(c, { optionGroups: [grp("keep", ["k1", undefined]), grp(undefined, [undefined])] }))).json() as { id: string; optionGroups: { id: string; options: { id: string }[] }[] };
@@ -178,7 +178,7 @@ describe("option groups", () => {
 
 describe("86 and N left", () => {
   it("86 -> the guest menu shows soldOut; availability.changed reaches guests", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const g = await connect(url, { tableToken: s.seed.tables.T7!.token });
@@ -194,7 +194,7 @@ describe("86 and N left", () => {
   });
 
   it("remaining 0 implies soldOut; unknown/bad item -> 404; invalid body -> 400", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const r = await m("POST", `/api/manager/availability/${item.id}`, { remaining: 0 });
@@ -207,7 +207,7 @@ describe("86 and N left", () => {
   });
 
   it("concurrent availability posts for one item never 500", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const rs = await Promise.all(Array.from({ length: 6 }, (_, i) => m("POST", `/api/manager/availability/${item.id}`, { remaining: i + 1 })));
@@ -216,7 +216,7 @@ describe("86 and N left", () => {
   });
 
   it("remaining 1 plus one order -> soldOut", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     await m("POST", `/api/manager/availability/${item.id}`, { remaining: 1 });
@@ -229,13 +229,13 @@ describe("86 and N left", () => {
 
 describe("tables", () => {
   it("GET lists tables with raw tokens (manager only)", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const rows = (await (await mgr(s))("GET", "/api/manager/tables")).json() as { id: string; name: string; token: string; capacity: number }[];
     expect(rows.find((r) => r.name === "T7")).toMatchObject({ id: s.seed.tables.T7!.id, token: s.seed.tables.T7!.token });
   });
 
   it("rename: '12' -> 400; 'T99' -> 200; existing name -> 409; capacity edit; tables.changed", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const id = s.seed.tables.T7!.id;
     expect((await m("PATCH", `/api/manager/tables/${id}`, { name: "12" })).statusCode).toBe(400);
@@ -248,7 +248,7 @@ describe("tables", () => {
   });
 
   it("token regeneration: new token works, old -> 404, guest sockets in the room are disconnected", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const T7 = s.seed.tables.T7!;
     const other = await connect(url, { tableToken: s.seed.tables.T3!.token });
@@ -268,7 +268,7 @@ describe("tables", () => {
 
 describe("photos", () => {
   it("a 3 MB upload -> 400; wrong type or bad magic bytes -> 400", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const big = Buffer.concat([PNG, Buffer.alloc(3 * 1024 * 1024)]);
     const r = await upload(s, item.id, "big.png", "image/png", big);
@@ -279,7 +279,7 @@ describe("photos", () => {
   });
 
   it("a valid upload is served publicly with the right type and cache headers; replacing deletes the old one", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     const up = await upload(s, item.id, "a.png", "image/png", PNG);
     expect(up.statusCode).toBe(200);
@@ -303,7 +303,7 @@ describe("photos", () => {
   });
 
   it("a seeded static photo path is left alone on replace", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const item = await itemNamed(t, s.tenantId, "Truffle fries");
     await runWithTenant(s.tenantId, () => t.models.MenuItem.updateOne({ _id: item.id }, { photo: "/photos/x.jpg" }));
     expect((await upload(s, item.id, "a.png", "image/png", PNG)).statusCode).toBe(200);
@@ -312,7 +312,7 @@ describe("photos", () => {
 
 describe("demo storage caps (always on)", () => {
   it("a tenant holds at most 120 menu items: the 121st create → 409 limit_exceeded", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const cat = await anyCategory(s);
     const have = await runWithTenant(s.tenantId, () => t.models.MenuItem.countDocuments({}));
@@ -331,7 +331,7 @@ describe("demo storage caps (always on)", () => {
   });
 
   it("uploaded photos total at most 20 MB per tenant; replacing a photo frees the old one first", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, s.tenantId, "Truffle fries");
     const burrata = await itemNamed(t, s.tenantId, "Burrata");
     const tenMb = Buffer.concat([PNG, Buffer.alloc(10 * 1024 * 1024 - PNG.length)]);
@@ -351,7 +351,7 @@ describe("demo storage caps (always on)", () => {
 
 describe("item vatRate", () => {
   it("defaults to 10, round-trips 20, and rejects other rates with 400 validation", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const c = String((await anyCategory(s))._id);
     const made = await m("POST", "/api/manager/items", validItem(c));
@@ -368,7 +368,7 @@ describe("item vatRate", () => {
   });
 
   it("a partial PATCH that does not mention vatRate leaves it alone", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const negroni = await itemNamed(t, s.tenantId, "Lodos Negroni");
     const r = await m("PATCH", `/api/manager/items/${negroni.id}`, { price: negroni.price + 100 });
@@ -381,7 +381,7 @@ describe("item vatRate", () => {
 
 describe("category defaultVatRate", () => {
   it("is seeded 20 for cocktails and wine and shown in the manager menu", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);
     const menu = (await m("GET", "/api/manager/menu")).json() as { categories: { name: { en: string }; defaultVatRate: number }[] };
     const rate = (n: string) => menu.categories.find((c) => c.name.en === n)!.defaultVatRate;

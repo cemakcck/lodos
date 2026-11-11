@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { billOf } from "../src/checks/bill";
 import { runWithTenant } from "../src/db/tenancy";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -74,7 +74,7 @@ const bill = (s: Seeded, checkId: string) => runWithTenant(s.tenantId, () => bil
 
 describe("billOf", () => {
   it("with no adjustments: the total is every line, gross split by VAT rate", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     const b = await bill(s, o.checkId);
     expect(b.total).toBe(3 * o.gelato.price + o.negroni.price);
@@ -103,7 +103,7 @@ describe("billOf", () => {
   });
 
   it("a comp of unit 2 charges 2 gelatos; the comped unit stays at ₺0 with its comp", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     const compId = await adjust(s, o, "comp", [2]);
     const b = await bill(s, o.checkId);
@@ -120,7 +120,7 @@ describe("billOf", () => {
   });
 
   it("a void of unit 1 as well removes that unit from the bill", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     await adjust(s, o, "comp", [2]);
     await adjust(s, o, "void", [1]);
@@ -135,7 +135,7 @@ describe("billOf", () => {
   });
 
   it("ignores a reversed adjustment", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     await adjust(s, o, "comp", [2], { reversedAt: NOW });
     const b = await bill(s, o.checkId);
@@ -145,7 +145,7 @@ describe("billOf", () => {
   });
 
   it("the waiter's check detail and the guest's table view show charged totals", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     await adjust(s, o, "comp", [2]);
     await adjust(s, o, "void", [1]);
@@ -169,7 +169,7 @@ describe("billOf", () => {
   });
 
   it("closing the check charges the bill total", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
     await adjust(s, o, "comp", [2]);
     const res = await o.w("POST", `/api/checks/${o.checkId}/close`, { method: "card" });

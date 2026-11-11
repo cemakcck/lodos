@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
 import { placeOrder } from "../src/orders/place";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 const DAY = serviceDayOf(NOW);
@@ -22,7 +22,7 @@ async function setRemaining(tenantId: string, itemId: string, remaining: number)
 
 describe("the last portion", () => {
   it("two concurrent orders for the last ribeye: exactly one 201, one 409 sold_out; the loser leaves no trace", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const ribeye = await itemNamed(t, tenantId, "Dry-aged ribeye");
     await setRemaining(tenantId, ribeye.id, 1);
 
@@ -47,7 +47,7 @@ describe("the last portion", () => {
   });
 
   it("qty above remaining → sold_out and remaining is unchanged; the whole order is rolled back", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const ribeye = await itemNamed(t, tenantId, "Dry-aged ribeye");
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     // Two lines of the same item sum against the same count.
@@ -64,7 +64,7 @@ describe("the last portion", () => {
   });
 
   it("an item with no availability doc for today is unlimited; yesterday's 86 does not carry over", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const prawns = await itemNamed(t, tenantId, "King prawns");
     await runWithTenant(tenantId, () => t.models.Availability.updateOne({ itemId: prawns.id }, { serviceDay: "2026-11-09" }));
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/orders", orderBody([{ itemId: prawns.id, qty: 5 }]));
@@ -74,7 +74,7 @@ describe("the last portion", () => {
 
 describe("the first order at a free table", () => {
   it("concurrent first orders open exactly one check and both land on it", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);
     const results = await Promise.all([1, 2, 3].map(() => g.post("/api/guest/orders", orderBody([{ itemId: fries.id }]))));
@@ -89,7 +89,7 @@ describe("the first order at a free table", () => {
 
 describe("deterministic interleavings (a competitor commits inside our transaction's window)", () => {
   it("a check opened by a competitor after our read is reused, not duplicated", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.T7!.id;
     const Check = t.models.Check;
@@ -116,7 +116,7 @@ describe("deterministic interleavings (a competitor commits inside our transacti
   });
 
   it("an order committed by a competitor with our idempotency key is returned as a replay", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     // B1 is seated, so neither transaction writes before the order insert (the winner can commit while we wait).
     const tableId = seed.tables.B1!.id;
@@ -181,7 +181,7 @@ describe("a check closed while an order is in flight (write skew)", () => {
   }
 
   it("a QR order never lands on the check that was paid mid-transaction; it opens the next party's check", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.T7!.id;
     const paidId = await openT7(tenantId, tableId, fries.id);
@@ -200,7 +200,7 @@ describe("a check closed while an order is in flight (write skew)", () => {
   });
 
   it("with expectedCheckId of the paid check → check_closed, no order and no new check", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.T7!.id;
     const paidId = await openT7(tenantId, tableId, fries.id);
@@ -226,7 +226,7 @@ describe("a check closed while an order is in flight (write skew)", () => {
   });
 
   it("a staff order whose check is paid mid-transaction → conflict, nothing written", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.B1!.id;
     const open = await runWithTenant(tenantId, () => t.models.Check.findOne({ tableId, status: "open" }));
@@ -246,7 +246,7 @@ describe("a check closed while an order is in flight (write skew)", () => {
 
 describe("the 30-orders-per-check limit is strict under concurrency", () => {
   it("three concurrent orders at 29 → exactly one placed, two limit_exceeded", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const tableId = seed.tables.B1!.id;
     const check = await runWithTenant(tenantId, () => t.models.Check.findOneAndUpdate({ tableId, status: "open" }, { orderCount: 29 }, { returnDocument: "after" }));

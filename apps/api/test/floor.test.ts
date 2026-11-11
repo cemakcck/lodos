@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
-import { makeTestApp, seedTenant, type TestApp } from "./helpers";
+import { makeTestApp, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -30,7 +30,7 @@ const tableNamed = (f: { tables: TableView[] }, name: string) => f.tables.find((
 
 describe("GET /api/floor", () => {
   it("the seeded floor: one calling table, one bill, one ready; T7 free; rooms, sections and stats", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const f = await floor(s);
     const byState = (st: string) => f.tables.filter((x) => x.state === st).map((x) => x.name);
     expect(byState("calling")).toEqual(["T2"]);
@@ -45,7 +45,7 @@ describe("GET /api/floor", () => {
   });
 
   it("chips are ordered calling → ready → bill, oldest first within a kind", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     // A second, older call at B1 sorts before T2's.
     await runWithTenant(s.tenantId, () => t.models.Call.create({ tableId: s.seed.tables.B1!.id, reason: "other", openedAt: new Date(NOW.getTime() - 5 * 60_000) }));
     const f = await floor(s);
@@ -55,7 +55,7 @@ describe("GET /api/floor", () => {
   });
 
   it("answering the call turns T2 seated (double tap: 200, one event)", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const call = await runWithTenant(s.tenantId, () => t.models.Call.findOne({ tableId: s.seed.tables.T2!.id }).lean().orFail());
     const emit = vi.spyOn(t.app.realtime, "emit");
     try {
@@ -75,7 +75,7 @@ describe("GET /api/floor", () => {
   });
 
   it("marking the ready ticket served removes the ready chip; only ready tickets can be served", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const ready = await runWithTenant(s.tenantId, () => t.models.Ticket.findOne({ tableId: s.seed.tables.B2!.id, status: "ready", servedAt: null }).lean().orFail());
     const notReady = await runWithTenant(s.tenantId, () => t.models.Ticket.findOne({ status: "new" }).lean().orFail());
     const w = await staff(s);
@@ -96,7 +96,7 @@ describe("GET /api/floor", () => {
   });
 
   it("malformed and unknown ids → 404; kitchen accounts cannot use the floor", async () => {
-    const s = await seedTenant(t);
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
     const w = await staff(s);
     for (const url of ["/api/tickets/nope/served", "/api/calls/nope/answer", "/api/tickets/aaaaaaaaaaaaaaaaaaaaaaaa/served", "/api/calls/aaaaaaaaaaaaaaaaaaaaaaaa/answer"]) {
       expect((await w("POST", url)).statusCode).toBe(404);

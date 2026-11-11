@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { runWithTenant } from "../src/db/tenancy";
 import type { Realtime } from "../src/realtime/emit";
-import { guest, itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { guest, itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 const NOW = new Date("2026-11-10T17:00:00Z");
 
@@ -39,7 +39,7 @@ describe("guest token", () => {
 
 describe("GET /api/guest/table", () => {
   it("returns the table and the open visit, or null", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const g = guest(t, seed.tables.T7!.token);
     const before = await g.get("/api/guest/table");
     expect(before.json()).toEqual({ table: { id: seed.tables.T7!.id, name: "T7" }, visit: null });
@@ -53,7 +53,7 @@ describe("GET /api/guest/table", () => {
 
 describe("GET /api/guest/menu", () => {
   it("hides inactive items and marks the seeded 86'd items soldOut, with N left", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const burrata = await itemNamed(t, tenantId, "Burrata");
     const prawns = await itemNamed(t, tenantId, "King prawns");
     const gelato = await itemNamed(t, tenantId, "Olive oil gelato");
@@ -82,12 +82,12 @@ describe("GET /api/guest/menu", () => {
 
 describe("GET /api/guest/orders", () => {
   it("is { visit: null } with no open check", async () => {
-    const { seed } = await seedTenant(t);
+    const { seed } = await seedTenant(t, LIVE_NO_HISTORY);
     expect((await guest(t, seed.tables.T7!.token).get("/api/guest/orders")).json()).toEqual({ visit: null });
   });
 
   it("groups lines as food and drinks; sent → ready follows the line's ticket", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const negroni = await itemNamed(t, tenantId, "Lodos Negroni");
     const g = guest(t, seed.tables.T7!.token);
@@ -118,7 +118,7 @@ describe("GET /api/guest/orders", () => {
   });
 
   it("does not show another table's lines", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     await guest(t, seed.tables.T8!.token).post("/api/guest/orders", orderBody([{ itemId: fries.id }]));
     expect((await guest(t, seed.tables.T7!.token).get("/api/guest/orders")).json()).toEqual({ visit: null });
@@ -127,7 +127,7 @@ describe("GET /api/guest/orders", () => {
 
 describe("POST /api/guest/calls", () => {
   it("opens a call with the open check (or none) and emits call.opened", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const tableId = seed.tables.T7!.id;
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/calls", { reason: "wine" });
     expect(res.statusCode).toBe(201);
@@ -139,7 +139,7 @@ describe("POST /api/guest/calls", () => {
   });
 
   it("links the open check; rejects an unknown reason with 400", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     // B1 is seated.
     const g = guest(t, seed.tables.B1!.token);
     expect((await g.post("/api/guest/calls", { reason: "dance" })).statusCode).toBe(400);
@@ -153,7 +153,7 @@ describe("POST /api/guest/calls", () => {
 
 describe("POST /api/guest/bill", () => {
   it("no open check → 409 conflict", async () => {
-    const { seed } = await seedTenant(t);
+    const { seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const res = await guest(t, seed.tables.T7!.token).post("/api/guest/bill", { method: "card" });
     expect(res.statusCode).toBe(409);
     expect(res.json().error.code).toBe("conflict");
@@ -161,7 +161,7 @@ describe("POST /api/guest/bill", () => {
   });
 
   it("records the bill request and emits check.updated", async () => {
-    const { tenantId, seed } = await seedTenant(t);
+    const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
     const tableId = seed.tables.T7!.id;
     const fries = await itemNamed(t, tenantId, "Truffle fries");
     const g = guest(t, seed.tables.T7!.token);

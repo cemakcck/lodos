@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedRestaurant, type SeedResult } from "../src/seed/seed";
-import { itemNamed, makeTestApp, orderBody, seedTenant, type TestApp } from "./helpers";
+import { itemNamed, makeTestApp, orderBody, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
 /** Deploy readiness (F5): behind a reverse proxy, per-IP limits must see the client's address, not the proxy's. */
 const NOW = new Date("2026-11-10T17:00:00Z");
@@ -19,7 +19,7 @@ afterAll(async () => {
 
 async function orderFromBehindProxy(t: TestApp) {
   await t.models.RateEvent.deleteMany({ key: /^order-ip:/ }); // both apps share this file's database
-  const { tenantId, seed } = await seedTenant(t);
+  const { tenantId, seed } = await seedTenant(t, LIVE_NO_HISTORY);
   const fries = await itemNamed(t, tenantId, "Truffle fries");
   const res = await t.inject({
     method: "POST",

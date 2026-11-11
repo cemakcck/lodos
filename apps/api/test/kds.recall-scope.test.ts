@@ -10,7 +10,7 @@ let sid: string;
 
 beforeAll(async () => {
   t = await makeTestApp({ now: NOW });
-  const seed = await seedRestaurant(t.models, "main", NOW, { liveService: true });
+  const seed = await seedRestaurant(t.models, "main", NOW, { liveService: true, history: false });
   const res = await t.inject({ method: "POST", url: "/api/auth/pin", payload: { staffId: seed.staff.bar, pin: "4444" }, remoteAddress: "10.7.0.1" });
   sid = res.cookies.find((c) => c.name === "lodos_sid")!.value;
 });

@@ -52,8 +52,14 @@ export async function makeTestApp(
 
 export type TestApp = Awaited<ReturnType<typeof makeTestApp>>;
 
-/** Seeds a fresh tenant with the Lodos restaurant at the app clock's `now` (live service by default). */
-export async function seedTenant(t: TestApp, opts: { liveService: boolean } = { liveService: true }) {
+/**
+ * Live service without the 60 days of generated sales history: for files that never read sales or the comp log,
+ * where the history would only cost seeding time (about a second per tenant).
+ */
+export const LIVE_NO_HISTORY = { liveService: true, history: false } as const;
+
+/** Seeds a fresh tenant with the Lodos restaurant at the app clock's `now` (live service and history by default). */
+export async function seedTenant(t: TestApp, opts: { liveService: boolean; history?: boolean } = { liveService: true }) {
   const tenantId = newTenant();
   const seed = await seedRestaurant(t.models, tenantId, t.clock.now(), opts);
   return { tenantId, seed };
