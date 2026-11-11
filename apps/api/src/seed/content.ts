@@ -512,10 +512,22 @@ export const TABLES: TableSpec[] = [
   rnd("T15", "terrace", 380, 90, 4, "waiter2", 76), rnd("T16", "terrace", 540, 90, 6, "waiter2", 88),
 ];
 
+/** Accounts that sign in. `demoProtected`: the demo role buttons use them, so in demo mode they can't be deactivated. */
 export const STAFF = [
-  { key: "waiter", name: "Deniz", role: "waiter", pin: "1111" },
-  { key: "waiter2", name: "Mert", role: "waiter", pin: "2222" },
-  { key: "kitchen", name: "Kitchen", role: "kitchen", pin: "3333" },
-  { key: "bar", name: "Bar", role: "bar", pin: "4444" },
-  { key: "manager", name: "Selin", role: "manager", pin: "9999" },
+  { key: "waiter", name: "Deniz", role: "waiter", pin: "1111", demoProtected: true },
+  { key: "waiter2", name: "Mert", role: "waiter", pin: "2222", demoProtected: false },
+  { key: "kitchen", name: "Kitchen", role: "kitchen", pin: "3333", demoProtected: true },
+  { key: "bar", name: "Bar", role: "bar", pin: "4444", demoProtected: true },
+  { key: "manager", name: "Selin", role: "manager", pin: "9999", demoProtected: true },
+] as const;
+
+/** Schedule-only people (no PIN, can't sign in): the cooks, bartenders, host and dishwasher. All names are fictional. */
+export const SCHEDULE_TEAM = [
+  { name: "Emre Yıldız", role: "cook" },
+  { name: "Zeynep Arslan", role: "cook" },
+  { name: "Burak Şahin", role: "cook" },
+  { name: "Ece Demir", role: "bartender" },
+  { name: "Can Özkan", role: "bartender" },
+  { name: "İpek Aydın", role: "host" },
+  { name: "Hasan Kılıç", role: "dishwasher" },
 ] as const;

@@ -260,6 +260,36 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 
+  it("Phase 2 Task 16: A's manager gets 404 on B's staff ids and never lists them; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const call = (method: "GET" | "POST" | "PATCH", url: string, payload?: object) =>
+      t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
+    const aTable = String((await t7(a.tenantId))._id);
+    const bTable = String((await t7(b.tenantId))._id);
+    for (const st of before.staff) {
+      const id = String(st._id);
+      for (const [method, url, payload] of [
+        ["PATCH", `/api/staff/${id}`, { name: "Hacked" }],
+        ["PATCH", `/api/staff/${id}`, { tableIds: [aTable] }],
+        ["POST", `/api/staff/${id}/pin`, { pin: "0000" }],
+        ["POST", `/api/staff/${id}/deactivate`, undefined],
+        ["POST", `/api/staff/${id}/reactivate`, undefined],
+      ] as const) {
+        const res = await call(method, url, payload);
+        expect(res.statusCode, `${method} ${url}`).toBe(404);
+      }
+    }
+    const list = await call("GET", "/api/staff");
+    expect(list.statusCode).toBe(200);
+    for (const st of before.staff) expect(list.body).not.toContain(String(st._id));
+    // B's table ids are unknown to A's staff routes.
+    expect((await call("POST", "/api/staff", { name: "Probe", role: "waiter", pin: "1234", tableIds: [bTable] })).statusCode).toBe(404);
+    const aMert = await runWithTenant(a.tenantId, () => t.models.Staff.findOne({ name: "Mert" }).lean().orFail());
+    expect((await call("PATCH", `/api/staff/${String(aMert._id)}`, { tableIds: [bTable] })).statusCode).toBe(404);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  }, 20_000);
+
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";
     await runWithTenant(b.tenantId, () =>

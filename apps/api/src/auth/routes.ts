@@ -16,7 +16,10 @@ const LoginBody = z.object({
 export function registerAuthRoutes(app: FastifyInstance): void {
   app.get("/api/auth/staff", async (req) => {
     const tenantId = loginTenant(req);
-    const staff = await runWithTenant(tenantId, () => app.models.Staff.find({ active: true }).sort({ name: 1 }));
+    // The picker shows who can sign in: people with a PIN role and the stations, never schedule-only staff.
+    const staff = await runWithTenant(tenantId, () =>
+      app.models.Staff.find({ active: true, role: { $in: ALL_ROLES } }).sort({ name: 1 }),
+    );
     return staff.map((s) => ({ id: s.id as string, name: s.name, role: s.role }));
   });
 
@@ -26,6 +29,7 @@ export function registerAuthRoutes(app: FastifyInstance): void {
     const now = app.clock.now();
     const { models } = app;
     const staff = await verifyStaffPin(models, { tenantId, ip: req.ip, staffId, pin, now });
+    await runWithTenant(tenantId, () => models.Staff.updateOne({ _id: staff._id }, { $set: { lastSignInAt: now } }));
 
     const token = await createSession(models, staff._id, tenantId, sessionKindFor(staff.role), now);
     void reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(SESSION_TTL_MS, app.cookieSecure));

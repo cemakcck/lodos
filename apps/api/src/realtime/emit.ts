@@ -1,13 +1,14 @@
-import { room, tableRoom, type EventName } from "@lodos/shared";
+import { personRoom, room, tableRoom, type EventName } from "@lodos/shared";
 import type { Server } from "socket.io";
 import type { Clock } from "../clock";
 
 /**
  * Who receives an event, as named in the plan's event table. `kitchen`/`bar`/`floor`/`manager` map to the tenant's
  * staff rooms (`room()` in @lodos/shared), `table` to `tableRoom(tenantId, payload.tableId)`, and `all` to every room
- * of the tenant, guests included (`availability.changed`, `menu.changed`).
+ * of the tenant, guests included (`availability.changed`, `menu.changed`), and `person` to `personRoom(tenantId, id)`
+ * for each id in `payload.ids` (`session.ended`).
  */
-export type Audience = "kitchen" | "bar" | "floor" | "manager" | "table" | "all";
+export type Audience = "kitchen" | "bar" | "floor" | "manager" | "table" | "all" | "person";
 
 /** Events carry ids only; clients refetch. `tableId` is required whenever `table` is an audience. */
 export type EventPayload = { ids: string[]; tableId?: string };
@@ -38,6 +39,8 @@ export function roomsFor(tenantId: string, payload: EventPayload, audiences: rea
     if (a === "all") rooms.add(allRoom(tenantId));
     else if (a === "table") {
       if (payload.tableId) rooms.add(tableRoom(tenantId, payload.tableId));
+    } else if (a === "person") {
+      for (const id of payload.ids) rooms.add(personRoom(tenantId, id));
     } else rooms.add(room(tenantId, a));
   }
   return [...rooms];

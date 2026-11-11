@@ -52,11 +52,12 @@ describe("handshake", () => {
     const waiter = await connect(url, { sid: await sid(s, "waiter") });
     const manager = await connect(url, { sid: await sid(s, "manager") });
     const g = await connect(url, { tableToken: s.seed.tables.T7!.token });
-    expect(await roomsOf(kitchen.socket.id!)).toEqual([`${T}:all`, `${T}:station:kitchen`]);
-    expect(await roomsOf(bar.socket.id!)).toEqual([`${T}:all`, `${T}:station:bar`]);
-    expect(await roomsOf(waiter.socket.id!)).toEqual([`${T}:all`, `${T}:floor`]);
+    const person = (key: keyof typeof s.seed.staff) => `${T}:person:${s.seed.staff[key]}`;
+    expect(await roomsOf(kitchen.socket.id!)).toEqual([`${T}:all`, person("kitchen"), `${T}:station:kitchen`].sort());
+    expect(await roomsOf(bar.socket.id!)).toEqual([`${T}:all`, person("bar"), `${T}:station:bar`].sort());
+    expect(await roomsOf(waiter.socket.id!)).toEqual([`${T}:all`, `${T}:floor`, person("waiter")].sort());
     expect(await roomsOf(manager.socket.id!)).toEqual(
-      [`${T}:all`, `${T}:floor`, `${T}:manager`, `${T}:station:bar`, `${T}:station:kitchen`].sort(),
+      [`${T}:all`, `${T}:floor`, `${T}:manager`, person("manager"), `${T}:station:bar`, `${T}:station:kitchen`].sort(),
     );
     expect(await roomsOf(g.socket.id!)).toEqual([`${T}:all`, `${T}:table:${s.seed.tables.T7!.id}`]);
   });

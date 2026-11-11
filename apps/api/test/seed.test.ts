@@ -72,12 +72,20 @@ describe("seedRestaurant content", () => {
     expect(groups("Kalecik")[0]).toMatchObject({ id: "size", type: "single", required: true });
   });
 
-  it("hashes PINs with argon2id and stores roles", async () => {
+  it("hashes PINs with argon2id and stores roles; the schedule-only team has no PIN", async () => {
     const staff = await inTenant(live, () => t.models.Staff.find().lean());
-    expect(staff.map((s) => `${s.name}:${s.role}`).sort()).toEqual(
+    const signIn = staff.filter((s) => s.pinHash);
+    expect(signIn.map((s) => `${s.name}:${s.role}`).sort()).toEqual(
       ["Bar:bar", "Deniz:waiter", "Kitchen:kitchen", "Mert:waiter", "Selin:manager"].sort(),
     );
-    expect(staff.every((s) => s.pinHash.startsWith("$argon2id$"))).toBe(true);
+    expect(signIn.every((s) => s.pinHash!.startsWith("$argon2id$"))).toBe(true);
+    expect(staff.filter((s) => !s.pinHash).map((s) => `${s.name}:${s.role}`).sort()).toEqual(
+      [
+        "Emre Yıldız:cook", "Zeynep Arslan:cook", "Burak Şahin:cook", "Ece Demir:bartender", "Can Özkan:bartender",
+        "İpek Aydın:host", "Hasan Kılıç:dishwasher",
+      ].sort(),
+    );
+    expect(staff.filter((s) => s.demoProtected).map((s) => s.name).sort()).toEqual(["Bar", "Deniz", "Kitchen", "Selin"]);
     expect(Object.keys(liveRes.staff).sort()).toEqual(["bar", "kitchen", "manager", "waiter", "waiter2"]);
   });
 

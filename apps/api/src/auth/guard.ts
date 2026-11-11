@@ -1,4 +1,4 @@
-import type { StaffRole } from "@lodos/shared";
+import { LOGIN_ROLES, STATION_ROLES, type StaffRole } from "@lodos/shared";
 import type { FastifyReply, FastifyRequest, RouteGenericInterface } from "fastify";
 import { runWithTenant } from "../db/tenancy";
 import { ApiError } from "../errors";
@@ -11,7 +11,8 @@ declare module "fastify" {
   }
 }
 
-export const ALL_ROLES: readonly StaffRole[] = ["waiter", "kitchen", "bar", "manager"];
+/** Every role that can hold a session. Schedule-only roles (cook, …) never can: `resolveSession` refuses them. */
+export const ALL_ROLES: readonly StaffRole[] = [...LOGIN_ROLES, ...STATION_ROLES];
 
 /** `secure` comes from config (COOKIE_SECURE, via `app.cookieSecure`). */
 export const sessionCookieOptions = (maxAgeMs: number, secure: boolean) =>

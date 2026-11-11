@@ -18,7 +18,13 @@ export type ErrorCode =
   | "not_a_manager"
   | "split_locked"
   | "amount_changed"
-  | "void_after_ready";
+  | "void_after_ready"
+  | "pin_required"
+  | "name_taken"
+  | "last_manager"
+  | "self"
+  | "station"
+  | "demo_protected";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

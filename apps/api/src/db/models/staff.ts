@@ -6,8 +6,13 @@ export const staffSchema = new Schema({
   tenantId: tenantIdField,
   name: { type: String, required: true },
   role: { type: String, enum: StaffRole.options, required: true },
-  pinHash: { type: String, required: true },
+  /** Absent for schedule-only roles (cook, bartender, host, dishwasher): they can't sign in. */
+  pinHash: { type: String },
   active: { type: Boolean, required: true, default: true },
+  /** Set on each successful PIN login (not on manager approvals). */
+  lastSignInAt: { type: Date, default: null },
+  /** Seeded role-button accounts: in demo mode they can be edited but not deactivated. */
+  demoProtected: { type: Boolean, required: true, default: false },
 });
 staffSchema.plugin(tenantPlugin);
 export type StaffRecord = InferSchemaType<typeof staffSchema>;

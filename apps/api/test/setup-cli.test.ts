@@ -31,15 +31,15 @@ describe("runSetup", () => {
     const selin = staff.find((s) => s.name === "Selin")!;
     const deniz = staff.find((s) => s.name === "Deniz")!;
     expect(selin.role).toBe("manager");
-    expect(await argon2.verify(selin.pinHash, "482910")).toBe(true);
-    expect(await argon2.verify(deniz.pinHash, "5678")).toBe(true); // upserted
-    expect(await argon2.verify(deniz.pinHash, "1234")).toBe(false);
+    expect(await argon2.verify(selin.pinHash!, "482910")).toBe(true);
+    expect(await argon2.verify(deniz.pinHash!, "5678")).toBe(true); // upserted
+    expect(await argon2.verify(deniz.pinHash!, "1234")).toBe(false);
   });
 
   it("repairs a half-finished run: demo staff left on a seeded tenant are removed", async () => {
     const tenant = newTenant();
     const now = new Date("2026-11-10T17:00:00Z");
-    await seedRestaurant(t.models, tenant, now, { liveService: false }); // seeded, cleanup never ran
+    await seedRestaurant(t.models, tenant, now, { liveService: false, scheduleTeam: false }); // as setup seeds; cleanup never ran
     await runSetup(["--tenant", tenant, "--staff", "Zeynep:manager:482910"], { models: t.models, env, log: () => {} });
     const [staff, tables] = await runWithTenant(tenant, () => Promise.all([t.models.Staff.find(), t.models.Table.find()]));
     expect(staff.map((s) => s.name)).toEqual(["Zeynep"]);

@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Types } from "mongoose";
-import type { StaffRole } from "@lodos/shared";
+import { isLoginRole, type StaffRole } from "@lodos/shared";
 import type { Models } from "../db/models";
 import { runWithTenant, unscoped } from "../db/tenancy";
 
@@ -41,7 +41,7 @@ export type ResolvedSession = { staff: AuthStaff; kind: SessionKind };
 
 /**
  * Resolves a raw token to its staff member, or null when unknown, expired (checked against `now`, not the TTL
- * index), or the staff member is gone or deactivated. Station sessions slide: every use extends them to now + 12 h.
+ * index), or the staff member is gone, deactivated or schedule-only. Station sessions slide: every use extends them to now + 12 h.
  */
 export async function resolveSession(models: Models, raw: string, now: Date): Promise<ResolvedSession | null> {
   const session = await unscoped("session lookup by token hash: the tenant is not known yet", () =>
@@ -51,7 +51,7 @@ export async function resolveSession(models: Models, raw: string, now: Date): Pr
 
   return runWithTenant(session.tenantId, async () => {
     const staff = await models.Staff.findOne({ _id: session.staffId, active: true });
-    if (!staff) return null;
+    if (!staff || !isLoginRole(staff.role)) return null;
     const update: Record<string, Date> = { lastUsedAt: now };
     if (session.kind === "station") update.expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     await models.Session.updateOne({ _id: session._id }, { $set: update });

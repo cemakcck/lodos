@@ -43,8 +43,14 @@ export function registerDemoRoutes(app: FastifyInstance, routeOpts: DemoRouteOpt
       void reply.clearCookie(SESSION_COOKIE, { path: "/" });
       return { redirect: `/t/${await guestToken(tenantId)}` };
     }
-    const staff = await runWithTenant(tenantId, () =>
-      models.Staff.findOne(role === "waiter" ? { role, name: "Deniz" } : { role }),
+    // The seeded, demo-protected account of that role (Deniz for waiter): it can't be deactivated in demo mode,
+    // and is found even if the visitor renamed it or added another person with the same role. Sandboxes seeded
+    // before the flag existed fall back to the old lookup.
+    const staff = await runWithTenant(
+      tenantId,
+      async () =>
+        (await models.Staff.findOne({ role, active: true, demoProtected: true })) ??
+        models.Staff.findOne(role === "waiter" ? { role, name: "Deniz", active: true } : { role, active: true }),
     );
     if (!staff) throw new ApiError(404, "not_found");
     const token = await createSession(models, staff._id, tenantId, sessionKindFor(staff.role), now);

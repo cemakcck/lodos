@@ -123,6 +123,27 @@ describe("cross-sandbox isolation over sockets", () => {
     }
   });
 
+  it("session.ended reaches only the deactivated person's sockets, in their own tenant", async () => {
+    // B's manager deactivates B's Mert while A's Mert (another sandbox, another id) and A's floor are connected.
+    const aw = await visitor("waiter");
+    const mertOf = (v: Visitor) => runWithTenant(v.tenantId, () => t.models.Staff.findOne({ name: "Mert" }).lean().orFail());
+    const [aMert, bMert] = [await mertOf(aw), await mertOf(b)];
+    const aMertSock = await connect(url, { sid: await createSession(t.models, String(aMert._id), aw.tenantId, "person", NOW) });
+    const bMertSock = await connect(url, { sid: await createSession(t.models, String(bMert._id), b.tenantId, "person", NOW) });
+    const aFloor = await connect(url, { sid: aw.sid });
+    const res = await t.inject({ method: "POST", url: `/api/staff/${String(bMert._id)}/deactivate`, cookies: { lodos_sid: b.sid } });
+    expect(res.statusCode).toBe(200);
+    expect((await bMertSock.next((e) => e.type === "session.ended")).ids).toEqual([String(bMert._id)]);
+    // A's Mert is a person in A's tenant: B's deactivation can't touch him. Barrier: A's own deactivation arrives.
+    const aManager = await runWithTenant(aw.tenantId, () => t.models.Staff.findOne({ role: "manager" }).lean().orFail());
+    const aMgrSid = await createSession(t.models, String(aManager._id), aw.tenantId, "person", NOW);
+    expect((await t.inject({ method: "POST", url: `/api/staff/${String(aMert._id)}/deactivate`, cookies: { lodos_sid: aMgrSid } })).statusCode).toBe(200);
+    await aMertSock.next((e) => e.type === "session.ended");
+    expect(aMertSock.events.filter((e) => e.type === "session.ended").map((e) => e.ids)).toEqual([[String(aMert._id)]]);
+    await aFloor.next((e) => e.type === "tables.changed");
+    expect(aFloor.events.some((e) => e.type === "session.ended")).toBe(false);
+  });
+
   it("a guest socket with A's token joins only A's rooms, whatever B cookies the browser holds", async () => {
     const g = await connect(url, {
       tableToken: a.t7Token,
@@ -139,7 +160,10 @@ describe("cross-sandbox isolation over sockets", () => {
 
   it("a staff cookie joins its own session's tenant rooms, never the sandbox cookie's", async () => {
     const k = await connect(url, { cookie: `lodos_sid=${a.sid}; lodos_sb=${b.sb}` });
-    expect((await roomsOf(k.socket.id!)).sort()).toEqual([`${a.tenantId}:all`, `${a.tenantId}:station:kitchen`]);
+    const kitchenId = await runWithTenant(a.tenantId, () => t.models.Staff.findOne({ role: "kitchen" }).lean().orFail());
+    expect((await roomsOf(k.socket.id!)).sort()).toEqual(
+      [`${a.tenantId}:all`, `${a.tenantId}:person:${String(kitchenId._id)}`, `${a.tenantId}:station:kitchen`].sort(),
+    );
   });
 
   it("presence counts per tenant: A's socket does not keep B connected", async () => {

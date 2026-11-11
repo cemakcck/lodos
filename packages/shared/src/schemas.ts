@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { COMP_REASONS, VOID_REASONS } from "./adjustments";
 import { ALLERGENS } from "./allergens";
+import { LOGIN_ROLES, SCHEDULE_ROLES } from "./staff";
 import { TABLE_NAME_RE } from "./tables";
 
 const OptionSelectionSchema = z.object({ groupId: z.string(), optionIds: z.array(z.string()) });
@@ -28,7 +29,8 @@ export const OrderRequest = z.object({
 });
 export type OrderRequest = z.infer<typeof OrderRequest>;
 
-export const StaffRole = z.enum(["waiter", "kitchen", "bar", "manager"]);
+/** Login (waiter, manager), station (kitchen, bar) and schedule-only (cook, bartender, host, dishwasher): see staff.ts. */
+export const StaffRole = z.enum(["waiter", "kitchen", "bar", "manager", "cook", "bartender", "host", "dishwasher"]);
 export type StaffRole = z.infer<typeof StaffRole>;
 
 export const DemoRole = z.enum(["guest", "waiter", "kitchen", "bar", "manager"]);
@@ -115,6 +117,28 @@ export const ApprovalBody = z.object({
   pin: PinSchema,
 });
 export type ApprovalBody = z.infer<typeof ApprovalBody>;
+
+const ObjectIdString = z.string().refine((s) => /^[0-9a-f]{24}$/i.test(s), "Invalid id");
+/** A person's role in the Staff screen: login or schedule-only (stations are fixed, never picked). */
+export const PersonRole = z.enum([...LOGIN_ROLES, ...SCHEDULE_ROLES]);
+export type PersonRole = z.infer<typeof PersonRole>;
+const StaffName = z.string().trim().min(1).max(60);
+
+/** POST /api/staff. `pin` is required for waiter and manager and refused for schedule-only roles. */
+export const StaffCreateBody = z.object({
+  name: StaffName,
+  role: PersonRole,
+  pin: PinSchema.optional(),
+  tableIds: z.array(ObjectIdString).max(200).optional(),
+});
+export type StaffCreateBody = z.infer<typeof StaffCreateBody>;
+
+/** PATCH /api/staff/:id. `tableIds` is the person's full section: listed tables move to them, others they had are unassigned. */
+export const StaffPatchBody = StaffCreateBody.partial();
+export type StaffPatchBody = z.infer<typeof StaffPatchBody>;
+
+/** POST /api/staff/:id/pin. */
+export const StaffPinBody = z.object({ pin: PinSchema });
 
 const ShareCount = z.number().int().min(2).max(20);
 

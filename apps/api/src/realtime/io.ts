@@ -1,4 +1,4 @@
-import { room, tableRoom, type StaffRole } from "@lodos/shared";
+import { personRoom, room, tableRoom, type StaffRole } from "@lodos/shared";
 import type { Server, Socket } from "socket.io";
 import { SESSION_COOKIE, resolveSession } from "../auth/sessions";
 import type { Clock } from "../clock";
@@ -25,11 +25,25 @@ const STAFF_ROOMS: Record<StaffRole, readonly ("kitchen" | "bar" | "floor" | "ma
   bar: ["bar"],
   waiter: ["floor"],
   manager: ["floor", "manager", "kitchen", "bar"],
+  // Schedule-only people can't hold a session, so they never have a socket; no rooms either way.
+  cook: [],
+  bartender: [],
+  host: [],
+  dishwasher: [],
 };
 
-/** Every room the identity belongs to: its role or table room(s), plus the tenant's `all` room. */
+/** A staff role's rooms in a tenant (not the person or `all` room). */
+export const roleRooms = (tenantId: string, role: StaffRole): string[] => STAFF_ROOMS[role].map((k) => room(tenantId, k));
+
+/**
+ * Every room the identity belongs to: a guest's table room, or a staff member's role rooms and person room
+ * (`personRoom`, for `session.ended` and disconnects), plus the tenant's `all` room.
+ */
 export function roomsOf(id: SocketIdentity): string[] {
-  const own = id.kind === "guest" ? [tableRoom(id.tenantId, id.tableId)] : STAFF_ROOMS[id.role].map((k) => room(id.tenantId, k));
+  const own =
+    id.kind === "guest"
+      ? [tableRoom(id.tenantId, id.tableId)]
+      : [...roleRooms(id.tenantId, id.role), personRoom(id.tenantId, id.staffId)];
   return [...own, allRoom(id.tenantId)];
 }
 

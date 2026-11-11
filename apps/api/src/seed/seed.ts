@@ -5,7 +5,7 @@ import { Types } from "mongoose";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
 import { generateHistory, mulberry32 } from "../sales/history";
-import { CATEGORIES, ITEMS, ROOMS, STAFF, TABLES, vatRateOf, type SeedItem, type Station } from "./content";
+import { CATEGORIES, ITEMS, ROOMS, SCHEDULE_TEAM, STAFF, TABLES, vatRateOf, type SeedItem, type Station } from "./content";
 
 export type SeedResult = {
   /** Keyed by table name. `token` is the raw guest QR token. */
@@ -65,14 +65,15 @@ const SOLD_OUT = ["king-prawns", "olive-oil-gelato"];
 const LOW_STOCK = { slug: "dry-aged-ribeye", remaining: 2 };
 
 /**
- * Seeds one tenant with the Lodos restaurant: menu, floor, staff and settings, plus (with `liveService`) a
+ * Seeds one tenant with the Lodos restaurant: menu, floor, staff (sign-in accounts and, unless `scheduleTeam: false`,
+ * the schedule-only team) and settings, plus (with `liveService`) a
  * mid-service snapshot where tickets, orders and checks agree. Everything is relative to `now`.
  */
 export async function seedRestaurant(
   models: Models,
   tenantId: string,
   now: Date,
-  opts: { liveService: boolean },
+  opts: { liveService: boolean; scheduleTeam?: boolean },
 ): Promise<SeedResult> {
   const ago = (min: number) => new Date(now.getTime() - min * 60_000);
   const pinHashes = await Promise.all(STAFF.map((s) => hashPin(s.pin)));
@@ -118,9 +119,10 @@ export async function seedRestaurant(
     await Promise.all([
       m.Tenant.create({ name: "Lodos", createdAt: now }),
       m.Setting.create({ warnMin: 8, lateMin: 15 }),
-      m.Staff.insertMany(
-        STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i] })),
-      ),
+      m.Staff.insertMany([
+        ...STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i], demoProtected: s.demoProtected })),
+        ...(opts.scheduleTeam === false ? [] : SCHEDULE_TEAM.map((s) => ({ name: s.name, role: s.role }))),
+      ]),
       m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort }))),
       m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i, defaultVatRate: vatRateOf(c.key) }))),
       m.MenuItem.insertMany(menuItems),

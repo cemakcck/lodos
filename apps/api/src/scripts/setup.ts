@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
-import { StaffRole } from "@lodos/shared";
+import { LOGIN_ROLES, STATION_ROLES } from "@lodos/shared";
 import type { Types } from "mongoose";
 import { z } from "zod";
 import { hashPin, PinSchema, verifyPin } from "../auth/pin";
@@ -14,7 +14,7 @@ import { seedRestaurant } from "../seed/seed";
 const StaffSpec = z
   .string()
   .transform((s) => s.split(":"))
-  .pipe(z.tuple([z.string().trim().min(1), StaffRole, PinSchema]));
+  .pipe(z.tuple([z.string().trim().min(1), z.enum([...LOGIN_ROLES, ...STATION_ROLES]), PinSchema]));
 
 export type SetupDeps = {
   /** Skips connecting (tests). */
@@ -66,7 +66,8 @@ export async function runSetup(args: string[], deps: SetupDeps = {}): Promise<vo
     const exists = await runWithTenant(tenantId, () => m.Tenant.exists({}));
     if (!exists) {
       if (values["seed-menu"]) {
-        await seedRestaurant(m, tenantId, now, { liveService: false });
+        // No fictional schedule team in a real install; the demo sign-in accounts are removed below.
+        await seedRestaurant(m, tenantId, now, { liveService: false, scheduleTeam: false });
         log(`Seeded menu and tables for tenant "${tenantId}"`);
       } else {
         await runWithTenant(tenantId, () => m.Tenant.create({ name: "Lodos", createdAt: now }));
