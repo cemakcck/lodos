@@ -214,45 +214,6 @@ export function newPayment(method: "card" | "cash", amount: number, at: Date): P
 
 const paymentView = (p: { method: "card" | "cash"; amount: number; at: Date; last4?: string | null } | null | undefined): Payment | null =>
   p ? { method: p.method, amount: p.amount, at: p.at, last4: p.last4 ?? null } : null;
-export type CheckPrintView = {
-  table: { id: string; name: string };
-  check: {
-    id: string;
-    status: "open" | "paid";
-    paid: boolean;
-    covers: number | null;
-    openedAt: Date;
-    closedAt: Date | null;
-    serverName: string | null;
-    payment: Payment | null;
-  };
-} & CheckLines;
-
-/** The print page's data, for an open or a paid check. */
-export async function checkPrint(models: Models, checkId: string): Promise<CheckPrintView> {
-  if (!isOid(checkId)) throw notFound();
-  const check = await models.Check.findOne({ _id: checkId }).lean();
-  if (!check) throw notFound();
-  const [table, lines, serverName] = await Promise.all([
-    models.Table.findOne({ _id: check.tableId }, { name: 1 }).lean(),
-    checkLines(models, check._id).then(maskedLines),
-    staffName(models, check.serverStaffId),
-  ]);
-  return {
-    table: { id: String(check.tableId), name: table?.name ?? "" },
-    check: {
-      id: String(check._id),
-      status: check.status,
-      paid: check.status === "paid",
-      covers: check.covers ?? null,
-      openedAt: check.openedAt,
-      closedAt: check.closedAt ?? null,
-      serverName,
-      payment: paymentView(check.payment),
-    },
-    ...lines,
-  };
-}
 
 // ─── Actions ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 

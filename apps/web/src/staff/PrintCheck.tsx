@@ -6,7 +6,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { api } from "../lib/api";
 import { useFormat } from "../lib/format";
 import { loc } from "./kds/lib";
-import type { CheckLine, CheckPrint } from "./floor/types";
+import type { CheckPrint } from "./floor/types";
 
 const dateFmt = new Intl.DateTimeFormat("tr-TR", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", year: "numeric" });
 
@@ -45,7 +45,7 @@ export function PrintCheck({ print = browserPrint, clock = Date.now }: PrintChec
     else print();
   }, [data, params, print]);
 
-  const back = `/staff/floor${data ? `?table=${data.table.id}` : ""}`;
+  const back = "/staff/floor";
   const toolbar = (
     <div className="pc-toolbar no-print">
       <Link to={back} className="staff-btn">
@@ -70,34 +70,7 @@ export function PrintCheck({ print = browserPrint, clock = Date.now }: PrintChec
     );
   }
 
-  const at = new Date(data.check.closedAt ?? clock());
-  const group = (key: "food" | "drinks", lines: CheckLine[], subtotal: number) =>
-    lines.length > 0 && (
-      <section className="pc-group" aria-label={t(`floor.print.${key}`)}>
-        <h2>{t(`floor.print.${key}`)}</h2>
-        <ul>
-          {lines.map((l, i) => (
-            <li key={`${l.orderId}-${i}`}>
-              <span className="q">{l.qty}</span>
-              <span className="nm">
-                {loc(l.name, lang)}
-                {l.options.map((o, j) => (
-                  <span key={j} className="mod">
-                    {loc(o, lang)}
-                  </span>
-                ))}
-              </span>
-              <span className="pr">{money(l.lineTotal)}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="pc-sub" data-testid={`sub-${key}`}>
-          <span>{t("floor.print.subtotal", { group: t(`floor.print.${key}`) })}</span>
-          <span className="pr">{money(subtotal)}</span>
-        </p>
-      </section>
-    );
-
+  const at = new Date(data.closedAt ?? clock());
   return (
     <div className="pc-page">
       {toolbar}
@@ -118,29 +91,45 @@ export function PrintCheck({ print = browserPrint, clock = Date.now }: PrintChec
             <dt>{t("floor.print.time")}</dt>
             <dd className="pr">{hhmm(at)}</dd>
           </div>
-          {data.check.serverName && (
+          {data.serverName && (
             <div>
               <dt>{t("floor.print.server")}</dt>
-              <dd>{data.check.serverName}</dd>
+              <dd>{data.serverName}</dd>
             </div>
           )}
-          {data.check.covers != null && (
+          {data.covers != null && (
             <div>
               <dt>{t("floor.print.covers")}</dt>
-              <dd className="pr">{data.check.covers}</dd>
+              <dd className="pr">{data.covers}</dd>
             </div>
           )}
         </dl>
-        {group("food", data.food, data.totals.food)}
-        {group("drinks", data.drinks, data.totals.drinks)}
+        <section className="pc-group">
+          <ul>
+            {data.lines.map((l, i) => (
+              <li key={i}>
+                <span className="q">{l.label}</span>
+                <span className="nm">
+                  {loc(l.name, lang)}
+                  {l.options.map((o, j) => (
+                    <span key={j} className="mod">
+                      {loc(o, lang)}
+                    </span>
+                  ))}
+                </span>
+                <span className="pr">{money(l.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
         <p className="pc-total" data-testid="print-total">
           <span>{t("floor.print.total")}</span>
-          <span className="pr">{money(data.totals.total)}</span>
+          <span className="pr">{money(data.total)}</span>
         </p>
         <p className="pc-vat">KDV dahil / VAT included</p>
         <p className="pc-paid">
-          {data.check.payment
-            ? t("floor.print.paidBy", { method: t(`floor.close.methodWord.${data.check.payment.method}`) })
+          {data.payment
+            ? t("floor.print.paidBy", { method: t(`floor.close.methodWord.${data.payment.method}`) })
             : t("floor.print.open")}
         </p>
         <p className="pc-thanks">{t("floor.print.thanks")}</p>

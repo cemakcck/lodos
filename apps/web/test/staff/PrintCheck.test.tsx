@@ -11,17 +11,22 @@ import { mockFetch } from "./harness";
 
 const n = (en: string, tr = en) => ({ en, tr });
 const data: CheckPrint = {
-  table: { id: "t12", name: "T12" },
-  check: {
-    id: "c1", status: "paid", paid: true, covers: 4, openedAt: "2026-11-10T17:30:00.000Z", closedAt: "2026-11-10T18:42:00.000Z",
-    serverName: "Deniz", payment: { method: "card", amount: 409000, at: "2026-11-10T18:42:00.000Z" },
-  },
-  food: [
-    { orderId: "o1", ticketId: "k", qty: 1, name: n("Dry-aged ribeye, 300 g"), options: [n("Medium rare")], note: null, seat: null, status: "served", lineTotal: 245000 },
-    { orderId: "o1", ticketId: "k", qty: 2, name: n("Köz patlıcan, miso"), options: [], note: null, seat: null, status: "served", lineTotal: 96000 },
+  table: { name: "T12" },
+  checkNo: "0427",
+  serverName: "Deniz",
+  covers: 4,
+  printedAt: "2026-11-10T18:43:00.000Z",
+  openedAt: "2026-11-10T17:30:00.000Z",
+  closedAt: "2026-11-10T18:42:00.000Z",
+  lines: [
+    { label: "", name: n("Dry-aged ribeye, 300 g"), options: [n("Medium rare")], amount: 245000, comp: null },
+    { label: "2 ×", name: n("Köz patlıcan, miso"), options: [], amount: 96000, comp: null },
+    { label: "", name: n("Lodos Negroni"), options: [], amount: 68000, comp: null },
   ],
-  drinks: [{ orderId: "o1", ticketId: "b", qty: 1, name: n("Lodos Negroni"), options: [], note: null, seat: null, status: "served", lineTotal: 68000 }],
-  totals: { food: 341000, drinks: 68000, total: 409000 },
+  total: 409000,
+  vat: [{ rate: 10, amount: 30000 }],
+  payment: { method: "card", amount: 409000, at: "2026-11-10T18:42:00.000Z", last4: "4242" },
+  paid: true,
 };
 
 function setup(print = vi.fn()) {
@@ -45,7 +50,7 @@ afterEach(async () => {
 });
 
 describe("PrintCheck", () => {
-  it("prints the wordmark, table, date and time, lines, subtotals, total and the VAT line, then calls print once", async () => {
+  it("prints the wordmark, table, date and time, lines, total and the VAT line, then calls print once", async () => {
     const print = setup();
     const doc = await screen.findByRole("article", { name: /Check T12/ });
     expect(within(doc).getByText("Lodos")).toBeTruthy();
@@ -53,8 +58,6 @@ describe("PrintCheck", () => {
     expect(doc.textContent).toContain("10.11.2026");
     expect(doc.textContent).toContain("21:42");
     expect(within(doc).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(doc).getByTestId("sub-food").textContent).toContain(formatTRY(341000, "en"));
-    expect(within(doc).getByTestId("sub-drinks").textContent).toContain(formatTRY(68000, "en"));
     expect(within(doc).getByTestId("print-total").textContent).toContain(formatTRY(409000, "en"));
     expect(doc.textContent).toContain("KDV dahil / VAT included");
     expect(doc.textContent).toContain("Paid by card");

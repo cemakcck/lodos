@@ -5,6 +5,7 @@ import { staffRoute } from "../auth/guard";
 import { notFound } from "../kds/service";
 import type { Audience, Realtime } from "../realtime/emit";
 import { addAdjustment, assertCheckExists, reverseAdjustment, type AdjustResult, type ReverseResult } from "./adjust";
+import { receiptView } from "./receipt";
 import { getSplit, payShare, setSplit } from "./split";
 
 const WAITER = ["waiter"] as const;
@@ -74,6 +75,11 @@ export function registerCheckRoutes(app: FastifyInstance): void {
       }
       return { changed: r.changed, share: r.share, closed: r.closed };
     }),
+  );
+
+  app.get<IdParams & { Querystring: { share?: string } }>(
+    "/api/checks/:id/receipt",
+    staffRoute(WAITER, async (req) => receiptView(req.server.models, req.params.id, { share: req.query.share ?? null, now: req.server.clock.now() })),
   );
 
   app.get(

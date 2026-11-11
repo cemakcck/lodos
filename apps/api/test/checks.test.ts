@@ -178,13 +178,12 @@ describe("close the check", () => {
     const s = await seedTenant(t);
     const { w, checkId, burrata, spritz } = await seatedT7WithOrder(s);
     const open = (await w("GET", `/api/checks/${checkId}/print`)).json();
-    expect(open).toMatchObject({ table: { name: "T7" }, check: { id: checkId, paid: false, closedAt: null, openedAt: NOW.toISOString(), covers: 2 } });
-    expect(open.food).toHaveLength(1);
-    expect(open.drinks).toHaveLength(1);
-    expect(open.totals.total).toBe(burrata.price + 2 * spritz.price);
+    expect(open).toMatchObject({ table: { name: "T7" }, paid: false, closedAt: null, openedAt: NOW.toISOString(), covers: 2, payment: null });
+    expect(open.lines).toHaveLength(2);
+    expect(open.total).toBe(burrata.price + 2 * spritz.price);
     await w("POST", `/api/checks/${checkId}/close`, { method: "cash" });
     const paid = (await w("GET", `/api/checks/${checkId}/print`)).json();
-    expect(paid.check).toMatchObject({ paid: true, status: "paid", closedAt: NOW.toISOString(), payment: { method: "cash", amount: open.totals.total } });
+    expect(paid).toMatchObject({ paid: true, closedAt: NOW.toISOString(), payment: { method: "cash", amount: open.total } });
   });
 });
 
@@ -268,7 +267,7 @@ describe("an order racing the close (deterministic interleavings)", () => {
 });
 
 describe("profanity in guest notes", () => {
-  it("staff check detail and print mask a listed word; the guest's own view keeps their words", async () => {
+  it("staff check detail masks a listed word; the guest's own view keeps their words", async () => {
     const s = await seedTenant(t);
     const T7 = s.seed.tables.T7!;
     const burrata = await itemNamed(t, s.tenantId, "Burrata");
@@ -278,8 +277,6 @@ describe("profanity in guest notes", () => {
     const w = await staff(s);
     const detail = (await w("GET", `/api/tables/${T7.id}/check`)).json();
     expect(detail.food[0].note).toBe("no basil, •••");
-    const print = (await w("GET", `/api/checks/${detail.check.id}/print`)).json();
-    expect(print.food[0].note).toBe("no basil, •••");
     expect((await g.get("/api/guest/orders")).json().food[0].note).toBe("no basil, shit");
   });
 });

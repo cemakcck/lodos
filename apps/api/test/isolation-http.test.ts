@@ -180,6 +180,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     }
     for (const c of before.checks) {
       await expect404("GET", `/api/checks/${String(c._id)}/print`);
+      await expect404("GET", `/api/checks/${String(c._id)}/receipt`);
       await expect404("POST", `/api/checks/${String(c._id)}/close`, { method: "card" });
       await expect404("GET", `/api/checks/${String(c._id)}/split`);
       await expect404("PUT", `/api/checks/${String(c._id)}/split`, { mode: "even", count: 2 });

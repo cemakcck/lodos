@@ -2,10 +2,11 @@ import { OrderRequest } from "@lodos/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { staffRoute } from "../auth/guard";
+import { receiptView } from "../checks/receipt";
 import { isOid, notFound } from "../kds/service";
 import { emitOrderPlaced, placeOrder } from "../orders/place";
 import type { Audience } from "../realtime/emit";
-import { answerCall, checkPrint, closeCheck, floorSnapshot, markServed, seatTable, tableCheck } from "./service";
+import { answerCall, closeCheck, floorSnapshot, markServed, seatTable, tableCheck } from "./service";
 
 const SeatBody = z.object({ covers: z.number().int().min(1).max(20) });
 const CloseBody = z.object({ method: z.enum(["card", "cash"]) });
@@ -107,6 +108,6 @@ export function registerFloorRoutes(app: FastifyInstance): void {
 
   app.get<IdParams>(
     "/api/checks/:id/print",
-    staffRoute(WAITER, async (req) => checkPrint(req.server.models, req.params.id)),
+    staffRoute(WAITER, async (req) => receiptView(req.server.models, req.params.id, { share: null, now: req.server.clock.now() })),
   );
 }
