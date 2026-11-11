@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, cleanup, within, waitFor, fireEvent } from "@testing-library/react";
+import { screen, cleanup, within, waitFor, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("socket.io-client", async () => (await import("../guest/fakeSocket")).socketModule);
@@ -28,14 +28,14 @@ const person = (id: string, name: string, role = "waiter", active = true) => ({
 const PEOPLE = { people: [person("id-deniz", "Deniz"), person("id-mert", "Mert"), person("id-manager", "Selin Kaya", "manager")], stations: [] };
 
 function setup(extra: Record<string, unknown> = {}, path = "/staff/floor-plan") {
-  const { calls } = mockFetch({
+  const { calls, routes } = mockFetch({
     "GET /api/auth/me": staffOf("manager"),
     "GET /api/floor": FLOOR,
     "GET /api/staff": PEOPLE,
     "GET /api/rooms/salon/layout": LAYOUT,
     ...extra,
   });
-  return { calls, ...renderApp(path) };
+  return { calls, routes, ...renderApp(path) };
 }
 const tableBtn = (name: string) => screen.findByRole("button", { name: new RegExp(`^${name},`) });
 const puts = (calls: { method: string; path: string; body: unknown }[]) => calls.filter((c) => c.method === "PUT" && c.path === "/api/rooms/salon/layout");
@@ -195,6 +195,91 @@ describe("Floor plan editor", () => {
     await user.click(screen.getByRole("button", { name: "Move down" }));
     expect((await tableBtn("T1")).getAttribute("aria-label")).toContain("x 32, y 48");
     expect(screen.getByText("T1 moved to x 32, y 48")).toBeTruthy();
+  });
+
+  it("typing a name with the other prefix is refused: Shape switches between table and booth", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(await tableBtn("T1"));
+    const name = screen.getByLabelText("Name") as HTMLInputElement;
+    await user.clear(name);
+    await user.type(name, "B9");
+    expect(screen.getByText("Use Shape to switch between table and booth")).toBeTruthy();
+    expect(await tableBtn("T1")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^B9,/ })).toBeNull();
+    const shape = screen.getByRole("group", { name: "Shape" });
+    expect(within(shape).getByRole("button", { name: "Round" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(shape).getByRole("button", { name: "Booth" }).getAttribute("aria-pressed")).toBe("false");
+    // Same prefix, typed in lower case: accepted as T12, and the field is not rewritten under the caret.
+    await user.clear(name);
+    await user.type(name, "t12");
+    expect(name.value).toBe("t12");
+    expect(await tableBtn("T12")).toBeTruthy();
+    expect(screen.queryByText("Use Shape to switch between table and booth")).toBeNull();
+    // Blur shows the stored name.
+    await user.tab();
+    expect(name.value).toBe("T12");
+  });
+
+  it("a booth's name can't be typed into a table name either (TR copy)", async () => {
+    const user = userEvent.setup();
+    await setLanguage("tr");
+    setup();
+    await user.click(await tableBtn("B1"));
+    const name = screen.getByLabelText("Ad") as HTMLInputElement;
+    await user.clear(name);
+    await user.type(name, "T30");
+    expect(screen.getByText("Masa ile loca arasında geçiş için Şekil'i kullanın")).toBeTruthy();
+    expect(await tableBtn("B1")).toBeTruthy();
+  });
+
+  it("a drag whose events land in one tick commits the final snapped position", async () => {
+    setup();
+    const t1 = await tableBtn("T1");
+    act(() => {
+      fireEvent.pointerDown(t1, { pointerId: 3, pointerType: "mouse", button: 0, clientX: 100, clientY: 100 });
+      fireEvent.pointerMove(t1, { pointerId: 3, pointerType: "mouse", clientX: 140, clientY: 100 });
+      fireEvent.pointerMove(t1, { pointerId: 3, pointerType: "mouse", clientX: 300, clientY: 165 });
+      fireEvent.pointerUp(t1, { pointerId: 3, pointerType: "mouse", clientX: 300, clientY: 165 });
+    });
+    // 32 + 200 → 232 → 240 (snap); 32 + 65 → 97 → 96.
+    expect((await tableBtn("T1")).getAttribute("aria-label")).toContain("x 240, y 96");
+  });
+
+  it("losing pointer capture mid-drag puts the table back", async () => {
+    setup();
+    const t1 = await tableBtn("T1");
+    fireEvent.pointerDown(t1, { pointerId: 4, pointerType: "touch", clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(t1, { pointerId: 4, pointerType: "touch", clientX: 160, clientY: 100 });
+    fireEvent(t1, new Event("lostpointercapture", { bubbles: true }));
+    expect(document.querySelector(".fp-coord")).toBeNull();
+    fireEvent.pointerUp(t1, { pointerId: 4, pointerType: "touch", clientX: 160, clientY: 100 });
+    expect((await tableBtn("T1")).getAttribute("aria-label")).toContain("x 32, y 32");
+    expect(screen.queryByText(/unsaved change/)).toBeNull();
+  });
+
+  it("a live reload never drops an edit made before the refetch lands", async () => {
+    const { calls } = setup();
+    const t1 = await tableBtn("T1");
+    act(() => {
+      for (const s of sockets) s.emit("event", { type: "layout.saved", ids: ["salon"], at: "2026-11-10T18:43:00.000Z" });
+      t1.focus();
+      fireEvent.keyDown(t1, { key: "ArrowRight" });
+    });
+    await waitFor(() => expect(calls.filter((c) => c.method === "GET" && c.path === "/api/rooms/salon/layout").length).toBeGreaterThanOrEqual(2));
+    await new Promise((r) => setTimeout(r, 20));
+    expect((await tableBtn("T1")).getAttribute("aria-label")).toContain("x 48, y 32");
+    expect(screen.getByText("1 unsaved change")).toBeTruthy();
+  });
+
+  it("a live reload of a clean room takes the other version", async () => {
+    const { routes } = setup();
+    await tableBtn("T1");
+    routes["GET /api/rooms/salon/layout"] = { ...LAYOUT, room: { ...LAYOUT.room, version: 4 }, tables: [...LAYOUT.tables, tb({ id: "t9", name: "T9", x: 400, y: 32 })] };
+    act(() => {
+      for (const s of sockets) s.emit("event", { type: "layout.saved", ids: ["salon"], at: "2026-11-10T18:43:00.000Z" });
+    });
+    expect(await tableBtn("T9")).toBeTruthy();
   });
 
   it("the inspector links to this table's QR code", async () => {

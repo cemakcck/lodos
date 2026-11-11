@@ -924,7 +924,7 @@
   .fp-field:last-child { border-bottom: 0; }
   .fp-field > label, .fp-field > span:first-child { font-weight: 500; color: var(--color-staff-fg-2); }
   .fp-name-wrap { position: relative; display: inline-flex; align-items: center; }
-  .fp-name { width: 96px; height: 38px; text-align: right; }
+  .fp-name { width: 96px; height: 38px; text-align: right; text-transform: uppercase; }
   .fp-name[readonly] { background: var(--color-staff-sunk); color: var(--color-staff-fg-3); padding-right: 28px; }
   .fp-lock { position: absolute; right: 9px; color: var(--color-staff-fg-3); pointer-events: none; }
   .fp-err { font-size: 12px; color: var(--color-staff-amber); padding: 0 0 8px; }

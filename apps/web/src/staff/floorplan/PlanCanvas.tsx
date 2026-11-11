@@ -24,7 +24,8 @@ const KEYS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight:
 /** Pixels of pointer travel before a press becomes a drag (a tap only selects). */
 const DRAG_SLOP = 3;
 
-type Drag = { key: string; pointerId: number; startX: number; startY: number; origX: number; origY: number; moved: boolean };
+/** The live drag. `x`/`y` is the last snapped position, kept here so a release commits it even before a re-render. */
+type Drag = { key: string; pointerId: number; startX: number; startY: number; origX: number; origY: number; moved: boolean; x: number; y: number };
 
 /**
  * The room as an SVG at its own size (scaled down to fit) on a 16 px dot grid. Each table is a focusable button:
@@ -58,25 +59,38 @@ export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId
     if (e.pointerType === "mouse" && e.button !== 0) return;
     onSelect(tb.key);
     e.currentTarget.setPointerCapture?.(e.pointerId);
-    drag.current = { key: tb.key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y, moved: false };
+    drag.current = { key: tb.key, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y, moved: false, x: tb.x, y: tb.y };
   };
-  const onPointerMove = (e: PointerEvent<SVGGElement>, tb: DraftTable) => {
-    const d = drag.current;
-    if (!d || d.pointerId !== e.pointerId || d.key !== tb.key) return;
-    const dx = e.clientX - d.startX;
-    const dy = e.clientY - d.startY;
+  /** Follows the pointer: past the slop, the snapped, clamped position goes into the drag and the readout. */
+  const track = (d: Drag, tb: DraftTable, clientX: number, clientY: number) => {
+    const dx = clientX - d.startX;
+    const dy = clientY - d.startY;
     if (!d.moved && Math.hypot(dx, dy) < DRAG_SLOP) return;
     d.moved = true;
     const s = scale();
     const at = clampInto({ ...tb, x: snap(d.origX + dx / s), y: snap(d.origY + dy / s) }, room);
+    d.x = at.x;
+    d.y = at.y;
     setLive({ key: tb.key, x: at.x, y: at.y });
   };
-  const endDrag = (e: PointerEvent<SVGGElement>, commit: boolean) => {
+  const onPointerMove = (e: PointerEvent<SVGGElement>, tb: DraftTable) => {
+    const d = drag.current;
+    if (d && d.pointerId === e.pointerId && d.key === tb.key) track(d, tb, e.clientX, e.clientY);
+  };
+  const onPointerUp = (e: PointerEvent<SVGGElement>, tb: DraftTable) => {
     const d = drag.current;
     if (!d || d.pointerId !== e.pointerId) return;
+    if (d.key === tb.key) track(d, tb, e.clientX, e.clientY);
     drag.current = null;
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
-    if (commit && d.moved && live && live.key === d.key && (live.x !== d.origX || live.y !== d.origY)) onMove(d.key, live.x, live.y);
+    if (d.moved && (d.x !== d.origX || d.y !== d.origY)) onMove(d.key, d.x, d.y);
+    setLive(null);
+  };
+  /** Cancelled or capture lost (another gesture, the element went away): the table stays where it was. */
+  const abortDrag = (pointerId?: number) => {
+    const d = drag.current;
+    if (!d || (pointerId !== undefined && d.pointerId !== pointerId)) return;
+    drag.current = null;
     setLive(null);
   };
 
@@ -157,8 +171,9 @@ export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId
               onKeyDown={(e) => onKeyDown(e, tb)}
               onPointerDown={(e) => onPointerDown(e, tb)}
               onPointerMove={(e) => onPointerMove(e, tb)}
-              onPointerUp={(e) => endDrag(e, true)}
-              onPointerCancel={(e) => endDrag(e, false)}
+              onPointerUp={(e) => onPointerUp(e, tb)}
+              onPointerCancel={(e) => abortDrag(e.pointerId)}
+              onLostPointerCapture={(e) => abortDrag(e.pointerId)}
             >
               <TableGlyph table={{ ...tb, x: 0, y: 0 }} />
               <text className="fp-no" x={tb.w / 2} y={tb.h / 2 - 2} textAnchor="middle" aria-hidden="true">{tb.name}</text>

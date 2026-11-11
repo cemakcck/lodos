@@ -1281,6 +1281,7 @@
       "name": "Ad",
       "nameInvalid": "T ya da B ve bir sayı kullanın, örneğin T12.",
       "nameTaken": "Bu odada zaten {{name}} adlı bir masa var.",
+      "namePrefix": "Masa ile loca arasında geçiş için Şekil'i kullanın",
       "shape": "Biçim",
       "seats": "Kişi",
       "fewer": "Daha az kişi",

@@ -1,13 +1,14 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Info, Lock, Minus, Plus, QrCode, Trash2 } from "lucide-react";
 import { TABLE_CAPACITY_MAX, TABLE_CAPACITY_MIN, TABLE_NAME_RE } from "@lodos/shared";
 import { clampInto, GRID, snap } from "./geometry";
-import { shapeOption, type LayoutDraft } from "./useLayoutDraft";
+import { samePrefix, shapeOption, type LayoutDraft } from "./useLayoutDraft";
 import type { DraftTable, ShapeOption } from "./types";
 
 const SHAPES: readonly ShapeOption[] = ["round", "square", "booth"];
+const normalise = (s: string) => s.trim().toUpperCase();
 
 export interface InspectorProps {
   draft: LayoutDraft;
@@ -32,7 +33,24 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }
   const nameErrId = `${id}-name-err`;
   const locked = table.openCheck;
   const option = shapeOption(table);
-  const nameError = !TABLE_NAME_RE.test(table.name)
+  // The field keeps what was typed (shown upper case by CSS) so the caret never jumps; the draft gets the
+  // normalised name. A typed name with the other prefix is not applied; Shape crosses between table and booth.
+  const [text, setText] = useState(table.name);
+  const [shownName, setShownName] = useState(table.name);
+  if (shownName !== table.name) {
+    // Renamed from elsewhere (Shape → Booth): show the new name unless it is what is being typed.
+    setShownName(table.name);
+    if (normalise(text) !== table.name) setText(table.name);
+  }
+  const typed = normalise(text);
+  const crossed = typed !== table.name && typed.length > 0 && !samePrefix(table.name, typed);
+  const onName = (value: string) => {
+    setText(value);
+    draft.update(table.key, { name: normalise(value) });
+  };
+  const nameError = crossed
+    ? t("floorPlan.inspector.namePrefix")
+    : typed.length === 0 || !TABLE_NAME_RE.test(table.name)
     ? t("floorPlan.inspector.nameInvalid")
     : draft.tables.some((x) => x.key !== table.key && x.name === table.name)
       ? t("floorPlan.inspector.nameTaken", { name: table.name })
@@ -63,14 +81,15 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }
             <input
               id={`${id}-name`}
               className="mg-input font-mono fp-name"
-              value={table.name}
+              value={text}
               readOnly={locked}
               maxLength={4}
               autoComplete="off"
               spellCheck={false}
               aria-invalid={nameError ? true : undefined}
               aria-describedby={[locked && reasonId, nameError && nameErrId].filter(Boolean).join(" ") || undefined}
-              onChange={(e) => draft.update(table.key, { name: e.target.value.toUpperCase().trim() })}
+              onChange={(e) => onName(e.target.value)}
+              onBlur={() => setText(table.name)}
             />
             {locked && <Lock size={14} strokeWidth={1.75} aria-hidden="true" className="fp-lock" />}
           </span>

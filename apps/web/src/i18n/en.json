@@ -1281,6 +1281,7 @@
       "name": "Name",
       "nameInvalid": "Use T or B and a number, like T12.",
       "nameTaken": "Another table here is already called {{name}}.",
+      "namePrefix": "Use Shape to switch between table and booth",
       "shape": "Shape",
       "seats": "Seats",
       "fewer": "Fewer seats",

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LayoutBody } from "@lodos/shared";
@@ -25,6 +25,9 @@ export function countChanges(base: readonly LayoutTable[], draft: readonly Draft
   }
   return n;
 }
+
+/** Whether a typed name keeps the table's prefix (T or B). */
+export const samePrefix = (current: string, next: string) => next.length > 0 && next[0] === current[0];
 
 export type Notice = { kind: "conflict" | "saved" | "error"; text: string } | null;
 type Editable = Partial<Pick<DraftTable, "name" | "capacity" | "sectionStaffId">>;
@@ -57,6 +60,8 @@ export function useLayoutDraft(roomId: string | null) {
   const [problems, setProblems] = useState<LayoutProblem[]>([]);
   const [notice, setNotice] = useState<Notice>(null);
   const seq = useRef(0);
+  // Read when a background reload lands, not when it was asked for: edits made meanwhile must survive.
+  const busy = useRef({ dirty: false, saving: false });
 
   // A new server version (first load, room switch, save, reload) replaces the draft. Selection survives by name.
   if (server !== state.source) {
@@ -100,6 +105,10 @@ export function useLayoutDraft(roomId: string | null) {
     },
   });
 
+  useEffect(() => {
+    busy.current = { dirty: changes > 0, saving: save.isPending };
+  });
+
   return {
     query,
     room,
@@ -130,10 +139,18 @@ export function useLayoutDraft(roomId: string | null) {
       return tb;
     },
 
-    update(key: string, changes: Editable) {
+    /**
+     * Name, seats or waiter. A name keeps its prefix: one that doesn't start with the table's T or B is refused
+     * (false), since crossing between table and booth is `setShape`'s job. A table with an open check keeps its name.
+     */
+    update(key: string, changes: Editable): boolean {
       const tb = find(key);
-      if (!tb || (tb.openCheck && changes.name !== undefined && changes.name !== tb.name)) return;
+      if (!tb) return false;
+      if (changes.name !== undefined && changes.name !== tb.name) {
+        if (tb.openCheck || !samePrefix(tb.name, changes.name)) return false;
+      }
       patch(key, (x) => ({ ...x, ...changes }));
+      return true;
     },
 
     /**
@@ -194,8 +211,20 @@ export function useLayoutDraft(roomId: string | null) {
       });
     },
 
-    /** Reload the room from the server, dropping the draft (another manager saved it). */
-    reload: () => void query.refetch(),
+    /**
+     * Another manager saved this room: fetch their version and take it only if, when it arrives, this draft still
+     * has nothing unsaved and no save in flight. Otherwise it is dropped; Save will then meet `409` and say so.
+     */
+    reloadIfClean() {
+      if (!roomId || busy.current.dirty || busy.current.saving) return;
+      const id = roomId;
+      void api<LayoutView>(`/api/rooms/${id}/layout`)
+        .then((view) => {
+          if (busy.current.dirty || busy.current.saving) return;
+          qc.setQueryData(layoutKey(id), view);
+        })
+        .catch(() => undefined);
+    },
   };
 }
 

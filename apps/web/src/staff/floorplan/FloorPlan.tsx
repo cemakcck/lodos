@@ -72,9 +72,10 @@ export function FloorPlan() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  // Another manager saved this room: take their version while there is nothing here to lose.
+  // Another manager saved this room (or this is the echo of our own save): take that version only if, when it
+  // arrives, there is still nothing here to lose.
   useLive({ audience: "staff" }, (e) => {
-    if (e.type === "layout.saved" && roomId && e.ids.includes(roomId) && !dirty && !draft.saving) draft.reload();
+    if (e.type === "layout.saved" && roomId && e.ids.includes(roomId)) draft.reloadIfClean();
   });
 
   const setRoom = (id: string) =>
