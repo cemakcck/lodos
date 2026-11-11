@@ -184,6 +184,9 @@ function Block({ shift, warnings, moving, anyMoving, onOpen, onMoveStart, onMove
     return () => document.removeEventListener("touchmove", stop);
   }, [dragging]);
 
+  // Unmounting mid-press (a week change, leaving the page) must not leave the long-press timer behind.
+  useEffect(() => () => clearTimeout(press.current?.timer), []);
+
   // A move ended elsewhere (Escape, a commit): drop any drag in progress.
   useEffect(() => {
     if (!moving && press.current?.active) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, cleanup, within, waitFor } from "@testing-library/react";
+import { screen, cleanup, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("socket.io-client", async () => (await import("../guest/fakeSocket")).socketModule);
@@ -128,6 +128,24 @@ describe("Schedule grid", () => {
     expect(screen.getByRole("status", { name: "Move" }).textContent).toContain("Deniz Kaya, Tuesday 10 November");
     await user.keyboard("{Enter}");
     await waitFor(() => expect(bodyOf(calls, "PATCH", "/api/shifts/s1")).toEqual({ staffId: "id-deniz", serviceDay: "2026-11-10" }));
+  });
+
+  it("a touch long-press timer is cleared when the grid unmounts", async () => {
+    setup();
+    const block = await screen.findByRole("button", { name: /17:00–01:00/ });
+    const set = vi.spyOn(window, "setTimeout");
+    const clear = vi.spyOn(window, "clearTimeout");
+    try {
+      fireEvent.pointerDown(block, { button: 0, pointerId: 7, pointerType: "touch", clientX: 10, clientY: 10 });
+      const i = set.mock.calls.findIndex((c) => c[1] === 350);
+      expect(i).toBeGreaterThanOrEqual(0);
+      const timer = set.mock.results[i]!.value;
+      cleanup();
+      expect(clear).toHaveBeenCalledWith(timer);
+    } finally {
+      set.mockRestore();
+      clear.mockRestore();
+    }
   });
 
   it("Escape cancels a keyboard move without a request", async () => {
