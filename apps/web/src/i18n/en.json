@@ -2,8 +2,7 @@
   "app": {
     "name": "Lodos",
     "loading": "Loading…",
-    "notFound": "Page not found",
-    "comingSoon": "Coming soon"
+    "notFound": "Page not found"
   },
   "conn": {
     "reconnecting": "Reconnecting…",
@@ -62,8 +61,7 @@
       "add": "Add {{name}}",
       "addUnavailable": "{{name}} is sold out tonight",
       "details": ", {{price}}. See details",
-      "added": "{{name}} added to your order",
-      "signature": "Signature"
+      "added": "{{name}} added to your order"
     },
     "dietary": {
       "vegetarian": "Vegetarian",
@@ -113,7 +111,6 @@
     },
     "cart": {
       "view": "View order · {{count}}",
-      "viewLabel": "View your order: {{count}} items, {{total}}",
       "title": "Your order",
       "empty": "Your order is empty.",
       "remove": "Remove {{name}}",
@@ -192,7 +189,6 @@
     }
   },
   "staff": {
-    "brand": "Lodos staff",
     "retry": "Try again",
     "nav": {
       "label": "Staff",
@@ -322,8 +318,7 @@
     },
     "search": {
       "label": "Find table or dish",
-      "placeholder": "Find table or dish",
-      "hint": "Press / to search"
+      "placeholder": "Find table or dish"
     },
     "recall": {
       "label": "Recall",
@@ -519,7 +514,6 @@
         "print": "Print check",
         "close": "Close check"
       },
-      "failed": "That didn't go through. Try again.",
       "conflict": "This table just changed. Refreshing…"
     },
     "seat": {
@@ -751,8 +745,6 @@
       "allergensHint": "Shown to guests and flagged in red on kitchen tickets.",
       "photo": "Photo",
       "photoHint": "JPEG, PNG or WebP, up to 2 MB",
-      "photoChoose": "Choose photo",
-      "photoReplace": "Replace photo",
       "photoCurrent": "Current photo",
       "photoNew": "New photo, saved with the item",
       "photoDiscard": "Keep the current photo",
@@ -951,10 +943,7 @@
     },
     "note": "Note",
     "notePlaceholder": "What happened?",
-    "noteRequired": "Required for Other",
     "approval": "Manager approval",
-    "approvalHint": "Pick a manager and enter their PIN. Nothing is stored.",
-    "approverLabel": "Manager",
     "noApprovers": "No manager is available to approve.",
     "approversLoading": "Loading managers…",
     "approversError": "Couldn't load the managers.",
@@ -1035,7 +1024,6 @@
       "kitchen": "Kitchen",
       "bar": "Bar",
       "threshold": "{{min}} min",
-      "avg": "Average minutes",
       "empty": "No tickets in this range yet.",
       "min": "{{value}} min"
     },
@@ -1052,8 +1040,7 @@
       "by": "{{requester}} → {{approver}}",
       "reversed": "Undone",
       "none": "–"
-    },
-    "updated": "Updated every minute"
+    }
   },
   "people": {
     "title": "Staff",

@@ -2,8 +2,7 @@
   "app": {
     "name": "Lodos",
     "loading": "Yükleniyor…",
-    "notFound": "Sayfa bulunamadı",
-    "comingSoon": "Çok yakında"
+    "notFound": "Sayfa bulunamadı"
   },
   "conn": {
     "reconnecting": "Yeniden bağlanılıyor…",
@@ -62,8 +61,7 @@
       "add": "{{name}} ekle",
       "addUnavailable": "{{name}} bu akşam tükendi",
       "details": ", {{price}}. Ayrıntılar",
-      "added": "{{name}} siparişinize eklendi",
-      "signature": "İmza"
+      "added": "{{name}} siparişinize eklendi"
     },
     "dietary": {
       "vegetarian": "Vejetaryen",
@@ -113,7 +111,6 @@
     },
     "cart": {
       "view": "Siparişi gör · {{count}}",
-      "viewLabel": "Siparişinizi görün: {{count}} ürün, {{total}}",
       "title": "Siparişiniz",
       "empty": "Siparişiniz henüz boş.",
       "remove": "{{name}} çıkar",
@@ -192,7 +189,6 @@
     }
   },
   "staff": {
-    "brand": "Lodos personel",
     "retry": "Tekrar dene",
     "nav": {
       "label": "Personel",
@@ -322,8 +318,7 @@
     },
     "search": {
       "label": "Masa veya yemek ara",
-      "placeholder": "Masa veya yemek ara",
-      "hint": "Aramak için / tuşuna basın"
+      "placeholder": "Masa veya yemek ara"
     },
     "recall": {
       "label": "Geri al",
@@ -519,7 +514,6 @@
         "print": "Hesabı yazdır",
         "close": "Hesabı kapat"
       },
-      "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
       "conflict": "Bu masa az önce değişti. Yenileniyor…"
     },
     "seat": {
@@ -751,8 +745,6 @@
       "allergensHint": "Misafire gösterilir, mutfak fişinde kırmızıyla işaretlenir.",
       "photo": "Fotoğraf",
       "photoHint": "JPEG, PNG ya da WebP, en fazla 2 MB",
-      "photoChoose": "Fotoğraf seç",
-      "photoReplace": "Fotoğrafı değiştir",
       "photoCurrent": "Mevcut fotoğraf",
       "photoNew": "Yeni fotoğraf, ürünle birlikte kaydedilir",
       "photoDiscard": "Mevcut fotoğrafı koru",
@@ -951,10 +943,7 @@
     },
     "note": "Not",
     "notePlaceholder": "Ne oldu?",
-    "noteRequired": "Diğer için gerekli",
     "approval": "Yönetici onayı",
-    "approvalHint": "Bir yönetici seçin ve PIN'ini girin. PIN kaydedilmez.",
-    "approverLabel": "Yönetici",
     "noApprovers": "Onaylayabilecek yönetici yok.",
     "approversLoading": "Yöneticiler yükleniyor…",
     "approversError": "Yöneticiler yüklenemedi.",
@@ -1035,7 +1024,6 @@
       "kitchen": "Mutfak",
       "bar": "Bar",
       "threshold": "{{min}} dk",
-      "avg": "Ortalama dakika",
       "empty": "Bu dönemde henüz fiş yok.",
       "min": "{{value}} dk"
     },
@@ -1052,8 +1040,7 @@
       "by": "{{requester}} → {{approver}}",
       "reversed": "Geri alındı",
       "none": "–"
-    },
-    "updated": "Dakikada bir güncellenir"
+    }
   },
   "people": {
     "title": "Personel",
