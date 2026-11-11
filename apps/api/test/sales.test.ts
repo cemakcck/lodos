@@ -280,6 +280,20 @@ describe("sales ranges", () => {
     });
   });
 
+  it("a closed check with a comp and a void: revenue is the charged total; comps and voids are counted beside it", async () => {
+    const c = await tenant(at("2026-11-10T17:00:00Z"));
+    const burrata = await itemNamed(t, c.s.tenantId, "Burrata");
+    const check = await c.seat("T7", 2);
+    const order = await c.order("T7", [{ itemId: burrata.id, qty: 3 }]);
+    for (const kind of ["comp", "void"] as const) {
+      const r = await c.m("POST", `/api/checks/${check}/adjustments`, { lineRef: `${order}:0`, kind, qty: 1, reason: kind === "comp" ? "celebration" : "wrong_item" });
+      expect(r.statusCode, r.body).toBe(201);
+    }
+    expect(await c.close(check, "card")).toBe(burrata.price);
+    const v = await c.view("today");
+    expect(v.current).toMatchObject({ revenue: burrata.price, checks: 1, covers: 2, comps: { count: 1, amount: burrata.price }, voids: { count: 1, amount: burrata.price } });
+  });
+
   it("share payments count in today's revenue when they are made (moved from the Tonight endpoint)", async () => {
     const c = await tenant();
     const burrata = await itemNamed(t, c.s.tenantId, "Burrata");

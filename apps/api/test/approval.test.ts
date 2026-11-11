@@ -25,7 +25,9 @@ async function fresh(tenantId = newTenant()) {
   const call = (requester: Awaited<ReturnType<typeof byName>>, approval: { managerId: string; pin: string } | undefined, ip = "10.9.0.1") =>
     runWithTenant(tenantId, () => approve(t.models, { tenantId, ip, approval, requester, now: NOW }));
   const events = () => unscoped("test", () => t.models.RateEvent.countDocuments({ key: new RegExp(tenantId) }));
-  return { tenantId, byName, call, events };
+  /** Every rate key a call from `ip` could write: the tenant's PIN keys and the IP's own key. */
+  const allEvents = (ip: string) => unscoped("test", () => t.models.RateEvent.countDocuments({ $or: [{ key: new RegExp(tenantId) }, { key: `ip:${ip}` }] }));
+  return { tenantId, byName, call, events, allEvents };
 }
 
 const code = async (p: Promise<unknown>) => {
@@ -42,8 +44,12 @@ describe("approve", () => {
   it("a manager requester approves themselves with no PIN and no rate events", async () => {
     const f = await fresh();
     const selin = await f.byName("Selin");
-    expect(await f.call(selin, undefined)).toEqual({ id: selin.id, name: "Selin" });
-    expect(await f.events()).toBe(0);
+    const ip = "10.9.42.1"; // used by no other test, so its IP key counts only this test's attempts
+    expect(await f.call(selin, undefined, ip)).toEqual({ id: selin.id, name: "Selin" });
+    expect(await f.allEvents(ip)).toBe(0);
+    // The count does see the IP key: a waiter's PIN approval from the same IP records it.
+    expect(await f.call(await f.byName("Deniz"), { managerId: selin.id, pin: "9999" }, ip)).toEqual({ id: selin.id, name: "Selin" });
+    expect(await unscoped("test", () => t.models.RateEvent.countDocuments({ key: `ip:${ip}` }))).toBeGreaterThan(0);
   });
 
   it("a waiter needs an approval", async () => {

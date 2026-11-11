@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { serviceDayOf, serviceDayStartOf } from "@lodos/shared";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
@@ -116,7 +117,12 @@ describe("close the check", () => {
     const f = (await w("GET", "/api/floor")).json();
     const t7 = f.tables.find((x: { name: string }) => x.name === "T7");
     expect(t7).toMatchObject({ state: "free", checkId: null, covers: null });
-    expect(f.stats.avgTurnMs).toBeGreaterThan(0); // the seed's paid checks tonight; this one (opened and closed at the same instant) averages in as 0
+    // Tonight's paid checks: the seeded ones plus this one, opened and closed at the same instant (a 0 ms turn).
+    const paid = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "paid", closedAt: { $gte: serviceDayStartOf(serviceDayOf(NOW)) } }).lean());
+    expect(paid.map((c) => String(c._id))).toContain(checkId);
+    expect(paid.length).toBeGreaterThan(1);
+    const turns = paid.map((c) => c.closedAt!.getTime() - c.openedAt.getTime());
+    expect(f.stats.avgTurnMs).toBe(Math.round(turns.reduce((a, b) => a + b, 0) / turns.length));
     expect(await runWithTenant(s.tenantId, () => t.models.Call.countDocuments({ tableId: T7, answeredAt: null }))).toBe(0);
     expect((await w("GET", `/api/tables/${T7}/check`)).json().check).toBeNull();
 

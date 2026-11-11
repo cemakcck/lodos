@@ -1,5 +1,7 @@
+import { serviceDayOf, serviceDayStartOf } from "@lodos/shared";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createSession } from "../src/auth/sessions";
+import { billOf } from "../src/checks/bill";
 import { runWithTenant } from "../src/db/tenancy";
 import { makeTestApp, LIVE_NO_HISTORY, seedTenant, type TestApp } from "./helpers";
 
@@ -40,8 +42,28 @@ describe("GET /api/floor", () => {
     expect(tableNamed(f, "B1")).toMatchObject({ state: "seated", covers: 4 });
     expect(f.rooms.map((r) => r.name)).toEqual(["Salon", "Bar", "Terrace"]);
     expect(f.stats).toMatchObject({ seated: 7, totalTables: f.tables.length, covers: 4 + 2 + 3 + 2 + 2 + 2 + 2 });
-    expect(f.stats.avgTurnMs).toBeGreaterThan(0); // tonight's seeded paid checks give a real turn time
+    // Tonight's seeded paid checks (closed since 06:00 Istanbul) give the average turn time.
+    const paid = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "paid", closedAt: { $gte: serviceDayStartOf(serviceDayOf(NOW)) } }).lean());
+    expect(paid.length).toBeGreaterThan(0);
+    const turns = paid.map((c) => c.closedAt!.getTime() - c.openedAt.getTime());
+    expect(f.stats.avgTurnMs).toBe(Math.round(turns.reduce((a, b) => a + b, 0) / turns.length));
+    expect(f.stats.avgTurnMs).toBeGreaterThan(0);
     expect(f.stats.openChecksTotal).toBeGreaterThan(0);
+  });
+
+  it("openChecksTotal is the open checks' charged totals: a comp on an open check lowers it by the comped unit", async () => {
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
+    const open = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "open" }).lean());
+    const totals = await runWithTenant(s.tenantId, () => Promise.all(open.map((c) => billOf(t.models, c._id))));
+    const before = (await floor(s)).stats.openChecksTotal;
+    expect(before).toBe(totals.reduce((n, b) => n + b.total, 0));
+    const target = totals.find((b) => b.lines.some((l) => l.lineTotal > 0))!;
+    const line = target.lines.find((l) => l.lineTotal > 0 && l.qty - l.compedQty - l.voidedQty > 0)!;
+    const m = await staff(s, "manager");
+    const checkId = String(open[totals.indexOf(target)]!._id);
+    const comp = await m("POST", `/api/checks/${checkId}/adjustments`, { lineRef: line.lineRef, kind: "comp", qty: 1, reason: "regular" });
+    expect(comp.statusCode, comp.body).toBe(201);
+    expect((await floor(s)).stats.openChecksTotal).toBe(before - line.unitTotal);
   });
 
   it("chips are ordered calling → ready → bill, oldest first within a kind", async () => {

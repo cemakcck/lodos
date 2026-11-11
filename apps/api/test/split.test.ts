@@ -441,6 +441,10 @@ describe("payments and the floor", () => {
       expect((await c.w("PUT", `/api/checks/${id}/split`, { mode: "even", count: 2 })).statusCode).toBe(404);
       expect((await c.w("POST", `/api/checks/${id}/shares/A/pay`, { method: "card", amount: 1 })).statusCode).toBe(404);
     }
+    // An open check that isn't split has no shares to pay: 404, nothing written.
+    const unsplit = await c.pay("A", 1);
+    expect(unsplit.statusCode, unsplit.body).toBe(404);
+    expect(await runWithTenant(c.s.tenantId, () => t.models.Check.findById(c.checkId).lean().orFail())).toMatchObject({ status: "open", split: null, payment: null });
     await c.put({ mode: "even", count: 2 });
     expect((await c.pay("C", 1)).statusCode).toBe(404);
     expect((await c.w("POST", `/api/checks/${c.checkId}/shares/A/pay`, { method: "bitcoin", amount: 1 })).statusCode).toBe(400);

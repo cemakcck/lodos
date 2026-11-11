@@ -102,6 +102,20 @@ describe("billOf", () => {
     expect(line.units.every((u) => u.unitAmount === o.gelato.price && u.comp === null && u.lineRef === line.lineRef)).toBe(true);
   });
 
+  it("an order line without a stored vatRate (phase 1 orders) reads as 10 %", async () => {
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
+    const o = await gelatoAndNegroni(s);
+    const order = await runWithTenant(s.tenantId, () => t.models.Order.findById(o.orderId).lean().orFail());
+    const negroniIndex = order.items.findIndex((i) => String(i.itemId) === o.negroni.id);
+    // Straight to the driver, so no schema default can fill it back in.
+    await t.models.Order.collection.updateOne({ _id: order._id }, { $unset: { [`items.${negroniIndex}.vatRate`]: "" } });
+    const raw = await t.models.Order.collection.findOne({ _id: order._id });
+    expect(raw!.items[negroniIndex]).not.toHaveProperty("vatRate");
+    const b = await bill(s, o.checkId);
+    expect(b.lines.find((l) => l.itemId === o.negroni.id)!.vatRate).toBe(10);
+    expect(b.grossByRate).toEqual({ 10: 3 * o.gelato.price + o.negroni.price, 20: 0 });
+  });
+
   it("a comp of unit 2 charges 2 gelatos; the comped unit stays at ₺0 with its comp", async () => {
     const s = await seedTenant(t, LIVE_NO_HISTORY);
     const o = await gelatoAndNegroni(s);
