@@ -259,4 +259,27 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect((await call("PATCH", `/api/manager/items/${String(mine._id)}`, { categoryId: cid })).statusCode).toBe(404);
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
+
+  it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
+    const marker = "only-in-sandbox-b";
+    await runWithTenant(b.tenantId, () =>
+      t.models.Adjustment.create({
+        qty: 1, kind: "comp", reason: "celebration", note: marker, amount: 123, itemName: { en: "X", tr: "X" }, tableName: "T7",
+        station: "kitchen", requestedByName: "Deniz", approvedByName: "Selin", at: NOW, serviceDay: "2026-11-10",
+      }),
+    );
+    const before = await snapshot(b.tenantId);
+    const bSummaries = await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}));
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const view = await t.inject({ method: "GET", url: "/api/sales?range=today", cookies });
+    expect(view.statusCode).toBe(200);
+    expect(view.body).not.toContain(marker);
+    const aChecks = await runWithTenant(a.tenantId, () => t.models.Check.find({ status: "paid" }).lean());
+    expect(view.json().current.checks).toBe(aChecks.length);
+    const csv = await t.inject({ method: "GET", url: "/api/sales/export.csv?range=30d", cookies });
+    expect(csv.statusCode).toBe(200);
+    expect(csv.body.trim().split("\r\n")).toHaveLength(1 + aChecks.length);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+    expect(await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}))).toBe(bSummaries);
+  });
 });

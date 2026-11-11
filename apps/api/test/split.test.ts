@@ -373,18 +373,6 @@ describe("payments and the floor", () => {
     expect(paidPayments(check)).toBe(3);
   });
 
-  it("Tonight's revenue counts share payments when they are made", async () => {
-    const c = await evenCheck();
-    await c.put({ mode: "even", count: 3 });
-    const revenue = async () => (await c.m("GET", "/api/manager/tonight")).json().revenue as number;
-    const before = await revenue();
-    await c.pay("A", 33334);
-    expect(await revenue()).toBe(before + 33334);
-    await c.pay("B", 33334);
-    await c.pay("C", 33333);
-    expect(await revenue()).toBe(before + 100001);
-  });
-
   it("/api/floor shows paying: { paid: 1, of: 3 }", async () => {
     const c = await evenCheck();
     await c.put({ mode: "even", count: 3 });

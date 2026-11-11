@@ -18,7 +18,6 @@ import {
   updateCategory,
   updateItem,
 } from "./menu";
-import { tonight } from "./tonight";
 
 type IdParams = { Params: { id: string } };
 const isDuplicate = (e: unknown) => typeof e === "object" && e !== null && (e as { code?: unknown }).code === 11000;
@@ -132,8 +131,6 @@ export function registerManagerRoutes(app: FastifyInstance): void {
       return { id: String(row._id), token };
     }),
   );
-
-  app.get("/api/manager/tonight", staffRoute([], async () => tonight(models, app.clock.now())));
 
   // Photos: the multipart parser lives in its own scope so no other route's body handling changes.
   void app.register(async (scope) => {

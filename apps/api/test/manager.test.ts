@@ -56,7 +56,7 @@ describe("auth", () => {
   it("non-managers get 403, anonymous 401", async () => {
     const s = await seedTenant(t);
     expect((await (await mgr(s, "waiter"))("GET", "/api/manager/menu")).statusCode).toBe(403);
-    expect((await t.inject({ method: "GET", url: "/api/manager/tonight" })).statusCode).toBe(401);
+    expect((await t.inject({ method: "GET", url: "/api/manager/menu" })).statusCode).toBe(401);
   });
 });
 
@@ -346,57 +346,6 @@ describe("demo storage caps (always on)", () => {
     const replaced = await upload(s, fries.id, "f.png", "image/png", PNG);
     expect(replaced.statusCode).toBe(200);
     expect(await runWithTenant(s.tenantId, () => t.models.Photo.countDocuments({ _id: a!._id }))).toBe(0);
-  });
-});
-
-describe("tonight", () => {
-  it("covers, revenue (paid today only), open checks and total, ticket time, top items", async () => {
-    const s = await seedTenant(t);
-    const m = await mgr(s);
-    const yesterday = new Date(NOW.getTime() - 24 * 3_600_000);
-    const payment = (amount: number, at: Date) => ({ method: "card" as const, amount, at });
-    const T = s.seed.tables;
-    await runWithTenant(s.tenantId, async () => {
-      const { Check, Ticket } = t.models;
-      await Check.create({ tableId: T.T7!.id, status: "paid", covers: 3, openedAt: new Date(NOW.getTime() - 3_600_000), closedAt: NOW, payment: payment(10000, NOW) });
-      await Check.create({ tableId: T.T7!.id, status: "paid", covers: 100, openedAt: yesterday, closedAt: yesterday, payment: payment(777777, yesterday) });
-      const sentAt = new Date(NOW.getTime() - 20 * 60_000);
-      const o = await t.models.Order.findOne({}).lean().orFail();
-      await Ticket.create({ orderId: o._id, checkId: o.checkId, tableId: o.tableId, tableName: "X", station: "kitchen", status: "ready", sentAt, readyAt: new Date(sentAt.getTime() + 600_000), items: [{ orderItemIndex: 0, name: { en: "a", tr: "a" }, qty: 1 }] });
-    });
-    const paidToday = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "paid", "payment.at": { $gte: new Date("2026-11-10T03:00:00Z") } }).lean());
-    const expectedRevenue = paidToday.reduce((n, c) => n + (c.payment?.amount ?? 0), 0);
-    const opened = await runWithTenant(s.tenantId, () => t.models.Check.find({ openedAt: { $gte: new Date("2026-11-10T03:00:00Z") } }).lean());
-    const expectedCovers = opened.reduce((n, c) => n + (c.covers ?? 0), 0);
-    const open = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "open" }).lean());
-
-    const res = await m("GET", "/api/manager/tonight");
-    expect(res.statusCode).toBe(200);
-    const body = res.json() as { covers: number; revenue: number; openChecks: number; openTotal: number; avgTicketMs: number; topItems: { name: Loc; qty: number }[] };
-    expect(body.revenue).toBe(expectedRevenue);
-    expect(body.revenue).toBeGreaterThanOrEqual(10000);
-    expect(body.covers).toBe(expectedCovers);
-    expect(body.openChecks).toBe(open.length);
-    expect(body.openTotal).toBeGreaterThan(0);
-    expect(Number.isInteger(body.avgTicketMs)).toBe(true);
-    expect(body.topItems.length).toBeGreaterThan(0);
-    expect(body.topItems.length).toBeLessThanOrEqual(5);
-    expect(body.topItems[0]!.name).toHaveProperty("tr");
-    for (let i = 1; i < body.topItems.length; i++) expect(body.topItems[i - 1]!.qty).toBeGreaterThanOrEqual(body.topItems[i]!.qty);
-  });
-
-  it("avgTicketMs is the mean of readyAt - sentAt over today's ready tickets", async () => {
-    const s = await seedTenant(t);
-    await runWithTenant(s.tenantId, async () => {
-      await t.models.Ticket.deleteMany({});
-      const o = await t.models.Order.findOne({}).lean().orFail();
-      const mk = (sent: Date, ms: number) =>
-        t.models.Ticket.create({ orderId: o._id, checkId: o.checkId, tableId: o.tableId, tableName: "X", station: "bar", status: "ready", sentAt: sent, readyAt: new Date(sent.getTime() + ms), items: [{ orderItemIndex: 0, name: { en: "a", tr: "a" }, qty: 1 }] });
-      await mk(new Date(NOW.getTime() - 3_600_000), 60_000);
-      await mk(new Date(NOW.getTime() - 7_200_000), 180_000);
-    });
-    const body = (await (await mgr(s))("GET", "/api/manager/tonight")).json() as { avgTicketMs: number };
-    expect(body.avgTicketMs).toBe(120_000);
   });
 });
 

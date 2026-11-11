@@ -18,6 +18,7 @@ import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
 import { registerMenuRoutes } from "./menu/routes";
+import { registerSalesRoutes } from "./sales/routes";
 import { SUMMARY_INTERVAL_MS, summaryJob } from "./sales/summary";
 import { registerWeb } from "./web";
 import { unscoped } from "./db/tenancy";
@@ -109,6 +110,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerFloorRoutes(app);
   registerCheckRoutes(app);
   registerManagerRoutes(app);
+  registerSalesRoutes(app);
   registerMenuRoutes(app);
   registerGuestRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
