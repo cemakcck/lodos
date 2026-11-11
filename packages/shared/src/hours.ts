@@ -16,6 +16,11 @@ export function istanbulHour(at: Date): number {
   return new Date(at.getTime() + ISTANBUL_OFFSET_MS).getUTCHours();
 }
 
+/** The Istanbul wall clock of `at` as `YYYY-MM-DD HH:MM` (e.g. the CSV export's `closed_at`). */
+export function istanbulDateTime(at: Date): string {
+  return new Date(at.getTime() + ISTANBUL_OFFSET_MS).toISOString().slice(0, 16).replace("T", " ");
+}
+
 /** Start instant of service day `day` ("YYYY-MM-DD"): 06:00 Istanbul = 03:00Z of that date. */
 export function serviceDayStartOf(day: string): Date {
   const [y, m, d] = day.split("-").map(Number) as [number, number, number];

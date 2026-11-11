@@ -1,4 +1,4 @@
-import { istanbulHour, SERVICE_HOURS, serviceDayOf, serviceDayStartOf, serviceHourIndex, TICKET_THRESHOLDS } from "@lodos/shared";
+import { istanbulDateTime, istanbulHour, SERVICE_HOURS, serviceDayOf, serviceDayStartOf, serviceHourIndex, TICKET_THRESHOLDS } from "@lodos/shared";
 import type { Types } from "mongoose";
 import { billsOf } from "../checks/bill";
 import type { Models } from "../db/models/index";
@@ -237,16 +237,17 @@ export async function salesView(models: Models, range: Range, now: Date): Promis
 export const CSV_HEADER = "service_day,closed_at,table,covers,server,gross,comps,voids,total,payment_methods";
 const BOM = "﻿";
 
-/** A quoted CSV text field, `"` doubled (spec Review Focus 4). */
-export const csvField = (s: string) => `"${s.replace(/"/g, '""')}"`;
+/**
+ * A quoted CSV text field, `"` doubled (spec Review Focus 4). Text a spreadsheet would run as a formula (starting with
+ * `=`, `+`, `-`, `@`, a tab or a CR; names are free text) gets a leading `'` so it stays text.
+ */
+export const csvField = (s: string) => `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
 /** Kuruş as plain lira with a dot and two decimals, e.g. `1250.50`. */
 const lira = (kurus: number) => {
   const sign = kurus < 0 ? "-" : "";
   const abs = Math.abs(Math.round(kurus));
   return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
 };
-/** Istanbul wall clock `YYYY-MM-DD HH:MM` (UTC+3 all year). */
-const istanbulStamp = (at: Date) => new Date(at.getTime() + 3 * HOUR_MS).toISOString().slice(0, 16).replace("T", " ");
 
 type PaymentLean = { method: "card" | "cash"; amount: number; at: Date } | null | undefined;
 
@@ -294,7 +295,7 @@ export async function salesCsv(models: Models, range: Range, now: Date): Promise
     lines.push(
       [
         csvField(serviceDayOf(lastAt)),
-        csvField(istanbulStamp(c.closedAt ?? lastAt)),
+        csvField(istanbulDateTime(c.closedAt ?? lastAt)),
         csvField(tableById.get(String(c.tableId))?.name ?? ""),
         String(c.covers ?? 0),
         csvField(server ? (staffName.get(String(server)) ?? "") : ""),

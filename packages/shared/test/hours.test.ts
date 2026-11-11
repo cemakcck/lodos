@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { istanbulHour, SERVICE_HOURS, serviceDayStartOf, serviceHourIndex } from "../src/index";
+import { istanbulDateTime, istanbulHour, SERVICE_HOURS, serviceDayStartOf, serviceHourIndex } from "../src/index";
 
 describe("service hours", () => {
   it("indexes hours from the 06:00 service day start", () => {
@@ -23,5 +23,13 @@ describe("service hours", () => {
   it("a service day starts 06:00 Istanbul = 03:00Z", () => {
     expect(serviceDayStartOf("2026-11-10")).toEqual(new Date("2026-11-10T03:00:00Z"));
     expect(serviceDayStartOf("2026-12-31")).toEqual(new Date("2026-12-31T03:00:00Z"));
+  });
+});
+
+describe("istanbulDateTime", () => {
+  it("is the Istanbul wall clock as YYYY-MM-DD HH:MM, across midnight", () => {
+    expect(istanbulDateTime(new Date("2026-11-10T18:30:00Z"))).toBe("2026-11-10 21:30");
+    expect(istanbulDateTime(new Date("2026-11-10T21:05:00Z"))).toBe("2026-11-11 00:05");
+    expect(istanbulDateTime(new Date("2026-12-31T20:59:59Z"))).toBe("2026-12-31 23:59");
   });
 });

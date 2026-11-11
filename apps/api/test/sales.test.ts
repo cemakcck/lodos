@@ -397,6 +397,13 @@ describe("CSV export", () => {
     expect(csvField('Ali "Kuzu" Şiş')).toBe('"Ali ""Kuzu"" Şiş"');
     expect(csvField("a,b")).toBe('"a,b"');
   });
+
+  it("text fields that a spreadsheet would read as a formula get a leading apostrophe", () => {
+    for (const x of ["=SUM(A1:A9)", "+90 555", "-1", "@cmd", "\tTab", "\rCR"]) expect(csvField(x)).toBe(`"'${x}"`);
+    expect(csvField('=HYPERLINK("x")')).toBe(`"'=HYPERLINK(""x"")"`);
+    expect(csvField("Ali=Veli")).toBe('"Ali=Veli"');
+    expect(csvField("")).toBe('""');
+  });
 });
 
 describe("guards", () => {
