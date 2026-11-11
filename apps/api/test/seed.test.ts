@@ -273,10 +273,15 @@ describe("liveService: true", () => {
     } finally {
       conn.set("debug", false);
     }
+    // A lower bound too: a debug hook that records nothing must fail this, not pass it vacuously.
+    expect(ops.length).toBeGreaterThanOrEqual(10);
     expect(ops.every((op) => /\.insert(One|Many)$/.test(op))).toBe(true);
     expect(ops.length).toBeLessThanOrEqual(24); // 20 today: one or two batches per collection
     const perCollection = new Map<string, number>();
     for (const op of ops) perCollection.set(op.split(".")[0]!, (perCollection.get(op.split(".")[0]!) ?? 0) + 1);
+    for (const c of ["tenants", "staffs", "rooms", "tables", "categories", "menuitems", "checks", "orders", "tickets", "shifts"]) {
+      expect(perCollection.has(c), `${c} written`).toBe(true);
+    }
     expect(Math.max(...perCollection.values())).toBeLessThanOrEqual(2);
   });
 });

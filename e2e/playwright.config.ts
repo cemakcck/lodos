@@ -14,10 +14,11 @@ const WEB_ORIGIN = `http://localhost:${WEB_PORT}`;
 
 /**
  * Specs are isolated (each test has its own sandbox), so they run fully parallel. Every worker drives a Chromium
- * against one API process and one preview server, so half the cores, between 2 and 4: measured on 8 cores,
- * 2 workers 103 s, 3 → 86 s, 4 → 85 s; 6 pushed the 5-scan a11y test past its 45 s timeout.
+ * against one API process and one preview server, so half the cores, between 2 and 3: measured on 8 cores,
+ * 2 workers 103 s, 3 → 86 s, 4 → 85 s (no gain, and less headroom for the a11y scans on a loaded machine); 6 pushed
+ * the 5-scan a11y test past its 45 s timeout.
  */
-const WORKERS = Math.min(4, Math.max(2, Math.floor(availableParallelism() / 2)));
+const WORKERS = Math.min(3, Math.max(2, Math.floor(availableParallelism() / 2)));
 
 export default defineConfig({
   testDir: ".",
