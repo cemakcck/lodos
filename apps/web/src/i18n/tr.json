@@ -192,7 +192,7 @@
       "floor": "Salon",
       "menu": "Menü",
       "tables": "Masalar",
-      "tonight": "Bu akşam"
+      "sales": "Satış"
     },
     "roles": {
       "waiter": "Garson",
@@ -835,23 +835,6 @@
       "loading": "Masalar yükleniyor…",
       "loadError": "Masalar yüklenemedi."
     },
-    "tonight": {
-      "title": "Bu akşam",
-      "covers": "Kişi",
-      "coversHint": "Bu serviste oturan misafir",
-      "revenue": "Ciro",
-      "revenueHint": "Kapanan hesaplar, KDV dahil",
-      "open": "Açık hesaplar",
-      "openTotal": "hâlâ masalarda",
-      "avg": "Ortalama fiş süresi",
-      "avgHint": "Gönderimden hazıra, mutfak ve bar",
-      "none": "Henüz fiş yok",
-      "top": "Bu akşam en çok satanlar",
-      "topEmpty": "Bu akşam henüz sipariş yok.",
-      "sold": "adet",
-      "serviceDay": "Servis günü 06:00'da başlar",
-      "loadError": "Bu akşamın rakamları yüklenemedi."
-    },
     "retry": "Tekrar dene"
   },
   "close": {
@@ -981,5 +964,68 @@
       "comp": "İkram edildi.",
       "void": "İptal edildi."
     }
+  },
+  "sales": {
+    "title": "Satış",
+    "ranges": {
+      "label": "Dönem",
+      "today": "Bugün",
+      "7d": "7 gün",
+      "30d": "30 gün"
+    },
+    "period": "{{from}} – {{to}}",
+    "export": "CSV indir",
+    "loadError": "Satış rakamları yüklenemedi.",
+    "retry": "Tekrar dene",
+    "tiles": {
+      "revenue": "Ciro",
+      "covers": "Kişi",
+      "perCover": "Kişi başı",
+      "perCheck": "hesap başı {{amount}}",
+      "compsVoids": "İkram · iptal",
+      "compsLine": "{{comps}} ikram · {{voids}} iptal · satış içindeki payı %{{pct}}",
+      "vs": {
+        "today": "önceki güne göre",
+        "7d": "önceki 7 güne göre",
+        "30d": "önceki 30 güne göre"
+      },
+      "up": "artış",
+      "down": "azalış",
+      "flat": "değişim yok",
+      "noPrevShort": "Önceki veri yok"
+    },
+    "hours": {
+      "title": "Saatlik ciro",
+      "hour": "Saat",
+      "revenue": "Ciro",
+      "peak": "Zirve",
+      "empty": "Bu dönemde henüz satış yok.",
+      "bar": "{{hour}}, {{amount}}",
+      "barPeak": "{{hour}}, {{amount}}, zirve saat"
+    },
+    "tickets": {
+      "title": "Mutfak/Bar fiş süreleri",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "threshold": "{{min}} dk",
+      "avg": "Ortalama dakika",
+      "empty": "Bu dönemde henüz fiş yok.",
+      "min": "{{value}} dk"
+    },
+    "top": {
+      "title": "En çok satanlar",
+      "sub": "adet · ciro",
+      "empty": "Bu dönemde satılan ürün yok."
+    },
+    "log": {
+      "title": "İkram ve iptaller",
+      "empty": "Bu dönemde ikram veya iptal yok.",
+      "comp": "İkram",
+      "void": "İptal",
+      "by": "{{requester}} → {{approver}}",
+      "reversed": "Geri alındı",
+      "none": "–"
+    },
+    "updated": "Dakikada bir güncellenir"
   }
 }

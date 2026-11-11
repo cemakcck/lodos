@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { computeAccessibleName } from "dom-accessibility-api";
 import { screen, cleanup, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { formatElapsed, formatTRY } from "@lodos/shared";
+import { formatTRY } from "@lodos/shared";
 
 vi.mock("socket.io-client", async () => (await import("../../guest/fakeSocket")).socketModule);
 
@@ -31,18 +31,6 @@ const STAFF = [
   { id: "id-deniz", name: "Deniz Kaya", role: "waiter" },
   { id: "id-mert", name: "Mert Aydın", role: "waiter" },
 ];
-const TONIGHT = {
-  covers: 42,
-  revenue: 4890050,
-  openChecks: 3,
-  openTotal: 1264000,
-  avgTicketMs: 754_000,
-  topItems: [
-    { name: { en: "Lodos Negroni", tr: "Lodos Negroni" }, qty: 18 },
-    { name: { en: "Burrata, heirloom tomato", tr: "Burrata, yerli domates" }, qty: 11 },
-    { name: { en: "Dry-aged ribeye, 300 g", tr: "Dinlendirilmiş antrikot, 300 g" }, qty: 7 },
-  ],
-};
 
 let calls: ReturnType<typeof mockFetch>["calls"];
 function setup(path: string, routes: Record<string, unknown> = {}) {
@@ -53,7 +41,6 @@ function setup(path: string, routes: Record<string, unknown> = {}) {
     "GET /api/manager/tables": () => ({ status: 200, body: tables }),
     "GET /api/floor": FLOOR,
     "GET /api/auth/staff": STAFF,
-    "GET /api/manager/tonight": TONIGHT,
     "POST /api/manager/tables/t12/token": () => {
       tables = tables.map((t) => (t.id === "t12" ? { ...t, token: "tok-t12-NEWNEWNEWNEWNEW" } : t));
       return { status: 200, body: { id: "t12", token: "tok-t12-NEWNEWNEWNEWNEW" } };
@@ -188,32 +175,5 @@ describe("QR sheet", () => {
     // jsdom runs on localhost: the on-screen hint is shown and kept off paper.
     const hint = screen.getByText(/only work on the deployed address/);
     expect(hint.closest(".no-print")).toBeTruthy();
-  });
-});
-
-describe("Tonight", () => {
-  it("shows covers, revenue, open checks with their total, average ticket time and the top items", async () => {
-    setup("/staff/tonight");
-    const covers = await screen.findByRole("group", { name: "Covers" });
-    expect(covers.textContent).toContain("42");
-    expect(screen.getByRole("group", { name: "Revenue" }).textContent).toContain(formatTRY(4890050, "en"));
-    const open = screen.getByRole("group", { name: "Open checks" });
-    expect(open.textContent).toContain("3");
-    expect(open.textContent).toContain(formatTRY(1264000, "en"));
-    expect(screen.getByRole("group", { name: "Average ticket time" }).textContent).toContain(formatElapsed(754_000));
-    const top = screen.getByRole("list", { name: /Top items/ });
-    expect(within(top).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
-      expect.stringContaining("Lodos Negroni"),
-      expect.stringContaining("Burrata"),
-      expect.stringContaining("ribeye"),
-    ]);
-    expect(within(top).getAllByRole("listitem")[0]!.textContent).toContain("18");
-  });
-
-  it("reads in Turkish", async () => {
-    await setLanguage("tr");
-    setup("/staff/tonight");
-    expect(await screen.findByRole("group", { name: "Kişi" })).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Ciro" }).textContent).toContain(formatTRY(4890050, "tr"));
   });
 });

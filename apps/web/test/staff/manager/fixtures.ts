@@ -1,4 +1,4 @@
-/* Manager screen fixtures: the shapes GET /api/manager/menu, /tables and /tonight return. */
+/* Manager screen fixtures: the shapes GET /api/manager/menu, and /tables return. */
 import type { CategoryView, ItemView, ManagerMenu } from "../../../src/staff/manager/types";
 
 const n = (en: string, tr: string) => ({ en, tr });

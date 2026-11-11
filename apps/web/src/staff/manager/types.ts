@@ -67,18 +67,8 @@ export interface ManagerTable {
   token: string;
 }
 
-export interface Tonight {
-  covers: number;
-  revenue: number;
-  openChecks: number;
-  openTotal: number;
-  avgTicketMs: number;
-  topItems: { name: Loc; qty: number }[];
-}
-
 /** All under ["manager", …] so useLive refreshes them on menu, availability and table events. */
 export const managerMenuKey = ["manager", "menu"] as const;
 export const managerTablesKey = ["manager", "tables"] as const;
 export const managerFloorKey = ["manager", "floor"] as const;
 export const managerStaffKey = ["manager", "staff"] as const;
-export const tonightKey = ["manager", "tonight"] as const;

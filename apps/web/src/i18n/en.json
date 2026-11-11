@@ -192,7 +192,7 @@
       "floor": "Floor",
       "menu": "Menu",
       "tables": "Tables",
-      "tonight": "Tonight"
+      "sales": "Sales"
     },
     "roles": {
       "waiter": "Waiter",
@@ -835,23 +835,6 @@
       "loading": "Loading tables…",
       "loadError": "Couldn't load the tables."
     },
-    "tonight": {
-      "title": "Tonight",
-      "covers": "Covers",
-      "coversHint": "Guests seated this service",
-      "revenue": "Revenue",
-      "revenueHint": "Closed checks, VAT included",
-      "open": "Open checks",
-      "openTotal": "still on the tables",
-      "avg": "Average ticket time",
-      "avgHint": "From sent to ready, kitchen and bar",
-      "none": "No tickets yet",
-      "top": "Top items tonight",
-      "topEmpty": "No orders yet tonight.",
-      "sold": "sold",
-      "serviceDay": "Service day starts at 06:00",
-      "loadError": "Couldn't load tonight's numbers."
-    },
     "retry": "Try again"
   },
   "close": {
@@ -981,5 +964,68 @@
       "comp": "Comped.",
       "void": "Voided."
     }
+  },
+  "sales": {
+    "title": "Sales",
+    "ranges": {
+      "label": "Range",
+      "today": "Today",
+      "7d": "7 days",
+      "30d": "30 days"
+    },
+    "period": "{{from}} – {{to}}",
+    "export": "Export CSV",
+    "loadError": "Couldn't load sales.",
+    "retry": "Try again",
+    "tiles": {
+      "revenue": "Revenue",
+      "covers": "Covers",
+      "perCover": "Average per cover",
+      "perCheck": "per check {{amount}}",
+      "compsVoids": "Comps · voids",
+      "compsLine": "{{comps}} comps · {{voids}} voids · {{pct}}% of sales",
+      "vs": {
+        "today": "vs previous day",
+        "7d": "vs previous 7 days",
+        "30d": "vs previous 30 days"
+      },
+      "up": "increase",
+      "down": "decrease",
+      "flat": "no change",
+      "noPrevShort": "No earlier data"
+    },
+    "hours": {
+      "title": "Revenue by hour",
+      "hour": "Hour",
+      "revenue": "Revenue",
+      "peak": "Peak",
+      "empty": "No sales in this range yet.",
+      "bar": "{{hour}}, {{amount}}",
+      "barPeak": "{{hour}}, {{amount}}, peak hour"
+    },
+    "tickets": {
+      "title": "Ticket times by hour",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "threshold": "{{min}} min",
+      "avg": "Average minutes",
+      "empty": "No tickets in this range yet.",
+      "min": "{{value}} min"
+    },
+    "top": {
+      "title": "Top dishes",
+      "sub": "sold · revenue",
+      "empty": "No dishes sold in this range yet."
+    },
+    "log": {
+      "title": "Comps & voids",
+      "empty": "No comps or voids in this range.",
+      "comp": "Comp",
+      "void": "Void",
+      "by": "{{requester}} → {{approver}}",
+      "reversed": "Undone",
+      "none": "–"
+    },
+    "updated": "Updated every minute"
   }
 }

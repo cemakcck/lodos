@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet, type RouteObject } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, type RouteObject } from "react-router";
 import { useTranslation } from "react-i18next";
 import { guestRoutes } from "./guest/routes";
 import { GuestFrame, StaffFrame } from "./frames";
@@ -13,7 +13,7 @@ import { OrderEntry } from "./staff/order/OrderEntry";
 import { MenuEditor } from "./staff/manager/MenuEditor";
 import { Tables } from "./staff/manager/Tables";
 import { QrSheet } from "./staff/manager/QrSheet";
-import { Tonight } from "./staff/manager/Tonight";
+import { Sales } from "./staff/sales/Sales";
 import type { StaffRole } from "./staff/auth";
 
 function NotFound() {
@@ -54,7 +54,8 @@ export const routes: RouteObject[] = [
             { path: "/staff/menu", element: <MenuEditor /> },
             { path: "/staff/tables", element: <Tables /> },
             { path: "/staff/tables/qr", element: <QrSheet /> },
-            { path: "/staff/tonight", element: <Tonight /> },
+            { path: "/staff/sales", element: <Sales /> },
+            { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],
       },

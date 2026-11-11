@@ -7,12 +7,10 @@ import {
   managerMenuKey,
   managerStaffKey,
   managerTablesKey,
-  tonightKey,
   type Availability,
   type ItemView,
   type ManagerMenu,
   type ManagerTable,
-  type Tonight,
 } from "./types";
 
 export const useManagerMenu = () => useQuery({ queryKey: managerMenuKey, queryFn: () => api<ManagerMenu>("/api/manager/menu") });
@@ -22,8 +20,6 @@ export const useManagerFloor = () =>
   useQuery({ queryKey: managerFloorKey, queryFn: () => api<FloorSnapshot>("/api/floor"), staleTime: 60_000 });
 export const useStaffList = () =>
   useQuery({ queryKey: managerStaffKey, queryFn: () => api<StaffMember[]>("/api/auth/staff"), staleTime: 5 * 60_000 });
-export const useTonight = () =>
-  useQuery({ queryKey: tonightKey, queryFn: () => api<Tonight>("/api/manager/tonight"), refetchInterval: 60_000 });
 
 /** Replaces one item in the cached manager menu (no-op when the menu isn't cached). */
 export function patchItem(qc: QueryClient, itemId: string, fn: (i: ItemView) => ItemView) {

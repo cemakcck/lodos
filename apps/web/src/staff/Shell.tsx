@@ -11,7 +11,7 @@ import { setLanguage } from "../i18n";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { canAccess, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
 
-export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "tonight";
+export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "sales";
 
 interface RailItem {
   key: RailKey;
@@ -29,7 +29,7 @@ export const RAIL: readonly RailItem[] = [
   { key: "floor", to: "/staff/floor", icon: LayoutGrid, roles: ["waiter"], match: ["/staff/floor", "/staff/order", "/staff/check"] },
   { key: "menu", to: "/staff/menu", icon: BookOpen, roles: [], match: ["/staff/menu"] },
   { key: "tables", to: "/staff/tables", icon: QrCode, roles: [], match: ["/staff/tables"] },
-  { key: "tonight", to: "/staff/tonight", icon: ChartLine, roles: [], match: ["/staff/tonight"] },
+  { key: "sales", to: "/staff/sales", icon: ChartLine, roles: [], match: ["/staff/sales", "/staff/tonight"] },
 ];
 
 export const railFor = (role: StaffRole | undefined) => (role ? RAIL.filter((i) => canAccess(role, i.roles)) : []);
