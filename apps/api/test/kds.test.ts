@@ -25,9 +25,14 @@ const call = (role: string, method: "GET" | "POST", url: string) => t.inject({ m
 const tickets = (station: string, tab = "active", role = station) => call(role, "GET", `/api/kds/${station}?tab=${tab}`);
 const find = (q: object) => runWithTenant("main", () => t.models.Ticket.findOne(q).lean().orFail());
 
-/** Adds an unserved ready bar ticket (readyAt = `at`) so recall tests do not depend on how many the seed has. */
+/**
+ * Adds an unserved ready bar ticket (readyAt = `at`) so recall tests do not depend on how many the seed has.
+ * It is attached to an OPEN check: recall deliberately skips tickets of paid checks, and the seed now also holds
+ * paid checks (with bar tickets) from earlier tonight, so an arbitrary bar ticket may belong to a paid one.
+ */
 async function addReadyBar(at: Date) {
-  const base = await find({ station: "bar" });
+  const openIds = await runWithTenant("main", async () => (await t.models.Check.find({ status: "open" }, { _id: 1 }).lean()).map((c) => c._id));
+  const base = await find({ station: "bar", checkId: { $in: openIds } });
   const doc = await runWithTenant("main", () =>
     t.models.Ticket.create({ orderId: base.orderId, checkId: base.checkId, tableId: base.tableId, tableName: base.tableName, station: "bar", status: "ready", sentAt: new Date(at.getTime() - 60_000), readyAt: at, items: base.items }),
   );
