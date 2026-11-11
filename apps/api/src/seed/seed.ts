@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { addDays, lineTotal, mondayOf, ROOM_DEFAULT_HEIGHT, ROOM_DEFAULT_WIDTH, serviceDayOf, serviceDayStartOf, shiftSpan } from "@lodos/shared";
-import argon2 from "argon2";
 import { Types } from "mongoose";
+import { hashPin } from "../auth/pin";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
 import { generateHistory, mulberry32 } from "../sales/history";
@@ -29,8 +29,21 @@ export type SeedResult = {
 const kurus = (lira: number) => Math.round(lira * 100);
 const oid = () => new Types.ObjectId();
 
-/** OWASP-minimum argon2id: the demo PINs are public, so the cost only has to keep seeding fast. */
-const hashPin = (pin: string) => argon2.hash(pin, { type: argon2.argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 });
+/**
+ * The demo PINs are public and the same for every tenant, so each is hashed once per process (argon2id with the
+ * production parameters) and the hash is reused: every sandbox still stores a real hash that `verifyPin` checks,
+ * without paying five argon2 runs per sandbox. A failed hash is not cached.
+ */
+const demoPinHashes = new Map<string, Promise<string>>();
+function demoPinHash(pin: string): Promise<string> {
+  let hash = demoPinHashes.get(pin);
+  if (!hash) {
+    hash = hashPin(pin);
+    demoPinHashes.set(pin, hash);
+    hash.catch(() => demoPinHashes.delete(pin));
+  }
+  return hash;
+}
 
 type LineSpec = { slug: string; qty?: number; opts?: string[]; note?: string };
 type OrderSpec = {
@@ -88,7 +101,7 @@ export async function seedRestaurant(
   opts: { liveService: boolean; scheduleTeam?: boolean },
 ): Promise<SeedResult> {
   const ago = (min: number) => new Date(now.getTime() - min * 60_000);
-  const pinHashes = await Promise.all(STAFF.map((s) => hashPin(s.pin)));
+  const pinHashes = await Promise.all(STAFF.map((s) => demoPinHash(s.pin)));
 
   const staffIds = Object.fromEntries(STAFF.map((s) => [s.key, oid()])) as Record<(typeof STAFF)[number]["key"], Types.ObjectId>;
   const withTeam = opts.scheduleTeam !== false;
