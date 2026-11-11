@@ -247,6 +247,38 @@ describe("tables", () => {
     expect((await m("PATCH", "/api/manager/tables/nope", { capacity: 2 })).statusCode).toBe(404);
   });
 
+  it("the floor-plan rules: prefix kept, unique names (inactive too), seats 1-12, no rename with an open check; bumps the room version", async () => {
+    const s = await seedTenant(t, LIVE_NO_HISTORY);
+    const m = await mgr(s);
+    const inT = <T>(fn: () => Promise<T>) => runWithTenant(s.tenantId, fn);
+    const T7 = s.seed.tables.T7!.id;
+    const B1 = s.seed.tables.B1!.id;
+    const table = (id: string) => inT(() => t.models.Table.findById(id).lean().orFail());
+    const version = async (id: string) => (await inT(async () => t.models.Room.findById((await table(id)).roomId).lean().orFail())).version;
+
+    const before = await version(T7);
+    const prefix = await m("PATCH", `/api/manager/tables/${T7}`, { name: "B99" });
+    expect(prefix.statusCode).toBe(400);
+    expect((await m("PATCH", `/api/manager/tables/${B1}`, { name: "T98" })).statusCode).toBe(400);
+    expect((await m("PATCH", `/api/manager/tables/${T7}`, { capacity: 13 })).statusCode).toBe(400);
+    expect((await m("PATCH", `/api/manager/tables/${T7}`, { capacity: 12 })).statusCode).toBe(200);
+    const roomId = (await table(T7)).roomId;
+    await inT(() => t.models.Table.create({ roomId, name: "T60", shape: "round", x: 0, y: 0, w: 64, h: 64, capacity: 2, token: randomBytes(32).toString("base64url"), active: false }));
+    const taken = await m("PATCH", `/api/manager/tables/${T7}`, { name: "T60" });
+    expect(taken.statusCode).toBe(409);
+    expect(taken.json().error.code).toBe("name_taken");
+    expect(await version(T7)).toBe(before + 1);
+
+    const fries = await itemNamed(t, s.tenantId, "Truffle fries");
+    expect((await guest(t, s.seed.tables.T7!.token).post("/api/guest/orders", orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
+    const open = await m("PATCH", `/api/manager/tables/${T7}`, { name: "T70" });
+    expect(open.statusCode).toBe(409);
+    expect(open.json().error.code).toBe("open_check_rename");
+    expect((await table(T7)).name).toBe("T7");
+    expect((await m("PATCH", `/api/manager/tables/${T7}`, { name: "T7", capacity: 4 })).statusCode).toBe(200);
+    expect(await version(T7)).toBe(before + 2);
+  });
+
   it("token regeneration: new token works, old -> 404, guest sockets in the room are disconnected", async () => {
     const s = await seedTenant(t, LIVE_NO_HISTORY);
     const m = await mgr(s);

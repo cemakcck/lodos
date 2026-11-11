@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Printer, RefreshCw } from "lucide-react";
-import { TABLE_NAME_RE } from "@lodos/shared";
+import { TABLE_CAPACITY_MAX, TABLE_CAPACITY_MIN, TABLE_NAME_RE } from "@lodos/shared";
 import { api, ApiClientError } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
 import { Dialog } from "../Dialog";
@@ -211,7 +211,7 @@ function TableDialog({ table, onClose, onSaved }: { table: ManagerTable; onClose
     },
     onError: (e) => {
       if (e instanceof ApiClientError && e.status === 409) {
-        setErrors({ name: t("manager.tables.duplicate") });
+        setErrors({ name: e.code === "open_check_rename" ? t("manager.tables.openCheck", { name: table.name }) : t("manager.tables.duplicate") });
         first.current?.focus();
       } else setFailure(errorMessage(t, e));
     },
@@ -223,8 +223,10 @@ function TableDialog({ table, onClose, onSaved }: { table: ManagerTable; onClose
     const n = name.trim().toUpperCase();
     const c = Number(cap);
     const errs: typeof errors = {};
+    // The floor plan's rules (the server applies them too): a table stays T, a booth stays B; 1 to 12 seats.
     if (!TABLE_NAME_RE.test(n)) errs.name = t("manager.tables.nameError");
-    if (!Number.isInteger(c) || c < 1 || c > 50) errs.capacity = t("manager.tables.capacityError");
+    else if (n[0] !== table.name[0]) errs.name = t(table.name.startsWith("B") ? "manager.tables.prefixB" : "manager.tables.prefixT", { name: table.name });
+    if (!Number.isInteger(c) || c < TABLE_CAPACITY_MIN || c > TABLE_CAPACITY_MAX) errs.capacity = t("manager.tables.capacityError");
     setErrors(errs);
     if (errs.name) first.current?.focus();
     else if (errs.capacity) document.getElementById(`${base}-cap`)?.focus();
@@ -272,8 +274,8 @@ function TableDialog({ table, onClose, onSaved }: { table: ManagerTable; onClose
               id={`${base}-cap`}
               type="number"
               inputMode="numeric"
-              min={1}
-              max={50}
+              min={TABLE_CAPACITY_MIN}
+              max={TABLE_CAPACITY_MAX}
               className="mg-input font-mono"
               value={cap}
               onChange={(e) => setCap(e.target.value)}

@@ -153,6 +153,35 @@ describe("Tables", () => {
     expect(name.getAttribute("aria-invalid")).toBe("true");
     expect(calls.some((c) => c.method === "PATCH")).toBe(false);
   });
+  it("follows the floor plan's rules: the name keeps its prefix, seats 1 to 12", async () => {
+    setup("/staff/tables");
+    await userEvent.click(await screen.findByRole("button", { name: "Edit T12" }));
+    const dialog = await screen.findByRole("dialog");
+    const name = within(dialog).getByRole("textbox", { name: "Name" });
+    const cap = within(dialog).getByRole("spinbutton", { name: "Capacity" });
+    await userEvent.clear(name);
+    await userEvent.type(name, "B12");
+    await userEvent.clear(cap);
+    await userEvent.type(cap, "13");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(within(dialog).getByText("T12 is a table, so its name starts with T.")).toBeTruthy();
+    expect(within(dialog).getByText("Enter a number from 1 to 12.")).toBeTruthy();
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("a rename refused for an open check says so at the name field", async () => {
+    setup("/staff/tables", {
+      "PATCH /api/manager/tables/t12": () => ({ status: 409, body: { error: { code: "open_check_rename", message: "open check" } } }),
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Edit T12" }));
+    const dialog = await screen.findByRole("dialog");
+    const name = within(dialog).getByRole("textbox", { name: "Name" });
+    await userEvent.clear(name);
+    await userEvent.type(name, "T30");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await within(dialog).findByText("T12 has an open check, so it can't be renamed.")).toBeTruthy();
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+  });
 });
 
 describe("QR sheet", () => {

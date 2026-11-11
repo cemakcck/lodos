@@ -103,9 +103,13 @@ export const AvailabilityInput = z.object({
 });
 export type AvailabilityInput = z.infer<typeof AvailabilityInput>;
 
+export const TABLE_CAPACITY_MIN = 1;
+export const TABLE_CAPACITY_MAX = 12;
+
+/** The Tables screen's edit: the floor plan's seat range; the server also applies its name rules (`editTable`). */
 export const TableEdit = z.object({
   name: z.string().regex(TABLE_NAME_RE).optional(),
-  capacity: z.number().int().min(1).max(50).optional(),
+  capacity: z.number().int().min(TABLE_CAPACITY_MIN).max(TABLE_CAPACITY_MAX).optional(),
 });
 export type TableEdit = z.infer<typeof TableEdit>;
 
@@ -113,8 +117,6 @@ export type TableEdit = z.infer<typeof TableEdit>;
 export const ROOM_DEFAULT_WIDTH = 800;
 export const ROOM_DEFAULT_HEIGHT = 480;
 export const TABLE_MAX_SIZE = 400;
-export const TABLE_CAPACITY_MIN = 1;
-export const TABLE_CAPACITY_MAX = 12;
 
 /** Per-table reasons a layout save is refused (`400 layout_invalid`, `details.problems: [{ key, code }]`). */
 export const LAYOUT_PROBLEM_CODES = [

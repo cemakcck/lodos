@@ -29,7 +29,8 @@ export type ErrorCode =
   | "shift_overlap"
   | "layout_invalid"
   | "version_conflict"
-  | "room_not_empty";
+  | "room_not_empty"
+  | "open_check_rename";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

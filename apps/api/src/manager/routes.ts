@@ -6,6 +6,7 @@ import { staffRoute } from "../auth/guard";
 import { unscoped } from "../db/tenancy";
 import { ApiError } from "../errors";
 import { isOid, notFound } from "../kds/service";
+import { editTable } from "../layout/service";
 import {
   MAX_PHOTO_BYTES,
   createCategory,
@@ -111,11 +112,11 @@ export function registerManagerRoutes(app: FastifyInstance): void {
     "/api/manager/tables/:id",
     staffRoute([], async (req) => {
       const body = TableEdit.parse(req.body);
-      if (!isOid(req.params.id)) throw notFound();
-      const row = await conflictOn(() => models.Table.findOneAndUpdate({ _id: req.params.id }, { $set: body }, { returnDocument: "after" }).lean());
-      if (!row) throw notFound();
+      // The floor plan's rules and its room version (an open editor then sees a version conflict).
+      const row = await conflictOn(() => editTable(models, req.params.id, body));
+      app.realtime.emit(req.staff.tenantId, "layout.saved", { ids: [row.roomId] }, ["floor", "manager"]);
       emit(req.staff.tenantId, "tables.changed", [req.params.id]);
-      return { id: String(row._id), name: row.name, capacity: row.capacity };
+      return { id: row.id, name: row.name, capacity: row.capacity };
     }),
   );
   app.post<IdParams>(

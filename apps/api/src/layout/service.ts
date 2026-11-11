@@ -100,6 +100,23 @@ type Rect = { x: number; y: number; w: number; h: number };
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /**
+ * The name and seat rules of one table, shared by the layout save and the Tables screen's edit: the name is T/B and a
+ * number and not held by any table outside the edit (`heldElsewhere`: inactive ones included); seats 1-12; a table
+ * with an open check keeps its name (`currentName` is its stored name, `undefined` for a new table).
+ */
+export function tableFieldProblems(
+  x: { name: string; capacity: number },
+  ctx: { heldElsewhere: ReadonlySet<string>; currentName: string | undefined; openCheck: boolean },
+): LayoutProblemCode[] {
+  const out: LayoutProblemCode[] = [];
+  if (!TABLE_NAME_RE.test(x.name)) out.push("name_invalid");
+  else if (ctx.heldElsewhere.has(x.name)) out.push("name_taken");
+  if (x.capacity < TABLE_CAPACITY_MIN || x.capacity > TABLE_CAPACITY_MAX) out.push("capacity");
+  if (ctx.openCheck && ctx.currentName !== undefined && ctx.currentName !== x.name) out.push("open_check_rename");
+  return out;
+}
+
+/**
  * Every problem of a layout save at once (spec §7). `tables` is every table of the tenant, inactive ones included;
  * `openTableIds` the tables with an open check; `waiterIds` the tenant's active waiters (checked only for new or
  * changed section assignments).
@@ -127,16 +144,17 @@ export function layoutProblems(input: {
   const heldElsewhere = new Set(tables.filter((t) => !kept.has(String(t._id))).map((t) => t.name));
 
   for (const x of known) {
-    if (!TABLE_NAME_RE.test(x.name)) add(x.key, "name_invalid");
-    else if (heldElsewhere.has(x.name) || known.some((o) => o !== x && o.name === x.name)) add(x.key, "name_taken");
+    const cur = x.id === undefined ? undefined : current.get(x.id);
+    for (const code of tableFieldProblems(x, { heldElsewhere, currentName: cur?.name, openCheck: x.id !== undefined && openTableIds.has(x.id) })) {
+      add(x.key, code);
+    }
+    if (TABLE_NAME_RE.test(x.name) && !heldElsewhere.has(x.name) && known.some((o) => o !== x && o.name === x.name)) add(x.key, "name_taken");
     if (x.x < 0 || x.y < 0 || x.x + x.w > room.width || x.y + x.h > room.height) add(x.key, "out_of_bounds");
-    if (x.capacity < TABLE_CAPACITY_MIN || x.capacity > TABLE_CAPACITY_MAX) add(x.key, "capacity");
     // Only a changed (or new) assignment is checked: a stored one may name someone no longer a waiter (e.g. promoted
     // to manager), which must not block saving the rest of the room.
     const stored = x.id === undefined ? undefined : current.get(x.id)!.sectionStaffId;
     const unchanged = x.id !== undefined && (stored ? String(stored) : null) === x.sectionStaffId;
     if (x.sectionStaffId !== null && !unchanged && !waiterIds.has(x.sectionStaffId)) add(x.key, "waiter");
-    if (x.id !== undefined && openTableIds.has(x.id) && current.get(x.id)!.name !== x.name) add(x.key, "open_check_rename");
   }
   for (let i = 0; i < known.length; i++) {
     for (let j = i + 1; j < known.length; j++) {
@@ -234,6 +252,37 @@ export async function saveLayout(models: Models, roomId: string, body: LayoutBod
       changed.push(...removed.map(String));
     }
     return { changedIds: changed };
+  });
+}
+
+/**
+ * PATCH /api/manager/tables/:id (the Tables screen): name and seats under the floor plan's rules
+ * (`tableFieldProblems`), and the name keeps its T or B prefix (a booth stays a booth). One transaction that also bumps
+ * the table's room `version`, so a floor plan editor open on that room gets `version_conflict` instead of saving its
+ * older copy over this edit. Unknown or inactive → 404; `name_taken` and `open_check_rename` → 409; the rest → 400.
+ */
+export async function editTable(
+  models: Models,
+  id: string,
+  body: { name?: string; capacity?: number },
+): Promise<{ id: string; name: string; capacity: number; roomId: string }> {
+  if (!isOid(id)) throw notFound();
+  return inCheckTransaction(models, async (session) => {
+    const cur = await models.Table.findOne({ _id: id, active: true }).session(session).lean<TableLean>();
+    if (!cur) throw notFound();
+    const next = { name: body.name ?? cur.name, capacity: body.capacity ?? cur.capacity };
+    if (next.name[0] !== cur.name[0]) throw new ApiError(400, "validation", "A table keeps its T or B prefix");
+    const [others, open] = await Promise.all([
+      models.Table.find({ _id: { $ne: cur._id } }, { name: 1 }).session(session).lean<{ name: string }[]>(),
+      models.Check.exists({ tableId: cur._id, status: "open" }).session(session),
+    ]);
+    const problems = tableFieldProblems(next, { heldElsewhere: new Set(others.map((t) => t.name)), currentName: cur.name, openCheck: open !== null });
+    if (problems.includes("open_check_rename")) throw new ApiError(409, "open_check_rename", "This table has an open check, so it can't be renamed");
+    if (problems.includes("name_taken")) throw new ApiError(409, "name_taken", "Another table already has this name");
+    if (problems.length > 0) throw new ApiError(400, "validation", `Invalid table: ${problems.join(", ")}`);
+    await models.Room.updateOne({ _id: cur.roomId }, { $inc: { version: 1 } }, { session });
+    await models.Table.updateOne({ _id: cur._id }, { $set: next }, { session });
+    return { id: String(cur._id), name: next.name, capacity: next.capacity, roomId: String(cur.roomId) };
   });
 }
 
