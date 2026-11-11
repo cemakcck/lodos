@@ -27,7 +27,7 @@ type Deletable = { deleteMany(filter: object): PromiseLike<unknown> };
 
 export async function deleteSandbox(models: Models, tenantId: string): Promise<void> {
   await runWithTenant(tenantId, async () => {
-    for (const name of TENANT_SCOPED_MODELS) await (models[name] as unknown as Deletable).deleteMany({});
+    await Promise.all(TENANT_SCOPED_MODELS.map((name) => (models[name] as unknown as Deletable).deleteMany({})));
   });
   await unscoped("sandbox registry is not tenant-scoped", () => models.Sandbox.deleteOne({ _id: tenantId }));
 }
