@@ -15,7 +15,7 @@ beforeAll(async () => {
 afterAll(() => t.close());
 
 type Seeded = Awaited<ReturnType<typeof seedTenant>>;
-type Req = (method: "GET" | "POST" | "PUT", path: string, payload?: object) => ReturnType<TestApp["inject"]>;
+type Req = (method: "GET" | "POST" | "PUT" | "DELETE", path: string, payload?: object) => ReturnType<TestApp["inject"]>;
 
 async function session(s: Seeded, who: "waiter" | "manager"): Promise<Req> {
   // Sessions are checked against the moving clock: create them at its current time.
@@ -183,6 +183,29 @@ describe("daily summaries", () => {
     const day = await c.inTenant(() => summarizeDay(t.models, DAY));
     expect(day.comps).toEqual({ count: 1, amount: 2 * fries.price });
     expect(day.voids).toEqual({ count: 0, amount: 0 });
+  });
+
+  it("undoing an adjustment of a stored past day drops that day's summary, so it is recomputed without it", async () => {
+    const c = await fresh();
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    // 01:00 Istanbul on the 11th is still service day the 10th; the check stays open past 06:00.
+    t.clock.set(at("2026-11-10T22:00:00Z"));
+    const checkId = await c.seat("T7", 2);
+    const orderId = await c.order("T7", [{ itemId: fries.id, qty: 2 }]);
+    const m1 = await session(c.s, "manager");
+    const comp = await m1("POST", `/api/checks/${checkId}/adjustments`, { lineRef: `${orderId}:0`, kind: "comp", qty: 1, reason: "celebration" });
+    expect(comp.statusCode, comp.body).toBe(201);
+    t.clock.set(at("2026-11-11T05:00:00Z"));
+    await c.inTenant(() => ensureSummaries(t.models, ["2026-11-09", DAY], "2026-11-11"));
+    const stored = () => c.inTenant(() => t.models.DailySummary.find({}).sort({ serviceDay: 1 }).lean());
+    expect((await stored()).map((d) => [d.serviceDay, d.comps.count])).toEqual([["2026-11-09", 0], [DAY, 1]]);
+
+    const m2 = await session(c.s, "manager");
+    const undo = await m2("DELETE", `/api/checks/${checkId}/adjustments/${comp.json().adjustment.id}`);
+    expect(undo.statusCode, undo.body).toBe(200);
+    expect((await stored()).map((d) => d.serviceDay)).toEqual(["2026-11-09"]);
+    const again = await c.inTenant(() => ensureSummaries(t.models, [DAY], "2026-11-11"));
+    expect(again.get(DAY)!.comps).toEqual({ count: 0, amount: 0 });
   });
 
   it("never stores today (or a later day); past days are stored", async () => {

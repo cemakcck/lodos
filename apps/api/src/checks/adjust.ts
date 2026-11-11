@@ -62,6 +62,7 @@ type AdjustmentLean = {
   approvedBy?: Types.ObjectId | null;
   approvedByName: string;
   at: Date;
+  serviceDay?: string | null;
   reversedAt?: Date | null;
   reversedBy?: Types.ObjectId | null;
 };
@@ -336,6 +337,9 @@ export async function reverseAdjustment(models: Models, input: { checkId: string
       { session, returnDocument: "after" },
     ).lean<AdjustmentLean>();
     if (!reversed) throw new CheckChangedError();
+    // An adjustment of a past service day (made before 06:00 on a check still open) may already be counted in that
+    // day's stored summary: drop it, and the next read recomputes the day without this adjustment.
+    if (adj.serviceDay && adj.serviceDay < serviceDayOf(now)) await models.DailySummary.deleteOne({ serviceDay: adj.serviceDay }, { session });
 
     if (adj.kind === "void" && adj.orderId) {
       const tid = await moveTicketVoids(models, session, { orderId: adj.orderId, index, station: adj.station, delta: -adj.qty, now, guardReady: false });
