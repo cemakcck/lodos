@@ -2,7 +2,7 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRound, UserCheck, UserX } from "lucide-react";
-import { isLoginRole, tableRanges } from "@lodos/shared";
+import { canSignIn, tableRanges } from "@lodos/shared";
 import { api, ApiClientError } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
 import { initials } from "../auth";
@@ -93,7 +93,7 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
   const heading = person ? person.name : t("people.form.newTitle");
   const header = <PanelHeader person={person} heading={heading} />;
 
-  const needsPin = isLoginRole(role) && !(person && isLoginRole(person.role));
+  const needsPin = canSignIn(role) && !(person && canSignIn(person.role));
   const isWaiter = role === "waiter";
   const sameSet = selected.size === originalIds.length && originalIds.every((id) => selected.has(id));
   const dirty = !person || name.trim() !== person.name || role !== person.role || pin !== "" || (isWaiter && !sameSet);
@@ -134,7 +134,7 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
     const body: Record<string, unknown> = {};
     if (!person || n !== person.name) body.name = n;
     if (!person || role !== person.role) body.role = role;
-    if (isLoginRole(role) && pin) body.pin = pin;
+    if (canSignIn(role) && pin) body.pin = pin;
     // `tableIds` is the whole section: send the full resulting list, never a delta.
     if (isWaiter && (person ? !sameSet : selected.size > 0)) body.tableIds = [...selected];
     save.mutate(body);
@@ -182,10 +182,10 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
             </label>
           ))}
         </div>
-        {!isLoginRole(role) && <p className="mg-hint">{t("people.form.scheduleOnly", { role: roleLabel(role) })}</p>}
+        {!canSignIn(role) && <p className="mg-hint">{t("people.form.scheduleOnly", { role: roleLabel(role) })}</p>}
       </div>
 
-      {(needsPin || (isLoginRole(role) && pin)) && (
+      {(needsPin || (canSignIn(role) && pin)) && (
         <div className="pp-ps">
           <PinFields
             pin={pin}
@@ -217,7 +217,7 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
       )}
 
       <div className="pp-pf">
-        {person && isLoginRole(person.role) && (
+        {person && canSignIn(person.role) && (
           <button type="button" className="staff-btn" onClick={() => onResetPin(person)}>
             <KeyRound size={15} strokeWidth={1.75} aria-hidden="true" />
             {t("people.resetPin")}

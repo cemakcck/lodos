@@ -14,7 +14,7 @@ export type ScheduleRole = (typeof SCHEDULE_ROLES)[number];
 const SIGN_IN: readonly string[] = [...LOGIN_ROLES, ...STATION_ROLES];
 
 /** Whether a role can hold a session at all (a person's PIN role, or a station). */
-export const isLoginRole = (role: string): role is LoginRole | StationRole => SIGN_IN.includes(role);
+export const canSignIn = (role: string): role is LoginRole | StationRole => SIGN_IN.includes(role);
 export const isStationRole = (role: string): role is StationRole => (STATION_ROLES as readonly string[]).includes(role);
 export const isScheduleRole = (role: string): role is ScheduleRole => (SCHEDULE_ROLES as readonly string[]).includes(role);
 

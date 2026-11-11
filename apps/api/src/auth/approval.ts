@@ -1,4 +1,4 @@
-import { isLoginRole } from "@lodos/shared";
+import { canSignIn } from "@lodos/shared";
 import type { Models, StaffDoc } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
 import { ApiError } from "../errors";
@@ -28,7 +28,7 @@ export async function verifyStaffPin(
   }
   const staff = await runWithTenant(a.tenantId, () => models.Staff.findOne({ _id: a.staffId, active: true }));
   // Schedule-only staff have no PIN: they fail like a wrong PIN (the attempt above already counts toward the lock).
-  if (!staff || !isLoginRole(staff.role) || !(await verifyPin(staff.pinHash, a.pin))) throw new ApiError(401, "unauthorized", "Wrong PIN");
+  if (!staff || !canSignIn(staff.role) || !(await verifyPin(staff.pinHash, a.pin))) throw new ApiError(401, "unauthorized", "Wrong PIN");
   await clearHits(models, failKey);
   return staff;
 }

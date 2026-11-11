@@ -1,5 +1,5 @@
 import {
-  isLoginRole,
+  canSignIn,
   isScheduleRole,
   isStationRole,
   tableRanges,
@@ -132,7 +132,7 @@ const ONLY_WAITERS = "Only waiters have tables";
 /** Schedule-only people have no PIN; waiters and managers must have one. */
 function checkPin(role: StaffRole, hasPin: boolean, pinSent: boolean): void {
   if (isScheduleRole(role) && pinSent) throw invalid("Schedule-only staff have no PIN");
-  if (isLoginRole(role) && !hasPin && !pinSent) throw new ApiError(400, "pin_required", "Waiters and managers need a PIN");
+  if (canSignIn(role) && !hasPin && !pinSent) throw new ApiError(400, "pin_required", "Waiters and managers need a PIN");
 }
 
 type SectionTable = { _id: Types.ObjectId; name: string; sectionStaffId?: Types.ObjectId | null };
@@ -209,7 +209,7 @@ export async function updateStaff(
     }
     if (String(s._id) === ctx.requesterId) throw new ApiError(409, "self", "You can't change your own role");
   }
-  checkPin(to, Boolean(s.pinHash) && isLoginRole(from), body.pin !== undefined);
+  checkPin(to, Boolean(s.pinHash) && canSignIn(from), body.pin !== undefined);
   if (body.tableIds?.length) {
     if (to !== "waiter") throw invalid(ONLY_WAITERS);
     if (!s.active) throw new ApiError(409, "conflict", "Reactivate them before giving them tables");
@@ -224,18 +224,18 @@ export async function updateStaff(
   if (body.pin !== undefined) set.pinHash = await hashPin(body.pin);
   await models.Staff.updateOne({ _id: s._id }, { $set: set, ...(isScheduleRole(to) ? { $unset: { pinHash: 1 } } : {}) });
 
-  if (isScheduleRole(to) && isLoginRole(from)) await cutOff(models, s._id, fx);
+  if (isScheduleRole(to) && canSignIn(from)) await cutOff(models, s._id, fx);
   // A waiter moving to another sign-in role (manager) gives up their section, as a move to a schedule role does.
   else if (from === "waiter" && to !== "waiter") await unassignAll(models, s._id, fx);
   else if (section && !isScheduleRole(to)) await setSection(models, s._id, section, fx);
-  if (to !== from && isLoginRole(from) && isLoginRole(to)) fx.roleMoved = { from, to };
+  if (to !== from && canSignIn(from) && canSignIn(to)) fx.roleMoved = { from, to };
   return { row: await rowFor(models, s._id, ctx), fx };
 }
 
 /** POST /api/staff/:id/pin: anyone with a sign-in role, stations included. Also lifts a wrong-PIN lock. */
 export async function resetPin(models: Models, id: string, pin: string, ctx: StaffCtx): Promise<void> {
   const s = await findStaff(models, id);
-  if (!isLoginRole(s.role)) throw invalid("Schedule-only staff have no PIN");
+  if (!canSignIn(s.role)) throw invalid("Schedule-only staff have no PIN");
   await models.Staff.updateOne({ _id: s._id }, { $set: { pinHash: await hashPin(pin) } });
   await clearHits(models, `pin:${ctx.tenantId}:${String(s._id)}`);
 }

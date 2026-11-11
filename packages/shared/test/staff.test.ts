@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { isLoginRole, LOGIN_ROLES, personRoom, SCHEDULE_ROLES, StaffRole, STATION_ROLES, tableRanges } from "../src/index";
+import { canSignIn, LOGIN_ROLES, personRoom, SCHEDULE_ROLES, StaffRole, STATION_ROLES, tableRanges } from "../src/index";
 
 describe("staff roles", () => {
   it("every role is exactly one of login, station or schedule-only", () => {
     expect([...LOGIN_ROLES, ...STATION_ROLES, ...SCHEDULE_ROLES].sort()).toEqual([...StaffRole.options].sort());
   });
-  it("isLoginRole: login and station roles sign in, schedule roles don't", () => {
-    expect(isLoginRole("waiter")).toBe(true);
-    expect(isLoginRole("manager")).toBe(true);
-    expect(isLoginRole("kitchen")).toBe(true);
-    expect(isLoginRole("bar")).toBe(true);
-    for (const r of SCHEDULE_ROLES) expect(isLoginRole(r)).toBe(false);
+  it("canSignIn: login and station roles sign in, schedule roles don't", () => {
+    expect(canSignIn("waiter")).toBe(true);
+    expect(canSignIn("manager")).toBe(true);
+    expect(canSignIn("kitchen")).toBe(true);
+    expect(canSignIn("bar")).toBe(true);
+    for (const r of SCHEDULE_ROLES) expect(canSignIn(r)).toBe(false);
   });
   it("personRoom is per tenant and person", () => {
     expect(personRoom("t1", "abc")).toBe("t1:person:abc");
