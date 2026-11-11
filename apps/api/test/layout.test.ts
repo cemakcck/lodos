@@ -201,6 +201,22 @@ describe("PUT /api/rooms/:id/layout", () => {
     expect(after).toEqual({ ...l, nextNames: { T: "T18", B: "B6" } });
   });
 
+  it("an unchanged section of a waiter promoted to manager doesn't block a save; setting a non-waiter does", async () => {
+    const f = await fresh();
+    await f.inT(() => t.models.Staff.updateOne({ _id: f.seed.staff.waiter2 }, { $set: { role: "manager" } }));
+    const l = await f.layout();
+    const t1 = l.tables.find((x) => x.name === "T1")!;
+    expect(t1.sectionStaffId).toBe(f.seed.staff.waiter2);
+    const res = await f.save(f.bodyOf(l, move("T7", { x: 192 })));
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as Layout).tables.find((x) => x.name === "T1")!.sectionStaffId).toBe(f.seed.staff.waiter2);
+    const set = await f.save(f.bodyOf(res.json() as Layout, move("T7", { sectionStaffId: f.seed.staff.waiter2 })));
+    expect(set.statusCode).toBe(400);
+    expect(f.problems(set).details.problems).toEqual([{ key: f.seed.tables.T7!.id, code: "waiter" }]);
+    const fresh1 = await f.save(f.bodyOf(res.json() as Layout, (rows) => [...rows, { key: "n", name: "T17", shape: "round", x: 640, y: 380, w: 64, h: 64, capacity: 2, sectionStaffId: f.seed.staff.waiter2 }]));
+    expect(f.problems(fresh1).details.problems).toEqual([{ key: "n", code: "waiter" }]);
+  });
+
   it("two tables with the same new name are both name_taken; swapping two names in one save is allowed", async () => {
     const f = await fresh();
     const l = await f.layout();

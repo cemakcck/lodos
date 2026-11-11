@@ -101,7 +101,8 @@ const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y
 
 /**
  * Every problem of a layout save at once (spec §7). `tables` is every table of the tenant, inactive ones included;
- * `openTableIds` the tables with an open check; `waiterIds` the tenant's active waiters.
+ * `openTableIds` the tables with an open check; `waiterIds` the tenant's active waiters (checked only for new or
+ * changed section assignments).
  */
 export function layoutProblems(input: {
   room: { _id: Types.ObjectId; width: number; height: number };
@@ -130,7 +131,11 @@ export function layoutProblems(input: {
     else if (heldElsewhere.has(x.name) || known.some((o) => o !== x && o.name === x.name)) add(x.key, "name_taken");
     if (x.x < 0 || x.y < 0 || x.x + x.w > room.width || x.y + x.h > room.height) add(x.key, "out_of_bounds");
     if (x.capacity < TABLE_CAPACITY_MIN || x.capacity > TABLE_CAPACITY_MAX) add(x.key, "capacity");
-    if (x.sectionStaffId !== null && !waiterIds.has(x.sectionStaffId)) add(x.key, "waiter");
+    // Only a changed (or new) assignment is checked: a stored one may name someone no longer a waiter (e.g. promoted
+    // to manager), which must not block saving the rest of the room.
+    const stored = x.id === undefined ? undefined : current.get(x.id)!.sectionStaffId;
+    const unchanged = x.id !== undefined && (stored ? String(stored) : null) === x.sectionStaffId;
+    if (x.sectionStaffId !== null && !unchanged && !waiterIds.has(x.sectionStaffId)) add(x.key, "waiter");
     if (x.id !== undefined && openTableIds.has(x.id) && current.get(x.id)!.name !== x.name) add(x.key, "open_check_rename");
   }
   for (let i = 0; i < known.length; i++) {
