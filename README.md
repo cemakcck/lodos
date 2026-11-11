@@ -147,7 +147,7 @@ The supported setup is **one origin**: either run the image above, or have the w
 
 ```bash
 npm run lint && npm run typecheck
-npm test            # every workspace (shared, API, web) in one parallel Vitest projects run; 779 tests, the API's against a real MongoDB replica set
+npm test            # every workspace (shared, API, web) in one parallel Vitest projects run; 808 tests, the API's against a real MongoDB replica set
 npm run test:e2e    # Playwright: starts MongoDB (:27019), the built API (:4200) and the built web app (:5280)
 ```
 
