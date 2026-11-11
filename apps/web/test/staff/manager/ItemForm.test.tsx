@@ -30,12 +30,18 @@ function setup(item: ItemView | null, routes: Record<string, unknown> = {}) {
 
 const box = (name: string | RegExp, scope: HTMLElement = document.body) => within(scope).getByRole("textbox", { name });
 
+/**
+ * Types key by key with the same events as `userEvent.type`, without a timer between keystrokes: a full form is
+ * ~90 keys, and the default `delay: 0` yields a macrotask for each of them.
+ */
+const type = (el: HTMLElement, text: string) => userEvent.type(el, text, { delay: null });
+
 async function fillBasics(opts: { tr?: string; price?: string } = {}) {
-  await userEvent.type(box("Name (English)"), "Charred leeks");
-  if (opts.tr !== "") await userEvent.type(box("Name (Turkish)"), opts.tr ?? "Közlenmiş pırasa");
-  await userEvent.type(box("Description (English)"), "Leeks from the coals, hazelnut.");
-  await userEvent.type(box("Description (Turkish)"), "Közde pırasa, fındık.");
-  await userEvent.type(box("Price"), opts.price ?? "640");
+  await type(box("Name (English)"), "Charred leeks");
+  if (opts.tr !== "") await type(box("Name (Turkish)"), opts.tr ?? "Közlenmiş pırasa");
+  await type(box("Description (English)"), "Leeks from the coals, hazelnut.");
+  await type(box("Description (Turkish)"), "Közde pırasa, fındık.");
+  await type(box("Price"), opts.price ?? "640");
 }
 
 /** The text of everything an element's aria-describedby points at. */
@@ -108,19 +114,19 @@ describe("ItemForm", () => {
     await fillBasics();
     await userEvent.click(screen.getByRole("button", { name: "Add option group" }));
     const group = screen.getByRole("group", { name: "Option group 1" });
-    await userEvent.type(box("Group name (English)", group), "Doneness");
-    await userEvent.type(box("Group name (Turkish)", group), "Pişirme");
+    await type(box("Group name (English)", group), "Doneness");
+    await type(box("Group name (Turkish)", group), "Pişirme");
     await userEvent.click(within(group).getByRole("radio", { name: /Pick one/ }));
     await userEvent.click(within(group).getByRole("checkbox", { name: "Required" }));
     await userEvent.click(within(group).getByRole("button", { name: "Add option" }));
     await userEvent.click(within(group).getByRole("button", { name: "Add option" }));
     const o1 = within(group).getByRole("group", { name: "Option 1" });
     const o2 = within(group).getByRole("group", { name: "Option 2" });
-    await userEvent.type(box("Option name (English)", o1), "Rare");
-    await userEvent.type(box("Option name (Turkish)", o1), "Az pişmiş");
-    await userEvent.type(box("Option name (English)", o2), "Well done");
-    await userEvent.type(box("Option name (Turkish)", o2), "İyi pişmiş");
-    await userEvent.type(box(/^Price change/, o2), "50");
+    await type(box("Option name (English)", o1), "Rare");
+    await type(box("Option name (Turkish)", o1), "Az pişmiş");
+    await type(box("Option name (English)", o2), "Well done");
+    await type(box("Option name (Turkish)", o2), "İyi pişmiş");
+    await type(box(/^Price change/, o2), "50");
     await userEvent.click(screen.getByRole("button", { name: "Create item" }));
     await waitFor(() => expect(posts()).toHaveLength(1));
     expect((posts()[0]!.body as { optionGroups: unknown }).optionGroups).toEqual([
@@ -141,10 +147,10 @@ describe("ItemForm", () => {
     await fillBasics();
     await userEvent.click(screen.getByRole("button", { name: "Add option group" }));
     const group = screen.getByRole("group", { name: "Option group 1" });
-    await userEvent.type(box("Group name (English)", group), "Size");
-    await userEvent.type(box("Group name (Turkish)", group), "Boy");
+    await type(box("Group name (English)", group), "Size");
+    await type(box("Group name (Turkish)", group), "Boy");
     await userEvent.click(within(group).getByRole("button", { name: "Add option" }));
-    await userEvent.type(box("Option name (English)", group), "Large");
+    await type(box("Option name (English)", group), "Large");
     await userEvent.click(screen.getByRole("button", { name: "Create item" }));
     const trOpt = box("Option name (Turkish)", group);
     await waitFor(() => expect(trOpt.getAttribute("aria-invalid")).toBe("true"));
@@ -158,8 +164,8 @@ describe("ItemForm", () => {
     const group = screen.getByRole("group", { name: "Option group 1" });
     await userEvent.click(within(group).getByRole("button", { name: "Add option" }));
     const o3 = within(group).getByRole("group", { name: "Option 3" });
-    await userEvent.type(box("Option name (English)", o3), "Well done");
-    await userEvent.type(box("Option name (Turkish)", o3), "İyi pişmiş");
+    await type(box("Option name (English)", o3), "Well done");
+    await type(box("Option name (Turkish)", o3), "İyi pişmiş");
     await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     const patch = await waitFor(() => {
       const c = calls.find((x) => x.method === "PATCH");
