@@ -2,6 +2,7 @@ import {
   maskProfanity,
   noteMentionsAllergy,
   serviceDayOf,
+  serviceDayStartOf,
   TICKET_THRESHOLDS,
   ticketAgeState,
   type AgeState,
@@ -58,8 +59,7 @@ export const notFound = () => new ApiError(404, "not_found");
 
 /** Start instant (UTC) of the service day containing `at`: 06:00 Istanbul (fixed UTC+3) = 03:00Z of its date. */
 export function serviceDayStart(at: Date): Date {
-  const [y, m, d] = serviceDayOf(at).split("-").map(Number) as [number, number, number];
-  return new Date(Date.UTC(y, m - 1, d, 3, 0, 0));
+  return serviceDayStartOf(serviceDayOf(at));
 }
 
 async function thresholds(models: Models) {

@@ -12,3 +12,4 @@ export * from "./schemas";
 export * from "./events";
 export * from "./split";
 export * from "./adjustments";
+export * from "./hours";

@@ -4,6 +4,7 @@ import { availabilitySchema } from "./availability";
 import { callSchema } from "./call";
 import { categorySchema } from "./category";
 import { checkSchema } from "./check";
+import { dailySummarySchema } from "./dailySummary";
 import { menuItemSchema } from "./menuItem";
 import { orderSchema } from "./order";
 import { photoSchema } from "./photo";
@@ -37,6 +38,7 @@ export function registerModels(conn: Connection) {
     Photo: conn.model("Photo", photoSchema),
     Setting: conn.model("Setting", settingSchema),
     Adjustment: conn.model("Adjustment", adjustmentSchema),
+    DailySummary: conn.model("DailySummary", dailySummarySchema),
   };
 }
 
@@ -60,6 +62,7 @@ export type RateEventDoc = InstanceType<Models["RateEvent"]>;
 export type PhotoDoc = InstanceType<Models["Photo"]>;
 export type SettingDoc = InstanceType<Models["Setting"]>;
 export type AdjustmentDoc = InstanceType<Models["Adjustment"]>;
+export type DailySummaryDoc = InstanceType<Models["DailySummary"]>;
 
 /** Model names whose collections are tenant-scoped (everything except Sandbox and RateEvent). */
 export const TENANT_SCOPED_MODELS = [
@@ -78,6 +81,7 @@ export const TENANT_SCOPED_MODELS = [
   "Photo",
   "Setting",
   "Adjustment",
+  "DailySummary",
 ] as const satisfies readonly (keyof Models)[];
 
 /**

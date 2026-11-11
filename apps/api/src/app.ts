@@ -18,6 +18,7 @@ import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerManagerRoutes } from "./manager/routes";
 import { registerMenuRoutes } from "./menu/routes";
+import { SUMMARY_INTERVAL_MS, summaryJob } from "./sales/summary";
 import { registerWeb } from "./web";
 import { unscoped } from "./db/tenancy";
 import { socketRealtime, type Realtime } from "./realtime/emit";
@@ -47,7 +48,7 @@ export type BuildAppOptions = {
   demoMode?: boolean;
   sessionSecret: string;
   webOrigin: string;
-  /** Background jobs (sandbox cleanup, simulator) arrive in later tasks. */
+  /** Background jobs: the daily summary job always; sandbox cleanup and the simulator in demo mode. */
   startJobs?: boolean;
   /** Sandbox creations allowed per IP per hour (default 5). */
   sandboxesPerIpHour?: number;
@@ -122,6 +123,24 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
 
   let cleanupTimer: NodeJS.Timeout | undefined;
   let simulatorTimer: NodeJS.Timeout | undefined;
+  let summaryTimer: NodeJS.Timeout | undefined;
+  if (opts.startJobs) {
+    // Not only in demo mode: the real restaurant needs its past days summarized too. Runs once at start, so a day
+    // that ended during downtime is written promptly, then every 15 min.
+    let summarizing = false;
+    const runSummaries = () => {
+      if (summarizing) return;
+      summarizing = true;
+      summaryJob(models, clock.now(), (err, id) => app.log.error({ err, tenantId: id }, "daily summary failed"))
+        .catch((err: unknown) => app.log.error({ err }, "summary job failed"))
+        .finally(() => {
+          summarizing = false;
+        });
+    };
+    runSummaries();
+    summaryTimer = setInterval(runSummaries, SUMMARY_INTERVAL_MS);
+    summaryTimer.unref();
+  }
   if (opts.startJobs && app.demoMode) {
     cleanupTimer = setInterval(() => {
       runCleanup(models, clock.now(), (id) => app.presence.isConnected(id)).catch((err: unknown) =>
@@ -160,6 +179,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
       closed = true;
       clearInterval(cleanupTimer);
       clearInterval(simulatorTimer);
+      clearInterval(summaryTimer);
       // Closing io disconnects every socket; their final lastSeenAt writes finish before the models go.
       await io.close();
       await presence.stop();
