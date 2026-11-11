@@ -60,6 +60,21 @@ afterEach(async () => {
 });
 
 describe("Staff list", () => {
+  it("a failed tables or floor query shows the error with Try again instead of spinning", async () => {
+    for (const failing of ["GET /api/manager/tables", "GET /api/floor"]) {
+      let attempt = 0;
+      const ok = failing === "GET /api/floor" ? FLOOR : TABLES;
+      setup({ [failing]: () => (++attempt === 1 ? { status: 500, body: { error: { code: "internal", message: "boom" } } } : { status: 200, body: ok }) });
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toContain("Couldn't load the staff list.");
+      await userEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+      expect(await screen.findByRole("button", { name: "Deniz Kaya" })).toBeTruthy();
+      expect(attempt).toBe(2);
+      cleanup();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("renders names, roles, table ranges and status, inactive last", async () => {
     setup();
     const deniz = (await screen.findByRole("button", { name: "Deniz Kaya" })).closest("tr")!;

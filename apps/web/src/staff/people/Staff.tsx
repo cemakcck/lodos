@@ -58,6 +58,8 @@ export function Staff() {
   );
 
   const ready = list.data && tables.data && floor.data;
+  // Any of the three failing blocks the screen with the error and one retry (refetching only what failed).
+  const failed = [list, tables, floor].filter((q) => q.isError);
   return (
     <Shell
       title={t("people.title")}
@@ -66,11 +68,11 @@ export function Staff() {
       clock={false}
     >
       {!ready ? (
-        <div className="mg-blocking" role={list.isError ? "alert" : "status"}>
-          {list.isError ? (
+        <div className="mg-blocking" role={failed.length > 0 ? "alert" : "status"}>
+          {failed.length > 0 ? (
             <>
               <p>{t("people.loadError")}</p>
-              <button type="button" className="staff-btn" onClick={() => void list.refetch()}>{t("manager.retry")}</button>
+              <button type="button" className="staff-btn" onClick={() => failed.forEach((q) => void q.refetch())}>{t("manager.retry")}</button>
             </>
           ) : (
             <p>{t("app.loading")}</p>
