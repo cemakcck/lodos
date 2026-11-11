@@ -147,7 +147,7 @@ The supported setup is **one origin**: either run the image above, or have the w
 
 ```bash
 npm run lint && npm run typecheck
-npm test            # unit and integration: shared 28, API 232 (real MongoDB replica set), web 197
+npm test            # every workspace (shared, API, web) in one parallel Vitest projects run; 779 tests, the API's against a real MongoDB replica set
 npm run test:e2e    # Playwright: starts MongoDB (:27019), the built API (:4200) and the built web app (:5280)
 ```
 
@@ -160,10 +160,11 @@ npm run test:e2e    # Playwright: starts MongoDB (:27019), the built API (:4200)
   - closing a check: the table turns free, the guest's page says the visit ended, and the next order opens a new visit
   - the kitchen catching up after going offline
   - the kitchen ticket headers reading on one line at 1280 px with four columns (the screenshot above)
-- **Accessibility:** axe checks the guest menu, the dish sheet, "Your table", the staff login, the kitchen, the floor with a table selected, order entry, the menu editor and the demo landing against WCAG 2.2 A and AA, and allows zero serious or critical violations, with no rule disabled. What it found and we fixed: buttons whose spoken name left out their visible text (the EN/TR toggle said "English" but showed "EN"), an amber that was 4.35:1 instead of 4.5:1, and a scrolling check panel a keyboard couldn't reach.
+  - phase 2: a check split by item and paid by two guests with their receipts, a comp approved with a manager's PIN, the Sales dashboard, a Dinner shift added from a template with the week PDF downloaded (the file starts with `%PDF`), and a floor-plan move saved by the manager that a waiter on a second device sees without reloading
+- **Accessibility:** axe checks the guest menu, the dish sheet, "Your table", the staff login, the kitchen, the floor with a table selected, order entry, the close view in each mode, the approval pad and the receipt, the menu editor, Sales, Staff, Schedule, My shifts, the floor plan editor with a table selected and the demo landing against WCAG 2.2 A and AA, and allows zero serious or critical violations, with no rule disabled. What it found and we fixed: buttons whose spoken name left out their visible text (the EN/TR toggle said "English" but showed "EN", and the floor plan editor's SVG tables read "T7" and "4" as "T74"), an amber that was 4.35:1 instead of 4.5:1, and a scrolling check panel a keyboard couldn't reach.
 - **Wall-clock independence:** tests pass at any hour. The integration tests inject "now"; the end-to-end seed is relative to the moment each sandbox is created and no test asserts a clock time.
 
-**CI:** GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint, typecheck, unit, integration, end-to-end and build on every push and pull request.
+**CI:** GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint and typecheck, unit and integration tests, end-to-end tests and the build as parallel jobs on every push and pull request.
 
 ## Photo credits
 
@@ -171,12 +172,24 @@ The menu photos are from Wikimedia Commons, under CC BY and CC BY-SA licences (a
 
 ## Phase 2
 
-Phase 1 is complete and demo-able on its own. Planned next:
+Phase 2 turns the demo into something a restaurant could run on. The spec is [`docs/superpowers/specs/2026-11-10-lodos-phase-2-design.md`](docs/superpowers/specs/2026-11-10-lodos-phase-2-design.md).
 
-- Split the bill, by item and evenly.
-- A sales dashboard: covers, revenue, average check, top items, ticket times by hour.
-- A drag-and-drop table layout editor.
-- A staff management screen (in phase 1, staff are created with the setup command).
-- Comps and voids with a reason, approved by a manager.
-- A printable receipt layout.
-- Scaling out beyond one API instance, with the Socket.IO Redis adapter.
+<p>
+  <img src="docs/screenshots/close-check.png" alt="Closing a check split by item: items on the left with guest letters, one card per guest with their lines and Take payment" width="420">
+  <img src="docs/screenshots/sales.png" alt="The Sales dashboard: revenue, covers, average per cover, comps and voids, revenue by hour, ticket times, top dishes" width="420">
+  <img src="docs/screenshots/schedule.png" alt="The weekly schedule grid with shifts per person, weekly totals and a warning for 47 hours" width="420">
+</p>
+
+- **Split the bill.** Pay in full, evenly (2 to 20 shares) or by item (assign lines, or single units of a line, to guests A, B, C…; several letters share a line). Shares always add up to the check to the kuruş, each share is paid on its own (card or cash, simulated), and the check closes when the last one is paid. Paying a share twice records one payment.
+- **Comps and voids with manager approval.** A reason is required. A waiter picks a manager and that manager types their PIN on the waiter's tablet: the same check, lockout and rate limit as sign-in, and no session switch. A void is allowed until the item is ready and gives back an "N left" portion. A comp stays on the check at ₺0.
+- **80 mm receipt.** A print-styled page for receipt paper, per share or for the whole check, with KDV (VAT) lines at 10% and 20%, in English or Turkish. It is an information slip, not a fiscal receipt, and says so on its face ("Bilgi fişi: mali değeri yoktur / Not a fiscal receipt"). Real e-Arşiv or ÖKC integration is out of scope.
+- **Sales.** Today, 7 and 30 days: revenue, covers, average per cover and per check, revenue by hour, ticket times by hour per station, top dishes, and a log of comps and voids. Every demo copy opens with 60 days of generated history. Past days read stored daily summaries and today is computed live with the same function. **Export CSV** lists the checks in the range (UTF-8 with a BOM so Excel reads Turkish names). The generated demo history has no per-check rows, so the CSV lists real checks only: those paid in your own sandbox.
+- **Staff.** The manager adds, edits and deactivates people, sets PINs and assigns waiters their tables. In the demo, Deniz, Selin and the Kitchen and Bar accounts are protected from changes that would lock a visitor out.
+- **Shifts.** A week grid with templates, "Copy last week", and drag, keyboard or tap to move a shift. Warnings show for more than 45 h a week, more than 11 h in a service day and less than 11 h of rest; a shift can't exceed 16 h. The week roster and each person's page export as **PDF** (rendered on the server with pdfkit). Everyone sees their own shifts under **My shifts**.
+- **Floor plan editor.** Drag tables on a 16 px grid, or use the arrow keys (Shift for four steps) or the inspector. Add round, square and booth tables, edit seats and waiter sections, manage rooms. The whole room saves in one versioned transaction, and waiters see the new layout live.
+
+Everything that can be dragged can also be done by keyboard and by tap (WCAG 2.2, 2.5.7).
+
+**Fonts.** The schedule PDFs embed Inter (Regular and SemiBold), released under the SIL Open Font License. The licence text is in [`apps/api/assets/fonts/OFL.txt`](apps/api/assets/fonts/OFL.txt).
+
+Still ahead: scaling out beyond one API instance, with the Socket.IO Redis adapter.

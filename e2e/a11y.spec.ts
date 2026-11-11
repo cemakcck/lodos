@@ -138,4 +138,29 @@ test.describe("staff", () => {
     await expect(page.getByRole("switch").first()).toBeVisible();
     await expectAccessible(page, "menu editor");
   });
+  test("staff, schedule and my shifts", async ({ page }) => {
+    await demoAs(page, "manager");
+    await page.getByRole("link", { name: "Staff", exact: true }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Staff" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Deniz/ }).first()).toBeVisible();
+    await expectAccessible(page, "staff");
+
+    await page.getByRole("link", { name: "Schedule" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Schedule" })).toBeVisible();
+    await expect(page.getByRole("table")).toBeVisible();
+    await expectAccessible(page, "schedule");
+
+    await page.getByRole("link", { name: "My shifts" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "My shifts" })).toBeVisible();
+    await expectAccessible(page, "my shifts");
+  });
+
+  test("floor plan with a table selected", async ({ page }) => {
+    await demoAs(page, "manager");
+    await page.getByRole("link", { name: "Floor plan" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Floor plan" })).toBeVisible();
+    await page.getByRole("group", { name: /floor plan$/ }).getByRole("button", { name: /^T7,/ }).focus();
+    await expect(page.getByRole("group", { name: /floor plan$/ }).getByRole("button", { name: /^T7,/ })).toHaveAttribute("aria-pressed", "true");
+    await expectAccessible(page, "floor plan");
+  });
 });

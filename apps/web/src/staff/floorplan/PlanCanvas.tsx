@@ -176,8 +176,12 @@ export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId
               onLostPointerCapture={(e) => abortDrag(e.pointerId)}
             >
               <TableGlyph table={{ ...tb, x: 0, y: 0 }} />
-              <text className="fp-no" x={tb.w / 2} y={tb.h / 2 - 2} textAnchor="middle" aria-hidden="true">{tb.name}</text>
-              <text className="fp-m" x={tb.w / 2} y={tb.h / 2 + 12} textAnchor="middle" aria-hidden="true">{tb.capacity}</text>
+              {/* One text node with a space between the two lines, so the visible text ("T7 4") is part of the
+                  accessible name ("T7, 4 seats, …", WCAG 2.5.3). */}
+              <text textAnchor="middle" aria-hidden="true">
+                <tspan className="fp-no" x={tb.w / 2} y={tb.h / 2 - 2}>{tb.name}</tspan>{" "}
+                <tspan className="fp-m" x={tb.w / 2} y={tb.h / 2 + 12}>{tb.capacity}</tspan>
+              </text>
               {issues.length > 0 && (
                 <g className="fp-warn" transform={`translate(${tb.w - 6} -6)`} aria-hidden="true">
                   <circle r={8} />
