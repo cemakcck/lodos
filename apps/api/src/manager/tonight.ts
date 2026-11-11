@@ -1,4 +1,4 @@
-import { checkTotals } from "@lodos/shared";
+import { billsOf } from "../checks/bill";
 import type { Models } from "../db/models/index";
 import { serviceDayStart } from "../kds/service";
 
@@ -30,13 +30,13 @@ export async function tonight(models: Models, now: Date): Promise<Tonight> {
       { $limit: 5 },
     ]),
   ]);
-  const openOrders = open.length ? await models.Order.find({ checkId: { $in: open.map((c) => c._id) } }, { items: 1 }).lean() : [];
+  const openBills = await billsOf(models, open.map((c) => c._id));
   const times = ready.filter((t) => t.readyAt).map((t) => t.readyAt!.getTime() - t.sentAt.getTime());
   return {
     covers: opened.reduce((n, c) => n + (c.covers ?? 0), 0),
     revenue: paid.reduce((n, c) => n + (c.payment?.amount ?? 0), 0),
     openChecks: open.length,
-    openTotal: checkTotals(openOrders.flatMap((o) => o.items.map((i) => ({ station: i.station, lineTotal: i.lineTotal })))).total,
+    openTotal: [...openBills.values()].reduce((n, b) => n + b.total, 0),
     avgTicketMs: times.length ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0,
     topItems: top.map((r) => ({ name: { en: r.name.en, tr: r.name.tr }, qty: r.qty })),
   };

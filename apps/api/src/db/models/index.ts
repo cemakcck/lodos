@@ -1,4 +1,5 @@
 import type { Connection } from "mongoose";
+import { adjustmentSchema } from "./adjustment";
 import { availabilitySchema } from "./availability";
 import { callSchema } from "./call";
 import { categorySchema } from "./category";
@@ -35,6 +36,7 @@ export function registerModels(conn: Connection) {
     RateEvent: conn.model("RateEvent", rateEventSchema),
     Photo: conn.model("Photo", photoSchema),
     Setting: conn.model("Setting", settingSchema),
+    Adjustment: conn.model("Adjustment", adjustmentSchema),
   };
 }
 
@@ -57,6 +59,7 @@ export type SessionDoc = InstanceType<Models["Session"]>;
 export type RateEventDoc = InstanceType<Models["RateEvent"]>;
 export type PhotoDoc = InstanceType<Models["Photo"]>;
 export type SettingDoc = InstanceType<Models["Setting"]>;
+export type AdjustmentDoc = InstanceType<Models["Adjustment"]>;
 
 /** Model names whose collections are tenant-scoped (everything except Sandbox and RateEvent). */
 export const TENANT_SCOPED_MODELS = [
@@ -74,6 +77,7 @@ export const TENANT_SCOPED_MODELS = [
   "Session",
   "Photo",
   "Setting",
+  "Adjustment",
 ] as const satisfies readonly (keyof Models)[];
 
 /**

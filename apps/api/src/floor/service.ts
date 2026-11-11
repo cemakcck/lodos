@@ -1,5 +1,6 @@
-import { checkTotals, deriveTableState, maskProfanity, type TableState } from "@lodos/shared";
+import { deriveTableState, maskProfanity, type TableState } from "@lodos/shared";
 import type { Types } from "mongoose";
+import { billOf, billsOf } from "../checks/bill";
 import type { Models } from "../db/models";
 import { ApiError } from "../errors";
 import { isOid, notFound, serviceDayStart } from "../kds/service";
@@ -64,7 +65,7 @@ const earliest = (a: Date | undefined, b: Date) => (a && a <= b ? a : b);
  * table). Calls count while unanswered, with or without a check.
  */
 export async function floorSnapshot(models: Models, now: Date): Promise<FloorSnapshot> {
-  const { Call, Check, Order, Room, Staff, Table, Ticket } = models;
+  const { Call, Check, Room, Staff, Table, Ticket } = models;
   const [rooms, tables, openChecks, openCalls, staff, paidToday] = await Promise.all([
     Room.find().sort({ sort: 1, _id: 1 }).lean(),
     Table.find({ active: true }).sort({ _id: 1 }).lean(),
@@ -74,9 +75,9 @@ export async function floorSnapshot(models: Models, now: Date): Promise<FloorSna
     Check.find({ status: "paid", closedAt: { $gte: serviceDayStart(now) } }, { openedAt: 1, closedAt: 1 }).lean(),
   ]);
   const checkIds = openChecks.map((c) => c._id);
-  const [readyTickets, openOrders] = await Promise.all([
+  const [readyTickets, openBills] = await Promise.all([
     Ticket.find({ checkId: { $in: checkIds }, status: "ready", servedAt: null }, { tableId: 1, readyAt: 1, sentAt: 1 }).lean(),
-    Order.find({ checkId: { $in: checkIds } }, { items: 1 }).lean(),
+    billsOf(models, checkIds),
   ]);
 
   const nameOf = new Map(staff.map((s) => [String(s._id), s.name]));
@@ -134,7 +135,7 @@ export async function floorSnapshot(models: Models, now: Date): Promise<FloorSna
       totalTables: out.length,
       covers: seatedChecks.reduce((n, c) => n + (c.covers ?? 0), 0),
       avgTurnMs: turns.length ? Math.round(turns.reduce((a, b) => a + b, 0) / turns.length) : 0,
-      openChecksTotal: checkTotals(openOrders.flatMap((o) => o.items.map((i) => ({ station: i.station, lineTotal: i.lineTotal })))).total,
+      openChecksTotal: [...openBills.values()].reduce((n, b) => n + b.total, 0),
     },
   };
 }
@@ -342,9 +343,10 @@ export type CloseResult = {
 class CheckChangedError extends Error {}
 
 /**
- * Closes a check with a simulated payment, in one transaction: the amount is the server-computed total of the order
- * snapshots read in the same transaction, the check moves `open → paid` conditionally, and the table's open calls
- * are answered. Already paid → `changed: false` with the stored payment (never charged twice, amount never changed).
+ * Closes a check with a simulated payment, in one transaction: the amount is the bill total (`billOf`: order
+ * snapshots minus active comps and voids) read in the same transaction, the check moves `open → paid` conditionally,
+ * and the table's open calls are answered. Already paid → `changed: false` with the stored payment (never charged
+ * twice, amount never changed).
  *
  * Concurrency: `placeOrder` writes the check (`$inc orderCount` conditional on `open`) and so do we, so an order and
  * a close that overlap write-conflict and `withTransaction` re-runs the loser on a fresh snapshot. An order that
@@ -369,8 +371,7 @@ export async function closeCheck(
           result = { check: closedView(check), changed: false, answeredCallIds: [] };
           return;
         }
-        const orders = await models.Order.find({ checkId: check._id }, { items: 1 }).session(session).lean();
-        const amount = checkTotals(orders.flatMap((o) => o.items.map((i) => ({ station: i.station, lineTotal: i.lineTotal })))).total;
+        const amount = (await billOf(models, check._id, session)).total;
         const paid = await models.Check.findOneAndUpdate(
           { _id: check._id, status: "open" },
           { $set: { status: "paid", closedAt: now, payment: { method, amount, at: now } } },
