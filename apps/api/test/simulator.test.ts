@@ -66,7 +66,7 @@ describe("tickSimulator", () => {
   });
 });
 
-describe("runSimulatorDue", () => {
+describe("runSimulatorDue", { timeout: 20_000 }, () => {
   it("ticks only connected, enabled, due sandboxes", async () => {
     const on = await mkSandbox();
     const off = await mkSandbox({ simulatorOn: false });

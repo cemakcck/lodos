@@ -39,7 +39,8 @@ describe("GET /api/floor", () => {
     expect(tableNamed(f, "T7")).toMatchObject({ state: "free", covers: null, checkId: null, sectionStaffId: s.seed.staff.waiter, serverInitials: "D" });
     expect(tableNamed(f, "B1")).toMatchObject({ state: "seated", covers: 4 });
     expect(f.rooms.map((r) => r.name)).toEqual(["Salon", "Bar", "Terrace"]);
-    expect(f.stats).toMatchObject({ seated: 7, totalTables: f.tables.length, covers: 4 + 2 + 3 + 2 + 2 + 2 + 2, avgTurnMs: 0 });
+    expect(f.stats).toMatchObject({ seated: 7, totalTables: f.tables.length, covers: 4 + 2 + 3 + 2 + 2 + 2 + 2 });
+    expect(f.stats.avgTurnMs).toBeGreaterThan(0); // tonight's seeded paid checks give a real turn time
     expect(f.stats.openChecksTotal).toBeGreaterThan(0);
   });
 

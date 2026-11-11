@@ -116,7 +116,7 @@ describe("close the check", () => {
     const f = (await w("GET", "/api/floor")).json();
     const t7 = f.tables.find((x: { name: string }) => x.name === "T7");
     expect(t7).toMatchObject({ state: "free", checkId: null, covers: null });
-    expect(f.stats.avgTurnMs).toBe(0); // opened and closed at the same fixed instant
+    expect(f.stats.avgTurnMs).toBeGreaterThan(0); // the seed's paid checks tonight; this one (opened and closed at the same instant) averages in as 0
     expect(await runWithTenant(s.tenantId, () => t.models.Call.countDocuments({ tableId: T7, answeredAt: null }))).toBe(0);
     expect((await w("GET", `/api/tables/${T7}/check`)).json().check).toBeNull();
 

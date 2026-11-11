@@ -1,8 +1,10 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { serviceDayOf, splitByStation, TABLE_NAME_RE, ticketAgeState } from "@lodos/shared";
+import { serviceDayOf, serviceDayStartOf, splitByStation, TABLE_NAME_RE, ticketAgeState } from "@lodos/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { billsOf } from "../src/checks/bill";
 import { runWithTenant } from "../src/db/tenancy";
+import { summarizeDay } from "../src/sales/summary";
 import { seedRestaurant, type SeedResult } from "../src/seed/seed";
 import { makeTestApp, newTenant } from "./helpers";
 
@@ -156,7 +158,7 @@ describe("liveService: true", () => {
     for (const tk of tickets) {
       const o = orderById.get(String(tk.orderId));
       expect(o).toBeDefined();
-      expect(checkById.get(String(o?.checkId))?.status).toBe("open");
+      expect(["open", "paid"]).toContain(checkById.get(String(o?.checkId))?.status); // paid: tonight's closed checks
       expect(String(tk.checkId)).toBe(String(o?.checkId));
       for (const [i, line] of tk.items.entries()) {
         const l = o?.items[line.orderItemIndex];
@@ -201,6 +203,41 @@ describe("liveService: true", () => {
     expect(av.every((a) => a.serviceDay === serviceDayOf(NOW))).toBe(true);
     expect(av.filter((a) => a.soldOut)).toHaveLength(2);
     expect(av.filter((a) => a.remaining === 2)).toHaveLength(1);
+  });
+
+  it("has 60 days of generated history, and 3-5 paid checks closed earlier tonight that agree with the bill reader", async () => {
+    expect(await inTenant(live, () => t.models.DailySummary.countDocuments({ generated: true }))).toBe(60);
+    const paid = await inTenant(live, () => t.models.Check.find({ status: "paid" }).lean());
+    expect(paid.length).toBeGreaterThanOrEqual(3);
+    expect(paid.length).toBeLessThanOrEqual(5);
+    const dayStart = serviceDayStartOf(serviceDayOf(NOW)).getTime();
+    const open = new Set((await inTenant(live, () => t.models.Check.find({ status: "open" }).lean())).map((c) => String(c.tableId)));
+    const bills = await inTenant(live, () => billsOf(t.models, paid.map((c) => c._id)));
+    for (const c of paid) {
+      expect(open.has(String(c.tableId))).toBe(false);
+      expect(c.closedAt!.getTime()).toBeGreaterThanOrEqual(dayStart + 11.5 * 3_600_000);
+      expect(c.closedAt!.getTime()).toBeLessThan(NOW.getTime());
+      expect(c.openedAt.getTime()).toBeLessThan(c.closedAt!.getTime());
+      expect(c.payment?.at).toEqual(c.closedAt);
+      expect(c.payment?.amount).toBe(bills.get(String(c._id))?.total);
+      expect(c.payment?.amount).toBeGreaterThan(0);
+      const tk = await inTenant(live, () => t.models.Ticket.find({ checkId: c._id }).lean());
+      expect(tk.length).toBeGreaterThan(0);
+      expect(tk.every((x) => x.status === "ready" && x.servedAt && x.readyAt && x.readyAt >= x.sentAt)).toBe(true);
+    }
+    const comps = await inTenant(live, () => t.models.Adjustment.find({ checkId: { $ne: null }, kind: "comp" }).lean());
+    expect(comps).toHaveLength(1);
+    expect(bills.get(String(comps[0]!.checkId))?.compsAmount).toBe(comps[0]!.amount);
+    const today = await inTenant(live, () => summarizeDay(t.models, serviceDayOf(NOW)));
+    expect(today.revenue).toBe(paid.reduce((s, c) => s + (c.payment?.amount ?? 0), 0));
+    expect(today.checks).toBe(paid.length);
+    expect(today.comps.count).toBe(1);
+  });
+
+  it("seeds no paid checks before 18:00 Istanbul", async () => {
+    const id = newTenant();
+    await seedRestaurant(t.models, id, new Date("2026-11-10T14:30:00Z"), { liveService: true }); // 17:30
+    expect(await inTenant(id, () => t.models.Check.countDocuments({ status: "paid" }))).toBe(0);
   });
 
   it("seeds quickly", async () => {

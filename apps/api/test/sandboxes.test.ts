@@ -215,7 +215,8 @@ describe("cleanup", () => {
   });
 });
 
-describe("cap and per-IP limit", () => {
+// These create up to 7 sandboxes each (seed + 60 days of history), so they get more than the default 5 s.
+describe("cap and per-IP limit", { timeout: 20_000 }, () => {
   it("defaults are 200 sandboxes and 5 creations per IP per hour", () => {
     expect(DEFAULT_MAX_SANDBOXES).toBe(200);
     expect(DEFAULT_SANDBOXES_PER_IP_HOUR).toBe(5);
