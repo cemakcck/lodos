@@ -14,12 +14,12 @@ const NOW = new Date("2026-11-10T18:42:00.000Z");
 const ago = (min: number) => new Date(NOW.getTime() - min * 60_000).toISOString();
 const n = (en: string, tr = en) => ({ en, tr });
 const line = (over: Partial<CheckLine>): CheckLine => ({
-  orderId: "o1", ticketId: "tk-food", qty: 1, name: n("Dish"), options: [], note: null, seat: null, status: "preparing", lineTotal: 0, ...over,
+  orderId: "o1", lineRef: "o1:0", compedQty: 0, voidedQty: 0, originalTotal: 0, adjustments: [], ticketId: "tk-food", qty: 1, name: n("Dish"), options: [], note: null, seat: null, status: "preparing", lineTotal: 0, ...over,
 });
 
-const ribeye = line({ name: n("Dry-aged ribeye, 300 g", "Dinlendirilmiş antrikot, 300 g"), options: [n("Medium rare", "Orta az pişmiş")], status: "ready", lineTotal: 245000 });
-const aubergine = line({ qty: 2, name: n("Köz patlıcan, miso"), status: "ready", lineTotal: 96000, seat: 2 });
-const negroni = line({ ticketId: "tk-bar", name: n("Lodos Negroni"), status: "served", lineTotal: 68000 });
+const ribeye = line({ lineRef: "o1:0", name: n("Dry-aged ribeye, 300 g", "Dinlendirilmiş antrikot, 300 g"), options: [n("Medium rare", "Orta az pişmiş")], status: "ready", lineTotal: 245000 });
+const aubergine = line({ lineRef: "o1:1", qty: 2, name: n("Köz patlıcan, miso"), status: "ready", lineTotal: 96000, seat: 2 });
+const negroni = line({ lineRef: "o1:2", ticketId: "tk-bar", name: n("Lodos Negroni"), status: "served", lineTotal: 68000 });
 
 const TABLE = { id: "t12", name: "T12", capacity: 4, sectionStaffId: "id-waiter" };
 const open = (over: Partial<Extract<TableCheck, { check: object }>> = {}): TableCheck => ({
@@ -221,6 +221,65 @@ describe("TableDetail", () => {
     const region2 = await panel();
     await userEvent.click(within(region2).getByRole("button", { name: "Add items" }));
     expect(await screen.findByText("order entry t12")).toBeTruthy();
+  });
+
+  describe("comps and voids", () => {
+    const gelato = line({
+      name: n("Olive oil gelato"), qty: 2, lineRef: "o1:3", status: "preparing", lineTotal: 26000, originalTotal: 52000, compedQty: 1,
+      adjustments: [{ id: "a1", kind: "comp", qty: 1, reason: "celebration", note: null, approvedByName: "Selin Kaya", at: ago(3) }],
+    });
+    const voided = line({
+      name: n("Tiramisu"), qty: 1, lineRef: "o1:4", status: "sent", lineTotal: 0, originalTotal: 30000, voidedQty: 1,
+      adjustments: [{ id: "a2", kind: "void", qty: 1, reason: "wrong_item", note: null, approvedByName: "Selin Kaya", at: ago(2) }],
+    });
+    const withLines = () => open({ food: [ribeye, gelato, voided] });
+
+    it("tapping a line offers Comp and Void; a ready or served line offers only Comp with the reason", async () => {
+      setup({ "GET /api/tables/t12/check": withLines() });
+      const region = await panel();
+      await userEvent.click(within(lineRow(/Olive oil gelato/)).getByRole("button", { name: /Olive oil gelato/ }));
+      expect(within(region).getByRole("button", { name: "Comp" })).toBeTruthy();
+      expect(within(region).getByRole("button", { name: "Void" })).toBeTruthy();
+      await userEvent.click(within(lineRow(/Dry-aged ribeye/)).getByRole("button", { name: /Dry-aged ribeye/ }));
+      expect(within(region).getByRole("button", { name: "Comp" })).toBeTruthy();
+      expect(within(region).queryByRole("button", { name: "Void" })).toBeNull();
+      expect(within(region).getByText("Already made: comp it instead")).toBeTruthy();
+    });
+
+    it("Comp opens the adjustment dialog for that line", async () => {
+      setup({ "GET /api/tables/t12/check": withLines(), "GET /api/approvers": [{ id: "m", name: "Selin Kaya" }] });
+      const region = await panel();
+      await userEvent.click(within(lineRow(/Olive oil gelato/)).getByRole("button", { name: /Olive oil gelato/ }));
+      await userEvent.click(within(region).getByRole("button", { name: "Comp" }));
+      expect(await screen.findByRole("dialog", { name: /Olive oil gelato · T12/ })).toBeTruthy();
+    });
+
+    it("shows the Comp tag, the voided tag, and a fully voided line struck through", async () => {
+      setup({ "GET /api/tables/t12/check": withLines() });
+      await panel();
+      expect(within(lineRow(/Olive oil gelato/)).getByText("Comp · Birthday / celebration")).toBeTruthy();
+      const v = lineRow(/Tiramisu/);
+      expect(within(v).getByText("1 voided")).toBeTruthy();
+      expect(v.querySelector("s")).toBeTruthy();
+      expect(within(v).getByText("Voided", { selector: ".fl-st" })).toBeTruthy();
+      // A fully voided line is not tappable.
+      expect(within(v).queryByRole("button", { name: /Tiramisu/ })).toBeNull();
+    });
+
+    it("only managers get Undo, and Undo reverses the adjustment", async () => {
+      setup({ "GET /api/tables/t12/check": withLines(), "GET /api/auth/me": { staff: { id: "m", name: "Selin Kaya", role: "manager" } },
+        "DELETE /api/checks/c1/adjustments/a1": { ok: true } });
+      await panel();
+      const btn = await within(lineRow(/Olive oil gelato/)).findByRole("button", { name: /Undo comp/ });
+      await userEvent.click(btn);
+      await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/checks/c1/adjustments/a1")).toBe(true));
+    });
+
+    it("a waiter sees no Undo", async () => {
+      setup({ "GET /api/tables/t12/check": withLines(), "GET /api/auth/me": { staff: { id: "w", name: "Deniz", role: "waiter" } } });
+      await panel();
+      expect(within(lineRow(/Olive oil gelato/)).queryByRole("button", { name: /Undo/ })).toBeNull();
+    });
   });
 
   it("speaks Turkish", async () => {

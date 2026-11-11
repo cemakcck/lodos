@@ -2,16 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, Plus, Printer, Receipt, ReceiptText, UserPlus, Users, type LucideIcon } from "lucide-react";
+import { Bell, Check, Ban, Gift, Plus, Printer, Receipt, ReceiptText, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { api, ApiClientError } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
-import { initials } from "../auth";
+import { initials, useMe } from "../auth";
+import { AdjustDialog, freeUnits, isMade } from "../adjust/AdjustDialog";
 import { loc } from "../kds/lib";
 import { SeatDialog } from "./SeatDialog";
 import { checkKey, floorKey, patchFloorTable, snapshotCaches, syncFloorFromCheck } from "./cache";
 import { checkState, hm, readyTickets, since } from "./lib";
-import type { CheckLine, FloorTable, TableCheck } from "./types";
+import type { AdjustmentKind } from "@lodos/shared";
+import type { CheckLine, FloorTable, LineAdjustment, TableCheck } from "./types";
 
 type OpenCheck = Extract<TableCheck, { check: object }>;
 
@@ -46,7 +48,10 @@ export interface TableDetailProps {
   seatRequest?: SeatRequest | null;
 }
 
-type DialogState = null | { kind: "seat"; mode: "seat" | "set"; thenOrder: boolean };
+type DialogState =
+  | null
+  | { kind: "seat"; mode: "seat" | "set"; thenOrder: boolean }
+  | { kind: "adjust"; line: CheckLine; adjust: AdjustmentKind };
 
 const MESSAGE_MS = 4000;
 
@@ -63,6 +68,8 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
   const navigate = useNavigate();
   const q = useQuery({ queryKey: checkKey(tableId), queryFn: () => api<TableCheck>(`/api/tables/${tableId}/check`) });
   const data = q.data;
+  const isManager = useMe().data?.role === "manager";
+  const [menuRef, setMenuRef] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -132,6 +139,14 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
       ctx?.rollback();
       flash(failure(err));
     },
+    onSettled: refresh,
+  });
+
+  // ---- Undo a comp or void (managers) ---------------------------------------------------------------------------
+  const undo = useMutation({
+    mutationFn: (v: { checkId: string; adjustmentId: string }) =>
+      api(`/api/checks/${v.checkId}/adjustments/${v.adjustmentId}`, { method: "DELETE" }),
+    onError: (err) => flash(err instanceof ApiClientError && err.message ? err.message : t("adjust.undoFailed")),
     onSettled: refresh,
   });
 
@@ -308,8 +323,26 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
           <p className="fl-hint">{t("floor.detail.noLines")}</p>
         ) : (
           <>
-            <LineGroup label={t("floor.detail.food")} lines={open.food} subtotal={open.totals.food} />
-            <LineGroup label={t("floor.detail.drinks")} lines={open.drinks} subtotal={open.totals.drinks} />
+            {[
+              { label: t("floor.detail.food"), ls: open.food, subtotal: open.totals.food },
+              { label: t("floor.detail.drinks"), ls: open.drinks, subtotal: open.totals.drinks },
+            ].map((g) => (
+              <LineGroup
+                key={g.label}
+                label={g.label}
+                lines={g.ls}
+                subtotal={g.subtotal}
+                openRef={menuRef}
+                onToggle={(ref) => setMenuRef((r) => (r === ref ? null : ref))}
+                onAdjust={(line, adjust) => {
+                  setMenuRef(null);
+                  openDialog({ kind: "adjust", line, adjust });
+                }}
+                canUndo={isManager}
+                onUndo={(adjustmentId) => undo.mutate({ checkId: open.check.id, adjustmentId })}
+                undoing={undo.isPending}
+              />
+            ))}
           </>
         )}
       </div>
@@ -353,11 +386,39 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
           onConfirm={(covers) => seat.mutate({ covers, thenOrder: dialog.thenOrder })}
         />
       )}
+      {dialog?.kind === "adjust" && open && (
+        <AdjustDialog
+          checkId={open.check.id}
+          tableName={name}
+          line={dialog.line}
+          isManager={isManager}
+          initialKind={dialog.adjust}
+          onCancel={() => setDialog(null)}
+          onDone={(k) => {
+            setDialog(null);
+            flash(t(`adjust.done.${k}`));
+            refresh();
+          }}
+        />
+      )}
     </section>
   );
 }
 
-function LineGroup({ label, lines, subtotal }: { label: string; lines: CheckLine[]; subtotal: number }) {
+interface LineGroupProps {
+  label: string;
+  lines: CheckLine[];
+  subtotal: number;
+  /** The line whose Comp / Void menu is open. */
+  openRef: string | null;
+  onToggle: (lineRef: string) => void;
+  onAdjust: (line: CheckLine, kind: AdjustmentKind) => void;
+  canUndo: boolean;
+  onUndo: (adjustmentId: string) => void;
+  undoing: boolean;
+}
+
+function LineGroup({ label, lines, subtotal, openRef, onToggle, onAdjust, canUndo, onUndo, undoing }: LineGroupProps) {
   const { t } = useTranslation();
   const { lang, money } = useFormat();
   if (lines.length === 0) return null;
@@ -369,30 +430,118 @@ function LineGroup({ label, lines, subtotal }: { label: string; lines: CheckLine
         <span>{count}</span>
       </h3>
       <ul>
-        {lines.map((l, i) => (
-          <li key={`${l.orderId}-${l.ticketId}-${i}`} className={`fl-line is-${l.status}`}>
-            <span className="q">{l.qty}</span>
-            <span className="body">
-              <span className="nm">{loc(l.name, lang)}</span>
-              {l.options.map((o, j) => (
-                <span key={j} className="mod">
-                  {loc(o, lang)}
-                </span>
-              ))}
-              {l.note && <span className="mod note">{l.note}</span>}
-              <span className="meta">
-                <span className={`fl-st is-${l.status}`}>{t(`floor.detail.status.${l.status}`)}</span>
-                {l.seat != null && <span> · {t("floor.detail.seat", { n: l.seat })}</span>}
+        {lines.map((l, i) => {
+          const gone = l.voidedQty >= l.qty;
+          const free = freeUnits(l);
+          const tappable = !gone && free > 0;
+          const menuOpen = tappable && openRef === l.lineRef;
+          const body = (
+            <>
+              <span className="q">
+                {l.voidedQty > 0 && !gone ? (
+                  <>
+                    <s>{l.qty}</s> {l.qty - l.voidedQty}
+                  </>
+                ) : gone ? (
+                  <s>{l.qty}</s>
+                ) : (
+                  l.qty
+                )}
               </span>
-            </span>
-            <span className="price font-mono">{money(l.lineTotal)}</span>
-          </li>
-        ))}
+              <span className="body">
+                <span className="nm">{gone ? <s>{loc(l.name, lang)}</s> : loc(l.name, lang)}</span>
+                {l.options.map((o, j) => (
+                  <span key={j} className="mod">
+                    {loc(o, lang)}
+                  </span>
+                ))}
+                {l.note && <span className="mod note">{l.note}</span>}
+                <span className="meta">
+                  {gone ? (
+                    <span className="fl-st is-voided">{t("adjust.tag.voidedLine")}</span>
+                  ) : (
+                    <span className={`fl-st is-${l.status}`}>{t(`floor.detail.status.${l.status}`)}</span>
+                  )}
+                  {l.seat != null && <span> · {t("floor.detail.seat", { n: l.seat })}</span>}
+                </span>
+              </span>
+              <span className="price font-mono">{gone ? <s>{money(l.originalTotal)}</s> : money(l.lineTotal)}</span>
+            </>
+          );
+          return (
+            <li key={`${l.orderId}-${l.ticketId}-${i}`} className={`fl-line is-${l.status}${gone ? " is-gone" : ""}`}>
+              {tappable ? (
+                <button
+                  type="button"
+                  className="fl-line-hit"
+                  aria-expanded={menuOpen}
+                  onClick={() => onToggle(l.lineRef)}
+                >
+                  {body}
+                </button>
+              ) : (
+                <div className="fl-line-hit">{body}</div>
+              )}
+              {menuOpen && (
+                <div className="fl-line-menu" role="group" aria-label={t("adjust.menu.label", { item: loc(l.name, lang) })}>
+                  <button type="button" className="staff-btn" onClick={() => onAdjust(l, "comp")}>
+                    <Gift size={16} strokeWidth={1.75} aria-hidden="true" />
+                    {t("adjust.menu.comp")}
+                  </button>
+                  {isMade(l) ? (
+                    <p className="fl-dialog-note">{t("adjust.menu.madeNote")}</p>
+                  ) : (
+                    <button type="button" className="staff-btn" onClick={() => onAdjust(l, "void")}>
+                      <Ban size={16} strokeWidth={1.75} aria-hidden="true" />
+                      {t("adjust.menu.void")}
+                    </button>
+                  )}
+                </div>
+              )}
+              {l.adjustments.length > 0 && (
+                <ul className="fl-tags">
+                  {l.adjustments.map((a) => (
+                    <AdjustTag key={a.id} adj={a} canUndo={canUndo} undoing={undoing} onUndo={() => onUndo(a.id)} />
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
       <div className="fl-sub" data-testid="subtotal">
         <span>{t("floor.detail.subtotal")}</span>
         <span className="font-mono">{money(subtotal)}</span>
       </div>
     </div>
+  );
+}
+
+function AdjustTag({ adj, canUndo, undoing, onUndo }: { adj: LineAdjustment; canUndo: boolean; undoing: boolean; onUndo: () => void }) {
+  const { t } = useTranslation();
+  const reason = t(`adjust.reasons.${adj.reason}`, { defaultValue: adj.reason });
+  const text = adj.kind === "comp" ? t(adj.qty > 1 ? "adjust.tag.compMany" : "adjust.tag.comp", { count: adj.qty, reason }) : null;
+  return (
+    <li className={`fl-tag is-${adj.kind}`}>
+      {adj.kind === "comp" ? (
+        <span>{text}</span>
+      ) : (
+        <>
+          <span>{t("adjust.tag.voided", { count: adj.qty })}</span>
+          <span>{t("adjust.tag.voidedReason", { reason })}</span>
+        </>
+      )}
+      {canUndo && (
+        <button
+          type="button"
+          className="fl-tag-undo"
+          disabled={undoing}
+          aria-label={t("adjust.undoAria", { what: adj.kind === "comp" ? t("adjust.menu.comp").toLowerCase() + ", " + reason : t("adjust.tag.voided", { count: adj.qty }) + ", " + reason })}
+          onClick={onUndo}
+        >
+          {t("adjust.undo")}
+        </button>
+      )}
+    </li>
   );
 }

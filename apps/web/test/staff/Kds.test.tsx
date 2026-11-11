@@ -38,7 +38,7 @@ const tk = (id: string, tableName: string, sentAt: string, items: KdsTicket["ite
   ...over,
 });
 const item = (index: number, en: string, tr = en, qty = 1) => ({
-  index, name: n(en, tr), qty, options: [], note: null, allergens: [], allergyFlag: false, checked: false,
+  index, name: n(en, tr), qty, options: [], note: null, allergens: [], allergyFlag: false, checked: false, voidedQty: 0,
 });
 
 const T12 = tk("a", "T12", ago(17, 20), [item(0, "Levrek crudo", "Levrek crudo", 2), item(1, "Dry-aged ribeye", "Dinlendirilmiş antrikot")]);

@@ -26,7 +26,7 @@ const ticket = (over: Partial<KdsTicket> = {}): KdsTicket => ({
   servedAt: null,
   ageState: "ok",
   items: [
-    { index: 0, name: n("Levrek crudo", "Levrek crudo"), qty: 2, options: [], note: null, allergens: [], allergyFlag: false, checked: false },
+    { index: 0, name: n("Levrek crudo", "Levrek crudo"), qty: 2, options: [], note: null, allergens: [], allergyFlag: false, checked: false, voidedQty: 0 },
     {
       index: 1,
       name: n("Dry-aged ribeye", "Dinlendirilmiş antrikot"),
@@ -36,6 +36,7 @@ const ticket = (over: Partial<KdsTicket> = {}): KdsTicket => ({
       allergens: [],
       allergyFlag: false,
       checked: false,
+      voidedQty: 0,
     },
   ],
   ...over,
@@ -157,6 +158,26 @@ describe("Ticket", () => {
     expect(card.getAttribute("data-age")).toBe("done");
     expect(screen.getByText("17:20")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Bump/ })).toBeNull();
+  });
+
+  it("a fully voided line is struck through with the hidden text voided", () => {
+    const t = ticket();
+    t.items[0] = { ...t.items[0]!, qty: 2, voidedQty: 2 };
+    renderTicket(t, at(1));
+    const row = screen.getByText("Levrek crudo").closest("li")!;
+    expect(row.querySelector("s")).toBeTruthy();
+    expect(row.textContent).toContain("voided");
+    expect(row.querySelector(".sr-only")?.textContent).toContain("voided");
+  });
+
+  it("a partly voided line shows its quantity as <s>3</s> 2", () => {
+    const t = ticket();
+    t.items[0] = { ...t.items[0]!, qty: 3, voidedQty: 1 };
+    renderTicket(t, at(1));
+    const row = screen.getByText("Levrek crudo").closest("li")!;
+    expect(row.querySelector(".q s")?.textContent).toBe("3");
+    expect(row.querySelector(".q")?.textContent).toContain("3 2");
+    expect(row.querySelector(".q .sr-only")?.textContent).toMatch(/1 voided/);
   });
 
   it("speaks Turkish", async () => {

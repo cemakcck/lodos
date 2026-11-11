@@ -56,8 +56,20 @@ export interface FloorSnapshot {
 /** The snapshot plus the held server-time offset (server now − device clock). */
 export type FloorData = FloorSnapshot & { offsetMs: number };
 
+export interface LineAdjustment {
+  id: string;
+  kind: "comp" | "void";
+  qty: number;
+  reason: string;
+  note: string | null;
+  approvedByName: string;
+  at: string;
+}
+
 export interface CheckLine {
   orderId: string;
+  /** `orderId:index`, what a comp or void names. */
+  lineRef: string;
   ticketId: string;
   qty: number;
   name: Loc;
@@ -65,7 +77,12 @@ export interface CheckLine {
   note: string | null;
   seat: number | null;
   status: LineStatus;
+  /** Charged amount, kuruş: comped and voided units excluded. */
   lineTotal: number;
+  compedQty: number;
+  voidedQty: number;
+  originalTotal: number;
+  adjustments: LineAdjustment[];
 }
 
 export interface CheckTotals {

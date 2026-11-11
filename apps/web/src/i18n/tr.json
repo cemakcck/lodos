@@ -912,5 +912,74 @@
       "back": "Masa planına dön",
       "already": "Bu hesap kapandı."
     }
+  },
+  "adjust": {
+    "menu": {
+      "label": "{{item}} için işlem",
+      "comp": "İkram",
+      "void": "İptal",
+      "madeNote": "Zaten yapıldı: ikram edin"
+    },
+    "title": "{{item}} · {{table}}",
+    "kind": {
+      "label": "Ne oldu",
+      "comp": "İkram",
+      "compHint": "Yapıldı ve servis edildi, hesaba yazılmaz",
+      "void": "İptal",
+      "voidHint": "Hata, hiç yapılmadı"
+    },
+    "qty": {
+      "label": "Adet",
+      "less": "Azalt",
+      "more": "Artır",
+      "of": "{{count}} adetten"
+    },
+    "reason": "Neden",
+    "reasons": {
+      "celebration": "Doğum günü / kutlama",
+      "complaint": "Misafir şikâyeti",
+      "long_wait": "Uzun bekleme",
+      "regular": "Müdavim",
+      "wrong_item": "Yanlış ürün",
+      "changed_mind": "Misafir vazgeçti",
+      "duplicate": "İki kez girildi",
+      "other": "Diğer…"
+    },
+    "note": "Not",
+    "notePlaceholder": "Ne oldu?",
+    "noteRequired": "Diğer için gerekli",
+    "approval": "Yönetici onayı",
+    "approvalHint": "Bir yönetici seçin ve PIN'ini girin. PIN kaydedilmez.",
+    "approverLabel": "Yönetici",
+    "noApprovers": "Onaylayabilecek yönetici yok.",
+    "pin": {
+      "label": "PIN",
+      "entered_one": "{{count}} hane girildi",
+      "entered_other": "{{count}} hane girildi",
+      "delete": "Son haneyi sil"
+    },
+    "demoHint": "Demo: Selin'in PIN'i 9999",
+    "confirm": "Onayla",
+    "approveComp": "İkramı onayla",
+    "approveVoid": "İptali onayla",
+    "working": "İşleniyor…",
+    "wrongPin": "Yanlış PIN",
+    "tag": {
+      "comp": "İkram · {{reason}}",
+      "compMany": "İkram ×{{count}} · {{reason}}",
+      "voided_one": "{{count}} iptal",
+      "voided_other": "{{count}} iptal",
+      "voidedReason": "· {{reason}}",
+      "voidedLine": "İptal edildi"
+    },
+    "undo": "Geri al",
+    "undoAria": "Geri al: {{what}}",
+    "undoFailed": "Geri alınamadı.",
+    "voidedHidden": "iptal edildi",
+    "voidedOf": "{{count}} iptal",
+    "done": {
+      "comp": "İkram edildi.",
+      "void": "İptal edildi."
+    }
   }
 }

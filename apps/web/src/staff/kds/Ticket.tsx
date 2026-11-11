@@ -104,18 +104,33 @@ function ItemRow({ item, lang, disabled, onToggle }: { item: KdsItem; lang: "en"
   const allergyNote = !!note && noteMentionsAllergy(note);
   const contains = item.allergens.map((a) => t(`guest.allergens.${a}`, { defaultValue: a }).toLocaleLowerCase(lang)).join(", ");
 
+  const gone = item.voidedQty >= item.qty;
+  const part = item.voidedQty > 0 && !gone;
+
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={item.checked}
-      disabled={disabled}
-      className={`kds-it${item.checked ? " is-done" : ""}`}
+      disabled={disabled || gone}
+      className={`kds-it${item.checked ? " is-done" : ""}${gone ? " is-voided" : ""}`}
       onClick={() => onToggle(item.index)}
     >
-      <span className="q">{item.qty}</span>
+      <span className="q">
+        {part ? (
+          <>
+            <s>{item.qty}</s> {item.qty - item.voidedQty}
+          </>
+        ) : gone ? (
+          <s>{item.qty}</s>
+        ) : (
+          item.qty
+        )}
+        {(part || gone) && <span className="sr-only"> ({t(gone ? "adjust.voidedHidden" : "adjust.voidedOf", { count: item.voidedQty })})</span>}
+      </span>
       <span className="n">
-        <span className="nm">{loc(item.name, lang)}</span>
+        <span className="nm">{gone ? <s>{loc(item.name, lang)}</s> : loc(item.name, lang)}</span>
+        {gone && <span className="kds-void-tag">{t("adjust.voidedHidden")}</span>}
         {item.options.map((o, i) => (
           <span key={i} className="mod">
             {loc(o, lang)}

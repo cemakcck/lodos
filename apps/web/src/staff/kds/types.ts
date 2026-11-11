@@ -15,6 +15,8 @@ export interface KdsItem {
   allergens: string[];
   allergyFlag: boolean;
   checked: boolean;
+  /** Units voided before the kitchen made them; struck through. */
+  voidedQty: number;
 }
 
 export interface KdsTicket {

@@ -912,5 +912,74 @@
       "back": "Back to floor",
       "already": "This check is closed."
     }
+  },
+  "adjust": {
+    "menu": {
+      "label": "Adjust {{item}}",
+      "comp": "Comp",
+      "void": "Void",
+      "madeNote": "Already made: comp it instead"
+    },
+    "title": "{{item}} · {{table}}",
+    "kind": {
+      "label": "What happened",
+      "comp": "Comp",
+      "compHint": "Made and served, on the house",
+      "void": "Void",
+      "voidHint": "Mistake, never made"
+    },
+    "qty": {
+      "label": "Quantity",
+      "less": "Fewer",
+      "more": "More",
+      "of": "of {{count}}"
+    },
+    "reason": "Reason",
+    "reasons": {
+      "celebration": "Birthday / celebration",
+      "complaint": "Guest complaint",
+      "long_wait": "Long wait",
+      "regular": "Regular",
+      "wrong_item": "Wrong item",
+      "changed_mind": "Guest changed mind",
+      "duplicate": "Entered twice",
+      "other": "Other…"
+    },
+    "note": "Note",
+    "notePlaceholder": "What happened?",
+    "noteRequired": "Required for Other",
+    "approval": "Manager approval",
+    "approvalHint": "Pick a manager and enter their PIN. Nothing is stored.",
+    "approverLabel": "Manager",
+    "noApprovers": "No manager is available to approve.",
+    "pin": {
+      "label": "PIN",
+      "entered_one": "{{count}} digit entered",
+      "entered_other": "{{count}} digits entered",
+      "delete": "Delete last digit"
+    },
+    "demoHint": "Demo: Selin's PIN is 9999",
+    "confirm": "Confirm",
+    "approveComp": "Approve comp",
+    "approveVoid": "Approve void",
+    "working": "Working…",
+    "wrongPin": "Wrong PIN",
+    "tag": {
+      "comp": "Comp · {{reason}}",
+      "compMany": "Comp ×{{count}} · {{reason}}",
+      "voided_one": "{{count}} voided",
+      "voided_other": "{{count}} voided",
+      "voidedReason": "· {{reason}}",
+      "voidedLine": "Voided"
+    },
+    "undo": "Undo",
+    "undoAria": "Undo {{what}}",
+    "undoFailed": "Couldn't undo that.",
+    "voidedHidden": "voided",
+    "voidedOf": "{{count}} voided",
+    "done": {
+      "comp": "Comped.",
+      "void": "Voided."
+    }
   }
 }
