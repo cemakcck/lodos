@@ -45,6 +45,17 @@ const snapshot = (tenantId: string) =>
     rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
   }));
 
+async function pdfText(body: Buffer): Promise<string> {
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await getDocument({ data: new Uint8Array(body), useSystemFonts: false }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const content = await (await doc.getPage(i)).getTextContent();
+    pages.push(content.items.map((it) => ("str" in it ? it.str : "")).join(" "));
+  }
+  return pages.join(" ");
+}
+
 const t7 = (tenantId: string) => runWithTenant(tenantId, () => t.models.Table.findOne({ name: "T7" }).lean().orFail());
 
 beforeAll(async () => {
@@ -324,6 +335,32 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     }
     // Copying last week works inside A only.
     expect((await call("POST", "/api/shifts/copy-last-week", { week: "2026-11-16" })).statusCode).toBe(200);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 2 Task 19: the shift PDFs: A gets 404 for B's people and A's PDFs never show B's names; B unchanged", async () => {
+    // Both sandboxes are copies of the same demo, so B's people and restaurant get names only B has.
+    await runWithTenant(b.tenantId, async () => {
+      const people = await t.models.Staff.find({}).sort({ _id: 1 }).lean();
+      for (const [i, p] of people.entries()) await t.models.Staff.updateOne({ _id: p._id }, { $set: { name: `Bonly${i} Person` } });
+      await t.models.Tenant.updateOne({}, { $set: { name: "Bonly Bistro" } });
+    });
+    const before = await snapshot(b.tenantId);
+    expect(before.shifts.length).toBeGreaterThan(0);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const get = (url: string) => t.inject({ method: "GET", url, cookies });
+    const week = before.shifts[0]!.serviceDay;
+    for (const st of before.staff) {
+      expect((await get(`/api/shifts/pdf/person/${String(st._id)}?week=${week}`)).statusCode).toBe(404);
+    }
+    for (const url of [`/api/shifts/pdf/week?week=${week}`, `/api/shifts/pdf/people?week=${week}`, `/api/me/shifts/pdf?week=${week}`]) {
+      const res = await get(url);
+      expect(res.statusCode, url).toBe(200);
+      const text = await pdfText(res.rawPayload);
+      expect(text.length, url).toBeGreaterThan(0);
+      expect(text, url).not.toContain("Bonly");
+      if (!url.startsWith("/api/me")) expect(text, url).toContain("Deniz"); // A's own people are there
+    }
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 

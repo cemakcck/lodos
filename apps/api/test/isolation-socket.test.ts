@@ -92,6 +92,32 @@ describe("cross-sandbox isolation over sockets", () => {
     for (const e of aFloor.events) if (e.tableId) expect(e.tableId).toBe(aw.t7Id);
   });
 
+  it("layout.saved reaches only its own tenant's floor and managers", async () => {
+    const am = await visitor("manager");
+    const waiter = await runWithTenant(am.tenantId, () => t.models.Staff.findOne({ role: "waiter", active: true }).lean().orFail());
+    const awSid = await createSession(t.models, String(waiter._id), am.tenantId, "person", NOW);
+    const saveT7Room = async (v: Visitor) => {
+      const req = (method: "GET" | "PUT", path: string, payload?: object) => t.inject({ method, url: path, cookies: { lodos_sid: v.sid }, ...(payload ? { payload } : {}) });
+      const room = String((await runWithTenant(v.tenantId, () => t.models.Table.findById(v.t7Id).lean().orFail())).roomId);
+      const layout = (await req("GET", `/api/rooms/${room}/layout`)).json() as { room: { version: number }; tables: { id: string }[] };
+      const res = await req("PUT", `/api/rooms/${room}/layout`, { version: layout.room.version, tables: layout.tables.map((x) => ({ ...x, key: x.id })) });
+      expect(res.statusCode, res.body).toBe(200);
+      return room;
+    };
+    const aManager = await connect(url, { sid: am.sid });
+    const aFloor = await connect(url, { sid: awSid });
+    const bManager = await connect(url, { sid: b.sid });
+    const bRoom = await saveT7Room(b);
+    await bManager.next((e) => e.type === "layout.saved" && e.ids.includes(bRoom));
+    // Barrier: A's own save arrives; nothing of B's may have come before it.
+    const aRoom = await saveT7Room(am);
+    for (const c of [aManager, aFloor]) {
+      await c.next((e) => e.type === "layout.saved");
+      expect(c.events.filter((e) => e.type === "layout.saved").map((e) => e.ids)).toEqual([[aRoom]]);
+      expect(c.events.some((e) => e.ids?.includes(bRoom))).toBe(false);
+    }
+  });
+
   it("adjustment.changed reaches only its own tenant's kitchen and guests", async () => {
     // A comp of a kitchen line on T7, by the tenant's manager (the demo manager is "Selin").
     const compT7 = async (v: Visitor) => {
