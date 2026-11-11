@@ -164,6 +164,35 @@ describe("Floor plan editor", () => {
     expect(await tableBtn("B1")).toBeTruthy();
   });
 
+  it("the inspector's Duplicate focuses the copy; Delete focuses the next table", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(await tableBtn("T1"));
+    await user.click(screen.getByRole("button", { name: "Duplicate" }));
+    const copy = await tableBtn("T17");
+    await waitFor(() => expect(document.activeElement).toBe(copy));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    expect(screen.queryByRole("button", { name: /^T17,/ })).toBeNull();
+    // Name order B1, T1, T4, T17: the one after T17 is none, so the one before it.
+    await waitFor(() => expect(document.activeElement?.getAttribute("aria-label")).toMatch(/^T4,/));
+    await user.click(await tableBtn("B1"));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(document.activeElement?.getAttribute("aria-label")).toMatch(/^T1,/));
+  });
+
+  it("an arrow press clamped at the edge doesn't move or announce", async () => {
+    const user = userEvent.setup();
+    setup({ "GET /api/rooms/salon/layout": { ...LAYOUT, tables: [tb({ id: "t1", name: "T1", x: 32, y: 0 })] } });
+    const t1 = await tableBtn("T1");
+    t1.focus();
+    await user.keyboard("{ArrowUp}");
+    expect((await tableBtn("T1")).getAttribute("aria-label")).toContain("x 32, y 0");
+    expect(document.querySelector("p.sr-only[role=status]")!.textContent).toBe("");
+    expect(screen.queryByText(/unsaved change/)).toBeNull();
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByText("T1 moved to x 32, y 16")).toBeTruthy();
+  });
+
   it("dragging snaps to the grid, shows the readout while moving and commits on release", async () => {
     setup();
     const t1 = await tableBtn("T1");

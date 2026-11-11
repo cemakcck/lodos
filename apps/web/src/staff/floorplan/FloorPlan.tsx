@@ -41,6 +41,8 @@ export function FloorPlan() {
   const roomId = (roomParam && rooms.some((r) => r.id === roomParam) ? roomParam : rooms[0]?.id) ?? null;
   const draft = useLayoutDraft(roomId);
   const [announcement, setAnnouncement] = useState("");
+  /** A table the canvas should focus once it is rendered (after the inspector's Duplicate or Delete). */
+  const [focusKey, setFocusKey] = useState<string | null>(null);
   const [roomDialog, setRoomDialog] = useState<"add" | "rename" | null>(null);
 
   const room = draft.room;
@@ -89,6 +91,8 @@ export function FloorPlan() {
     const tb = draft.tables.find((v) => v.key === key);
     if (!tb || !room) return;
     const at = clampInto({ ...tb, x, y }, room);
+    // Pressed against the edge: nothing moved, so nothing to say.
+    if (at.x === tb.x && at.y === tb.y) return;
     draft.move(key, at.x, at.y);
     setAnnouncement(t("floorPlan.moved", { name: tb.name, x: at.x, y: at.y }));
   };
@@ -193,6 +197,8 @@ export function FloorPlan() {
             </div>
             <div className="fp-canvas">
               <PlanCanvas
+                focusKey={focusKey}
+                onFocused={() => setFocusKey(null)}
                 room={room}
                 roomLabel={roomLabel}
                 tables={draft.tables}
@@ -223,6 +229,7 @@ export function FloorPlan() {
               waiters={waiters}
               nameOf={nameOf}
               announce={setAnnouncement}
+              focusTable={setFocusKey}
             />
           ) : (
             <aside className="pp-panel fp-panel fp-panel-empty">

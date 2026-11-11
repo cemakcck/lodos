@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Info, Lock, Minus, Plus, QrCode, Trash2 } from "lucide-react";
 import { TABLE_CAPACITY_MAX, TABLE_CAPACITY_MIN, TABLE_NAME_RE } from "@lodos/shared";
+import { byName } from "../floor/lib";
 import { clampInto, GRID, snap } from "./geometry";
 import { samePrefix, shapeOption, type LayoutDraft } from "./useLayoutDraft";
 import type { DraftTable, ShapeOption } from "./types";
@@ -19,6 +20,8 @@ export interface InspectorProps {
   /** Everyone's names, for a stored section whose person is no longer a waiter. */
   nameOf: (id: string) => string | null;
   announce: (text: string) => void;
+  /** Moves focus to a table on the canvas (the copy after Duplicate, the next table after Delete). */
+  focusTable: (key: string | null) => void;
 }
 
 /**
@@ -26,7 +29,7 @@ export interface InspectorProps {
  * alternative to dragging), Duplicate, Delete and its QR code. A table with an open check can still move; the
  * controls it can't use are disabled and point at the reason.
  */
-export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }: InspectorProps) {
+export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce, focusTable }: InspectorProps) {
   const { t } = useTranslation();
   const id = useId();
   const reasonId = `${id}-reason`;
@@ -61,6 +64,7 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }
   const nudge = (dx: number, dy: number) => {
     if (!draft.room) return;
     const at = clampInto({ ...table, x: snap(table.x + dx * GRID), y: snap(table.y + dy * GRID) }, draft.room);
+    if (at.x === table.x && at.y === table.y) return; // against the edge: nothing moved, nothing to announce
     draft.move(table.key, at.x, at.y);
     announce(t("floorPlan.moved", { name: table.name, x: at.x, y: at.y }));
   };
@@ -194,7 +198,9 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }
           className="staff-btn"
           onClick={() => {
             const copy = draft.duplicate(table.key);
-            if (copy) announce(t("floorPlan.duplicated", { name: table.name, copy: copy.name }));
+            if (!copy) return;
+            announce(t("floorPlan.duplicated", { name: table.name, copy: copy.name }));
+            focusTable(copy.key);
           }}
         >
           <Copy size={15} strokeWidth={1.75} aria-hidden="true" />
@@ -206,7 +212,13 @@ export function Inspector({ draft, table, roomLabel, waiters, nameOf, announce }
           disabled={locked}
           aria-describedby={locked ? reasonId : undefined}
           onClick={() => {
-            if (draft.remove(table.key)) announce(t("floorPlan.removed", { name: table.name }));
+            // The button goes with the table: focus the next table in name order (as the Delete key does).
+            const sorted = [...draft.tables].sort(byName);
+            const i = sorted.findIndex((x) => x.key === table.key);
+            const next = sorted[i + 1]?.key ?? sorted[i - 1]?.key ?? null;
+            if (!draft.remove(table.key)) return;
+            announce(t("floorPlan.removed", { name: table.name }));
+            focusTable(next);
           }}
         >
           <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />

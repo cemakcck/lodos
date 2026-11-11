@@ -18,6 +18,9 @@ export interface PlanCanvasProps {
   onMove: (key: string, x: number, y: number) => void;
   /** Returns false when the table can't be removed (open check). */
   onRemove: (key: string) => boolean;
+  /** Focus this table once it is on the canvas, then call `onFocused`. */
+  focusKey?: string | null;
+  onFocused?: () => void;
 }
 
 const KEYS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -33,7 +36,7 @@ type Drag = { key: string; pointerId: number; startX: number; startY: number; or
  * arrow keys move one grid step, Shift + arrow four; Delete removes. Only the tables take `touch-action: none`, so
  * the page still scrolls from anywhere else on the canvas.
  */
-export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId, onSelect, onMove, onRemove }: PlanCanvasProps) {
+export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId, onSelect, onMove, onRemove, focusKey = null, onFocused }: PlanCanvasProps) {
   const { t } = useTranslation();
   const dotsId = useId();
   const svg = useRef<SVGSVGElement>(null);
@@ -48,6 +51,14 @@ export function PlanCanvas({ room, roomLabel, tables, selected, problems, hintId
     if (focusNext.current === null) return;
     els.current.get(focusNext.current)?.focus();
     focusNext.current = null;
+  });
+  // A focus asked for from outside (the inspector's Duplicate or Delete).
+  useEffect(() => {
+    if (focusKey === null) return;
+    const el = els.current.get(focusKey);
+    if (!el) return;
+    el.focus();
+    onFocused?.();
   });
 
   const scale = () => {
