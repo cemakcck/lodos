@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COMP_REASONS, VOID_REASONS } from "./adjustments";
 import { ALLERGENS } from "./allergens";
 import { TABLE_NAME_RE } from "./tables";
 
@@ -134,3 +135,24 @@ export type SplitBody = z.infer<typeof SplitBody>;
 /** POST /api/checks/:id/shares/:label/pay. `amount` confirms the share amount the client was shown (kuruş). */
 export const PayShareBody = z.object({ method: z.enum(["card", "cash"]), amount: z.number().int().min(0) });
 export type PayShareBody = z.infer<typeof PayShareBody>;
+
+/**
+ * POST /api/checks/:id/adjustments: comp or void `qty` units of one order line (`lineRef` = "<orderId>:<index>").
+ * The reason comes from the kind's list; the note is required only for "other" (at most 140 characters).
+ * `approval` is a manager's PIN, needed unless the requester is a manager.
+ */
+export const AdjustBody = z
+  .object({
+    lineRef: z.string().regex(/^[0-9a-f]{24}:\d{1,3}$/i, "Invalid line"),
+    kind: z.enum(["comp", "void"]),
+    qty: z.number().int().min(1).max(99),
+    reason: z.string().min(1).max(40),
+    note: z.string().trim().max(140).nullish(),
+    approval: ApprovalBody.optional(),
+  })
+  .superRefine((b, ctx) => {
+    const reasons: readonly string[] = b.kind === "comp" ? COMP_REASONS : VOID_REASONS;
+    if (!reasons.includes(b.reason)) ctx.addIssue({ code: "custom", path: ["reason"], message: `Unknown ${b.kind} reason` });
+    if (b.reason === "other" && !b.note) ctx.addIssue({ code: "custom", path: ["note"], message: "A note is required for Other" });
+  });
+export type AdjustBody = z.infer<typeof AdjustBody>;

@@ -17,7 +17,8 @@ export type ErrorCode =
   | "approval_required"
   | "not_a_manager"
   | "split_locked"
-  | "amount_changed";
+  | "amount_changed"
+  | "void_after_ready";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

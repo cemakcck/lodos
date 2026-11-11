@@ -24,6 +24,8 @@ export type TicketItemView = {
   allergens: string[];
   allergyFlag: boolean;
   checked: boolean;
+  /** Units of this line voided; the display strikes them through. */
+  voidedQty: number;
 };
 export type TicketView = {
   id: string;
@@ -92,6 +94,7 @@ function view(t: Lean, now: Date, th: { warnMin: number; lateMin: number }): Tic
       allergens: [...i.allergens],
       allergyFlag: !!i.note && noteMentionsAllergy(i.note), // Task 16 ruling: only the guest's note raises the red flag
       checked: i.checked,
+      voidedQty: i.voidedQty ?? 0,
     })),
   };
 }
@@ -100,9 +103,9 @@ export async function kdsView(models: Models, station: Station, tab: Tab, now: D
   const th = await thresholds(models);
   const dayStart = serviceDayStart(now);
   const [active, held, done] = await Promise.all([
-    loadLean(models, { station, status: { $in: ["new", "started"] } }),
-    tab === "held" ? loadLean(models, { station, status: "held" }) : Promise.resolve([]),
-    models.Ticket.find({ station, status: "ready", readyAt: { $gte: dayStart } })
+    loadLean(models, { station, status: { $in: ["new", "started"] }, voidedAt: null }),
+    tab === "held" ? loadLean(models, { station, status: "held", voidedAt: null }) : Promise.resolve([]),
+    models.Ticket.find({ station, status: "ready", readyAt: { $gte: dayStart }, voidedAt: null })
       .sort({ readyAt: -1 })
       .lean(),
   ]);
@@ -110,17 +113,18 @@ export async function kdsView(models: Models, station: Station, tab: Tab, now: D
   held.sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
   const shown = tab === "active" ? active : tab === "held" ? held : done.slice(0, 50);
 
-  // allDay: not-yet-checked quantity per menu item (the ticket line points into Order.items, which has the itemId).
+  // allDay: not-yet-checked, not-voided quantity per menu item (the ticket line points into Order.items, which has the itemId).
   const orders = await models.Order.find({ _id: { $in: active.map((t) => t.orderId) } }, { items: 1 }).lean();
   const itemIdOf = new Map(orders.map((o) => [String(o._id), o.items.map((i) => String(i.itemId))]));
   const tally = new Map<string, { itemName: Loc; qty: number }>();
   for (const t of active) {
     for (const l of t.items) {
-      if (l.checked) continue;
+      const qty = l.qty - (l.voidedQty ?? 0);
+      if (l.checked || qty <= 0) continue;
       const key = itemIdOf.get(String(t.orderId))?.[l.orderItemIndex] ?? l.name.en;
       const cur = tally.get(key);
-      if (cur) cur.qty += l.qty;
-      else tally.set(key, { itemName: { en: l.name.en, tr: l.name.tr }, qty: l.qty });
+      if (cur) cur.qty += qty;
+      else tally.set(key, { itemName: { en: l.name.en, tr: l.name.tr }, qty });
     }
   }
   const allDay = [...tally.values()].sort((a, b) => b.qty - a.qty);
@@ -144,7 +148,7 @@ export async function kdsView(models: Models, station: Station, tab: Tab, now: D
     eightySix,
     stats: {
       open: active.length,
-      items: active.reduce((n, t) => n + t.items.reduce((m, i) => m + i.qty, 0), 0),
+      items: active.reduce((n, t) => n + t.items.reduce((m, i) => m + i.qty - (i.voidedQty ?? 0), 0), 0),
       avgTicketMs: cook.length ? Math.round(cook.reduce((a, b) => a + b, 0) / cook.length) : 0,
       late: active.filter((t) => ticketAgeState(t.sentAt, now, th) === "late").length,
     },

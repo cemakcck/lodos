@@ -39,6 +39,7 @@ const snapshot = (tenantId: string) =>
     orders: await t.models.Order.find({}).sort({ _id: 1 }).lean(),
     calls: await t.models.Call.find({}).sort({ _id: 1 }).lean(),
     availability: await t.models.Availability.find({}).sort({ _id: 1 }).lean(),
+    adjustments: await t.models.Adjustment.find({}).sort({ _id: 1 }).lean(),
   }));
 
 const t7 = (tenantId: string) => runWithTenant(tenantId, () => t.models.Table.findOne({ name: "T7" }).lean().orFail());
@@ -164,9 +165,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(before.checks.length).toBeGreaterThan(0);
     expect(before.calls.length).toBeGreaterThan(0);
     const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
-    const req = (method: "GET" | "POST" | "PUT", url: string, payload?: object) =>
+    const req = (method: "GET" | "POST" | "PUT" | "DELETE", url: string, payload?: object) =>
       t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
-    const expect404 = async (method: "GET" | "POST" | "PUT", url: string, payload?: object) => {
+    const expect404 = async (method: "GET" | "POST" | "PUT" | "DELETE", url: string, payload?: object) => {
       const res = await req(method, url, payload);
       expect(res.statusCode, `${method} ${url}`).toBe(404);
     };
@@ -183,14 +184,42 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
       await expect404("GET", `/api/checks/${String(c._id)}/split`);
       await expect404("PUT", `/api/checks/${String(c._id)}/split`, { mode: "even", count: 2 });
       await expect404("POST", `/api/checks/${String(c._id)}/shares/A/pay`, { method: "card", amount: 0 });
+      const order = before.orders.find((o) => String(o.checkId) === String(c._id));
+      if (order) {
+        await expect404("POST", `/api/checks/${String(c._id)}/adjustments`, { lineRef: `${String(order._id)}:0`, kind: "void", qty: 1, reason: "other", note: "x" });
+      }
+      await expect404("DELETE", `/api/checks/${String(c._id)}/adjustments/${String(c._id)}`);
     }
     for (const tk of before.tickets) await expect404("POST", `/api/tickets/${String(tk._id)}/served`);
     for (const c of before.calls) await expect404("POST", `/api/calls/${String(c._id)}/answer`);
+
+    const approvers = await req("GET", "/api/approvers");
+    expect(approvers.statusCode).toBe(200);
+    for (const st of before.staff) expect(JSON.stringify(approvers.json())).not.toContain(String(st._id));
 
     const floor = await req("GET", "/api/floor");
     expect(floor.statusCode).toBe(200);
     const text = JSON.stringify(floor.json());
     for (const tb of before.tables) expect(text).not.toContain(String(tb._id));
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  }, 20_000);
+  it("Phase 2 Task 6: A's manager cannot reverse or add to B's adjustments (404); B unchanged", async () => {
+    const bCheck = (await snapshot(b.tenantId)).checks.find((c) => c.status === "open")!;
+    const bOrder = (await snapshot(b.tenantId)).orders.find((o) => String(o.checkId) === String(bCheck._id))!;
+    const bReq = (method: "POST" | "DELETE", url: string, payload?: object) =>
+      t.inject({ method, url, cookies: { lodos_sid: b.sid }, ...(payload ? { payload } : {}) });
+    const made = await bReq("POST", `/api/checks/${String(bCheck._id)}/adjustments`, { lineRef: `${String(bOrder._id)}:0`, kind: "comp", qty: 1, reason: "regular" });
+    expect(made.statusCode).toBe(201);
+    const adjId = made.json().adjustment.id as string;
+    const before = await snapshot(b.tenantId);
+    const aCheck = (await snapshot(a.tenantId)).checks[0]!;
+    const cookieSets: Record<string, string>[] = [{ lodos_sid: a.sid }, { lodos_sid: a.sid, lodos_sb: b.sb }];
+    for (const cookies of cookieSets) {
+      for (const checkId of [String(bCheck._id), String(aCheck._id)]) {
+        const res = await t.inject({ method: "DELETE", url: `/api/checks/${checkId}/adjustments/${adjId}`, cookies });
+        expect(res.statusCode).toBe(404);
+      }
+    }
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
   it("T11: A's manager session gets 404 on B's menu item, category, availability, table and token ids; B unchanged", async () => {

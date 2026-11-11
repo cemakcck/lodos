@@ -15,6 +15,8 @@ const ticketLineSchema = new Schema(
     note: { type: String, default: null },
     allergens: { type: [{ type: String, enum: ALLERGENS }], default: [] },
     checked: { type: Boolean, required: true, default: false },
+    /** Units of this line voided (Task 6); shown struck through on the KDS. */
+    voidedQty: { type: Number, required: true, default: 0, min: 0 },
   },
   { _id: false },
 );
@@ -36,6 +38,8 @@ export const ticketSchema = new Schema({
   /** Set by recall; the 3 s double-tap dedupe window reads it. */
   recalledAt: { type: Date, default: null },
   items: { type: [ticketLineSchema], required: true },
+  /** Set when every line is fully voided: the ticket leaves the KDS lists. Cleared when a void is reversed. */
+  voidedAt: { type: Date, default: null },
 });
 ticketSchema.index({ tenantId: 1, station: 1, status: 1 });
 ticketSchema.index({ tenantId: 1, checkId: 1 });

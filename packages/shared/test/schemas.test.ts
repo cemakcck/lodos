@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALLERGENS, DemoRole, EVENTS, OrderItemRequest, OrderRequest, StaffRole, room, tableRoom } from "../src/index";
+import { AdjustBody, ALLERGENS, DemoRole, EVENTS, OrderItemRequest, OrderRequest, StaffRole, room, tableRoom } from "../src/index";
 
 const key = "123e4567-e89b-42d3-a456-426614174000";
 const item = (qty: number) => ({ itemId: "i1", qty, options: [] });
@@ -43,5 +43,27 @@ describe("schemas", () => {
     expect(room("t1", "floor")).toBe("t1:floor");
     expect(room("t1", "manager")).toBe("t1:manager");
     expect(tableRoom("t1", "x")).toBe("t1:table:x");
+  });
+});
+
+describe("AdjustBody", () => {
+  const ok = { lineRef: "0123456789abcdef01234567:2", kind: "comp", qty: 1, reason: "celebration" };
+  it("accepts a comp reason for a comp and a void reason for a void", () => {
+    expect(AdjustBody.safeParse(ok).success).toBe(true);
+    expect(AdjustBody.safeParse({ ...ok, kind: "void", reason: "wrong_item" }).success).toBe(true);
+    expect(AdjustBody.safeParse({ ...ok, kind: "void", reason: "celebration" }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, reason: "wrong_item" }).success).toBe(false);
+  });
+  it("needs a note (≤ 140 chars) only for other", () => {
+    expect(AdjustBody.safeParse({ ...ok, reason: "other" }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, reason: "other", note: "   " }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, reason: "other", note: "Spilled" }).success).toBe(true);
+    expect(AdjustBody.safeParse({ ...ok, reason: "other", note: "x".repeat(141) }).success).toBe(false);
+  });
+  it("rejects a bad line ref or quantity", () => {
+    expect(AdjustBody.safeParse({ ...ok, lineRef: "abc:1" }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, lineRef: "0123456789abcdef01234567:1:0" }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, qty: 0 }).success).toBe(false);
+    expect(AdjustBody.safeParse({ ...ok, qty: 1.5 }).success).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
 import { guest, itemNamed, makeTestApp, orderBody } from "./helpers";
 import { closeSockets, connect, connectError, listen, until, type WireEvent } from "./sockets";
@@ -89,6 +90,37 @@ describe("cross-sandbox isolation over sockets", () => {
     const splits = aFloor.events.filter((e) => e.type === "split.updated");
     expect(splits.map((e) => e.ids)).toEqual([[aCheck]]);
     for (const e of aFloor.events) if (e.tableId) expect(e.tableId).toBe(aw.t7Id);
+  });
+
+  it("adjustment.changed reaches only its own tenant's kitchen and guests", async () => {
+    // A comp of a kitchen line on T7, by the tenant's manager (the demo manager is "Selin").
+    const compT7 = async (v: Visitor) => {
+      await foodOrder(v);
+      const manager = await runWithTenant(v.tenantId, () => t.models.Staff.findOne({ role: "manager" }).lean().orFail());
+      const sid = await createSession(t.models, String(manager._id), v.tenantId, "person", NOW);
+      const order = await runWithTenant(v.tenantId, () => t.models.Order.findOne({ tableId: v.t7Id }).sort({ placedAt: -1, _id: -1 }).lean().orFail());
+      const res = await t.inject({
+        method: "POST",
+        url: `/api/checks/${String(order.checkId)}/adjustments`,
+        cookies: { lodos_sid: sid },
+        payload: { lineRef: `${String(order._id)}:0`, kind: "comp", qty: 1, reason: "regular" },
+      });
+      expect(res.statusCode).toBe(201);
+      return res.json().adjustment.id as string;
+    };
+    const aKitchen = await connect(url, { sid: a.sid });
+    const aGuest = await connect(url, { tableToken: a.t7Token });
+    const bManager = await connect(url, { sid: b.sid });
+    const bAdj = await compT7(b);
+    await bManager.next((e) => e.type === "adjustment.changed" && e.ids.includes(bAdj));
+    // Barrier: A's own adjustment arrives; nothing of B's may have come before it.
+    const aAdj = await compT7(a);
+    await aKitchen.next((e) => e.type === "adjustment.changed");
+    await aGuest.next((e) => e.type === "adjustment.changed");
+    for (const c of [aKitchen, aGuest]) {
+      expect(c.events.filter((e) => e.type === "adjustment.changed").map((e) => e.ids)).toEqual([[aAdj]]);
+      for (const e of c.events) if (e.tableId) expect(e.tableId).toBe(a.t7Id);
+    }
   });
 
   it("a guest socket with A's token joins only A's rooms, whatever B cookies the browser holds", async () => {
