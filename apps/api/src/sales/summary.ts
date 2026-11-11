@@ -88,7 +88,7 @@ export async function summarizeDay(models: Models, serviceDay: string): Promise<
   const voids = { count: 0, amount: 0 };
   for (const a of adjustments) {
     const sum = a.kind === "comp" ? comps : voids;
-    sum.count += a.qty;
+    sum.count += 1; // one per adjustment (a log row), whatever its qty
     sum.amount += a.amount;
     hour(a.at).comps += a.amount;
   }

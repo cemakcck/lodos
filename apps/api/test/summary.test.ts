@@ -172,6 +172,19 @@ describe("daily summaries", () => {
     expect(day.byHour).toEqual([{ hour: 6, revenue: 2 * fries.price, covers: 3, checks: 1, comps: 0 }]);
   });
 
+  it("comps and voids count adjustments, not units: a comp of 2 units is count 1, amount both units", async () => {
+    const c = await fresh();
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    t.clock.set(at("2026-11-10T15:00:00Z"));
+    const checkId = await c.seat("T7", 2);
+    const orderId = await c.order("T7", [{ itemId: fries.id, qty: 3 }]);
+    const comp = await c.m("POST", `/api/checks/${checkId}/adjustments`, { lineRef: `${orderId}:0`, kind: "comp", qty: 2, reason: "celebration" });
+    expect(comp.statusCode, comp.body).toBe(201);
+    const day = await c.inTenant(() => summarizeDay(t.models, DAY));
+    expect(day.comps).toEqual({ count: 1, amount: 2 * fries.price });
+    expect(day.voids).toEqual({ count: 0, amount: 0 });
+  });
+
   it("never stores today (or a later day); past days are stored", async () => {
     const c = await fresh();
     const out = await c.inTenant(() => ensureSummaries(t.models, ["2026-11-09", "2026-11-10"], "2026-11-10"));
