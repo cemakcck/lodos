@@ -451,7 +451,7 @@
 
   /* Close view (split the bill) */
   .cv-modes { margin-left: 14px; }
-  .cv-modes [role="radio"] { min-height: 34px; padding: 0 12px; }
+  .cv-modes [role="radio"] { min-height: 38px; padding: 0 12px; }
   .cv-modes [role="radio"][aria-checked="true"] {
     background: var(--color-staff-panel); color: var(--color-staff-fg);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--color-staff-line);
@@ -471,7 +471,8 @@
   .cv-empty { display: grid; place-items: center; gap: 12px; padding: 48px 16px; color: var(--color-staff-fg-2); }
   .cv-items { display: flex; flex-direction: column; min-height: 100%; }
   .cv-items-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px 4px; }
-  .cv-add { min-height: 32px; height: 32px; padding: 0 10px; }
+  .cv-add { min-height: 38px; height: 38px; padding: 0 10px; }
+  .cv-items-h .cv-acts { display: flex; gap: 6px; }
   .cv-items-hint { padding: 0 18px 10px; }
   .cv-units { list-style: none; }
   .cv-unit { border-top: 1px solid var(--color-staff-line); }
@@ -499,11 +500,12 @@
   .cv-letters .cv-g { width: 44px; height: 44px; font-size: 14px; border-radius: 8px; }
   .cv-letters .cv-g:disabled { opacity: 0.45; cursor: not-allowed; }
   .cv-g.is-none { border-style: dashed; }
+  /* Guest letters are identities, not states: plum and neutral tones only (red, amber and green mean alerts). Every
+     "on" pair is ≥ 7:1 (white on plum/ink/fg-2, plum on plum-100). */
   .cv-g.is-on { background: var(--color-staff-fg); border-color: var(--color-staff-fg); color: #fff; }
   .cv-g.is-a.is-on { background: var(--color-staff-rail); border-color: var(--color-staff-rail); }
-  .cv-g.is-b.is-on { background: var(--color-staff-red); border-color: var(--color-staff-red); }
-  .cv-g.is-c.is-on { background: var(--color-staff-amber); border-color: var(--color-staff-amber); }
-  .cv-g.is-d.is-on { background: var(--color-staff-ok); border-color: var(--color-staff-ok); }
+  .cv-g.is-c.is-on { background: var(--color-staff-fg-2); border-color: var(--color-staff-fg-2); }
+  .cv-g.is-d.is-on { background: var(--color-staff-plum-100); border-color: var(--color-staff-rail); color: var(--color-staff-rail); }
   .cv-unas {
     margin: auto 18px 16px; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; display: flex; gap: 8px; align-items: center;
     background: var(--color-staff-amber-50); color: var(--color-staff-amber); border: 1px solid #ecdcb8;

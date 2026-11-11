@@ -114,6 +114,15 @@ const floor = (covers: number | null) => ({
   stats: { seated: 1, totalTables: 1, covers: covers ?? 0, avgTurnMs: 0, openChecksTotal: TOTAL },
 });
 
+const tableCheck = (billMethod: "card" | "cash" | null) => ({
+  table: { id: "t4", name: "T4", capacity: 4, sectionStaffId: "id-waiter" },
+  calls: [],
+  check: { id: "c1", covers: 3, openedAt: AT, serverStaffId: "id-waiter", serverName: "Deniz Kaya", billRequestedAt: billMethod ? AT : null, billMethod },
+  food: [],
+  drinks: [],
+  totals: { food: 0, drinks: 0, total: TOTAL },
+});
+
 let calls: ReturnType<typeof mockFetch>["calls"];
 /** A stateful split API: GET answers what the last PUT stored; the PUT applies the body like the server would. */
 function setup(initial: SplitView, extra: Record<string, unknown> = {}, covers: number | null = 3) {
@@ -249,6 +258,52 @@ describe("CloseView", () => {
     await userEvent.click(screen.getByRole("button", { name: "Guest A" }));
     await waitFor(() => expect(puts()).toHaveLength(3));
     expect(puts()[2]).toEqual({ mode: "items", count: 2, assignments: [{ unit: "o1:0:0", labels: ["B"] }, { unit: "o1:2:0", labels: ["A"] }] });
+  });
+
+  it("every pay dialog preselects the method the guest asked for, with the note", async () => {
+    setup(fullView(), { "GET /api/tables/t4/check": tableCheck("cash") });
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/tables/t4/check")).toBe(true));
+    await userEvent.click(await screen.findByRole("button", { name: `Take payment, ${money(TOTAL)}` }));
+    let dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("radio", { name: "Cash" }).getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog).getByText("The guest asked to pay by cash.")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+
+    // A share's dialog too.
+    await userEvent.click(screen.getByRole("radio", { name: "By item" }));
+    await userEvent.click(await screen.findByRole("button", { name: /^Burrata/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Guest A" }));
+    await userEvent.click(await screen.findByRole("button", { name: `Take payment, Guest A, ${money(54000)}` }));
+    dialog = screen.getByRole("dialog", { name: "Take payment · Guest A" });
+    expect(within(dialog).getByRole("radio", { name: "Cash" }).getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog).getByText("The guest asked to pay by cash.")).toBeTruthy();
+  });
+
+  it("without a requested method, the dialog starts on Card and shows no note", async () => {
+    setup(fullView(), { "GET /api/tables/t4/check": tableCheck(null) });
+    await userEvent.click(await screen.findByRole("button", { name: `Take payment, ${money(TOTAL)}` }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("radio", { name: "Card" }).getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog).queryByText(/asked to pay/)).toBeNull();
+  });
+
+  it("By item: Remove guest drops the last letter only while it is unpaid and empty, never below 2", async () => {
+    const { set, qc } = setup(itemsView(3, { "o1:0:0": ["C"] }));
+    const remove = await screen.findByRole("button", { name: "Remove Guest C" });
+    expect((remove as HTMLButtonElement).disabled).toBe(true); // C has Burrata
+    set(itemsView(3, { "o1:0:0": ["A"] }));
+    await act(() => qc.invalidateQueries({ queryKey: ["split"] }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Remove Guest C" }) as HTMLButtonElement).disabled).toBe(false));
+    await userEvent.click(screen.getByRole("button", { name: "Remove Guest C" }));
+    await waitFor(() => expect(puts()).toEqual([{ mode: "items", count: 2, assignments: [{ unit: "o1:0:0", labels: ["A"] }] }]));
+    await waitFor(() => expect(cards()).toHaveLength(2));
+    // Two letters is the floor.
+    expect((screen.getByRole("button", { name: "Remove Guest B" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("By item: a paid last letter can't be removed", async () => {
+    setup(itemsView(3, { "o1:0:0": ["A"] }, { C: { method: "card", amount: 0 } }));
+    expect(((await screen.findByRole("button", { name: "Remove Guest C" })) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("By item: + Guest adds a letter", async () => {

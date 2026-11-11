@@ -883,6 +883,7 @@
     "items": {
       "onCheck": "On the check · {{count}}",
       "addGuest": "Add a guest",
+      "removeGuest": "Remove Guest {{label}}",
       "addGuestShort": "Guest",
       "hint": "Select an item, then tap the guests who pay for it. Tap several to share it.",
       "unitOf": "{{n}} of {{of}}",

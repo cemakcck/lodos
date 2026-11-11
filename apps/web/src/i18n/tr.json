@@ -883,6 +883,7 @@
     "items": {
       "onCheck": "Hesapta · {{count}}",
       "addGuest": "Misafir ekle",
+      "removeGuest": "Misafir {{label}} kaldır",
       "addGuestShort": "Misafir",
       "hint": "Bir ürün seçin, sonra ödeyecek misafirlere dokunun. Paylaşmak için birden fazlasına dokunun.",
       "unitOf": "{{of}} adetten {{n}}.",

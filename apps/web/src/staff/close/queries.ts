@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
-import { floorKey } from "../floor/cache";
-import type { FloorData, FloorSnapshot, PayMethod } from "../floor/types";
+import { checkKey, floorKey } from "../floor/cache";
+import type { FloorData, FloorSnapshot, PayMethod, TableCheck } from "../floor/types";
 import type { PayShareResult, SplitBody, SplitView } from "./types";
 
 /** Live events (`split.updated`, `adjustment.changed`, `check.updated`, `ticket.*`) invalidate the `["split"]` root. */
@@ -20,17 +20,30 @@ export const closeInFull = (checkId: string, method: PayMethod) =>
   api(`/api/checks/${checkId}/close`, { method: "POST", body: JSON.stringify({ method }) });
 
 /**
- * The check's covers, for the first Evenly count. Read from the floor snapshot already in the cache (the waiter
- * comes from the floor); after a reload, one `GET /api/floor` under its own key, so live events don't refetch it.
+ * The table's side of the check: covers (the first Evenly count) and the guest's requested bill method (preselected
+ * in the pay dialog). The table is found through the floor snapshot already in the cache (the waiter comes from the
+ * floor), or, after a reload, one `GET /api/floor` under its own key. Then the same `GET /api/tables/:id/check` query
+ * as the table panel, which live events keep fresh.
  */
-export function useCovers(checkId: string): number | null {
+export function useCheckTable(checkId: string): { covers: number | null; billMethod: PayMethod | null } {
   const qc = useQueryClient();
   const cached = qc.getQueryData<FloorData>(floorKey)?.tables.find((t) => t.checkId === checkId);
-  const q = useQuery({
-    queryKey: ["closeCovers", checkId],
-    queryFn: async () => (await api<FloorSnapshot>("/api/floor")).tables.find((t) => t.checkId === checkId)?.covers ?? null,
+  const found = useQuery({
+    queryKey: ["closeTable", checkId],
+    queryFn: async () => {
+      const t = (await api<FloorSnapshot>("/api/floor")).tables.find((x) => x.checkId === checkId);
+      return t ? { id: t.id, covers: t.covers } : null;
+    },
     enabled: !cached,
     staleTime: Infinity,
   });
-  return cached ? cached.covers : (q.data ?? null);
+  const table = cached ?? found.data ?? null;
+  const tableId = table?.id ?? null;
+  const check = useQuery({
+    queryKey: checkKey(tableId ?? ""),
+    queryFn: () => api<TableCheck>(`/api/tables/${tableId}/check`),
+    enabled: tableId !== null,
+  });
+  const info = check.data?.check?.id === checkId ? check.data.check : null;
+  return { covers: info ? info.covers : (table?.covers ?? null), billMethod: info?.billMethod ?? null };
 }

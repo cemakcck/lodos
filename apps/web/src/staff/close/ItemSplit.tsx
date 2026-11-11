@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CircleAlert, Lock, Plus } from "lucide-react";
+import { CircleAlert, Lock, Minus, Plus } from "lucide-react";
 import { SHARE_LABELS } from "@lodos/shared";
 import { useFormat } from "../../lib/format";
 import { loc } from "../kds/lib";
-import { MAX_SHARES, type SplitBody, type SplitUnit, type SplitView } from "./types";
+import { MAX_SHARES, MIN_SHARES, type SplitBody, type SplitUnit, type SplitView } from "./types";
 
 export interface ItemSplitProps {
   view: SplitView;
@@ -18,7 +18,8 @@ const inOrder = (labels: string[]) => [...labels].sort((a, b) => SHARE_LABELS.in
 
 /**
  * By item's left side: every unit of the check (a line with qty > 1 is one row per unit) with its letters and price.
- * Select a unit, then tap letters to toggle them; "+ Guest" adds a letter. Each change sends the full assignments.
+ * Select a unit, then tap letters to toggle them; "+ Guest" adds a letter and "− Guest D" removes the
+ * last one while it is unpaid and empty. Each change sends the full assignments.
  * Taps show at once (a local draft over the server view) and the server's answer replaces the draft when the last
  * request in flight settles. The amber banner shows what is not assigned yet, from the server.
  */
@@ -72,6 +73,15 @@ export function ItemSplit({ view, onSend }: ItemSplitProps) {
   const addGuest = () => {
     if (current.count < MAX_SHARES) send({ count: current.count + 1, labels: current.labels });
   };
+  // Only the last letter can go, and only while it is unpaid and has nothing on it (the server enforces it too), so an
+  // unused letter never keeps the check from closing.
+  const last = SHARE_LABELS[current.count - 1]!;
+  const lastShare = view.shares.find((s) => s.label === last);
+  const lastInUse = [...current.labels.values()].some((ls) => ls.includes(last));
+  const canRemove = !closed && current.count > MIN_SHARES && !lastShare?.payment && !lastInUse;
+  const removeGuest = () => {
+    if (canRemove) send({ count: current.count - 1, labels: current.labels });
+  };
 
   const spokenLetters = (ls: string[]) =>
     ls.length === 0 ? t("close.items.nobody") : t("close.items.who", { guests: ls.map((l) => t("close.share.guest", { label: l })).join(", ") });
@@ -80,10 +90,16 @@ export function ItemSplit({ view, onSend }: ItemSplitProps) {
     <div className="cv-items">
       <div className="cv-items-h">
         <span className="staff-label">{t("close.items.onCheck", { count: view.units.length })}</span>
-        <button type="button" className="staff-btn cv-add" aria-label={t("close.items.addGuest")} disabled={closed || current.count >= MAX_SHARES} onClick={addGuest}>
-          <Plus size={14} strokeWidth={1.75} aria-hidden="true" />
-          {t("close.items.addGuestShort")}
-        </button>
+        <span className="cv-acts">
+          <button type="button" className="staff-btn cv-add" aria-label={t("close.items.removeGuest", { label: last })} disabled={!canRemove} onClick={removeGuest}>
+            <Minus size={14} strokeWidth={1.75} aria-hidden="true" />
+            {t("close.items.addGuestShort")} {last}
+          </button>
+          <button type="button" className="staff-btn cv-add" aria-label={t("close.items.addGuest")} disabled={closed || current.count >= MAX_SHARES} onClick={addGuest}>
+            <Plus size={14} strokeWidth={1.75} aria-hidden="true" />
+            {t("close.items.addGuestShort")}
+          </button>
+        </span>
       </div>
       <p className="fl-hint cv-items-hint">{t("close.items.hint")}</p>
       <ul className="cv-units">

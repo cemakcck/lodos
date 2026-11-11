@@ -15,7 +15,7 @@ import { EvenSplit } from "./EvenSplit";
 import { ItemSplit } from "./ItemSplit";
 import { ModeTabs } from "./ModeTabs";
 import { PayDialog } from "./PayDialog";
-import { closeInFull, payShare, putSplit, splitKey, useCovers, useSplit } from "./queries";
+import { closeInFull, payShare, putSplit, splitKey, useCheckTable, useSplit } from "./queries";
 import { ShareCard } from "./ShareCard";
 import { MAX_SHARES, MIN_SHARES, type ShareView, type SplitBody, type SplitMode, type SplitView } from "./types";
 
@@ -37,7 +37,7 @@ export function CloseView() {
   const navigate = useNavigate();
   const q = useSplit(id);
   const view = q.data;
-  const covers = useCovers(id);
+  const { covers, billMethod } = useCheckTable(id);
   const [paying, setPaying] = useState<Paying | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [closedShown, setClosedShown] = useState(false);
@@ -241,6 +241,7 @@ export function CloseView() {
           amount={paying.amount}
           confirmLabel={paying.label === null ? t("floor.close.confirm") : t("close.takePayment")}
           pendingLabel={paying.label === null ? t("floor.close.closing") : t("close.pay.taking")}
+          suggested={billMethod}
           pending={pay.isPending || full.isPending}
           error={paying.error}
           onCancel={() => setPaying(null)}
