@@ -181,7 +181,8 @@ async function moveTicketVoids(
   const items = ticket.items.map((i, k) => (k === pos ? { qty: i.qty, voided: Math.min(i.qty, Math.max(0, (i.voidedQty ?? 0) + delta)) } : { qty: i.qty, voided: i.voidedQty ?? 0 }));
   const allVoided = items.every((i) => i.voided >= i.qty);
   const filter: Record<string, unknown> = { _id: ticket._id };
-  if (guardReady) Object.assign(filter, { status: { $ne: "ready" }, servedAt: null });
+  // A void races a bump or a check-off: a line the station already marked done is "made", so the void fails.
+  if (guardReady) Object.assign(filter, { status: { $ne: "ready" }, servedAt: null, [`items.${pos}.checked`]: { $ne: true } });
   const res = await models.Ticket.updateOne(
     filter,
     { $set: { [`items.${pos}.voidedQty`]: items[pos]!.voided, voidedAt: allVoided ? (ticket.voidedAt ?? now) : null } },
@@ -235,8 +236,10 @@ export async function addAdjustment(
     const order = await models.Order.findOne({ _id: line.orderId, checkId: check._id }, { placedAt: 1 }).session(session).lean();
     if (!order) throw conflict("That line is not on this check");
     if (body.kind === "void") {
-      const ticket = await models.Ticket.findOne({ orderId: order._id, station: line.station }, { status: 1, servedAt: 1 }).session(session).lean();
-      if (ticket && (ticket.status === "ready" || ticket.servedAt != null)) throw voidAfterReady();
+      // Ready = the ticket is ready or served, or the station checked this line off.
+      const ticket = await models.Ticket.findOne({ orderId: order._id, station: line.station }, { status: 1, servedAt: 1, items: 1 }).session(session).lean();
+      const checked = ticket?.items.some((i) => i.orderItemIndex === line.index && i.checked) ?? false;
+      if (ticket && (ticket.status === "ready" || ticket.servedAt != null || checked)) throw voidAfterReady();
     }
 
     const updated = await touchCheck(models, session, check, body.kind === "void" ? chosen.map((u) => u.ref) : []);

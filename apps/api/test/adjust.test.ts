@@ -202,6 +202,37 @@ describe("voids", () => {
   });
 });
 
+describe("voids of checked-off lines", () => {
+  it("a line the kitchen checked off counts as made: void → 409 void_after_ready, comp still allowed; other lines stay voidable", async () => {
+    const c = await setup([{ name: GELATO, qty: 2 }, { name: FRIES }]);
+    const ticket = await c.ticketOf("kitchen");
+    const pos = ticket.items.findIndex((i) => i.orderItemIndex === 0);
+    expect((await c.m("POST", `/api/tickets/${String(ticket._id)}/start`)).statusCode).toBe(200);
+    expect((await c.m("POST", `/api/tickets/${String(ticket._id)}/items/${pos}/toggle`)).statusCode).toBe(200);
+    expect((await c.ticketOf("kitchen")).status).toBe("started");
+    const res = await c.adjust(c.m, { name: GELATO, kind: "void" });
+    expect(code(res)).toBe("409 void_after_ready");
+    expect(res.json().error.message).toBe("Already made: comp it instead");
+    expect(await c.adjustmentCount()).toBe(0);
+    expect((await c.ticketOf("kitchen")).items[pos]!.voidedQty).toBe(0);
+    expect((await c.adjust(c.m, { name: GELATO, kind: "comp" })).statusCode).toBe(201);
+    expect((await c.adjust(c.m, { name: FRIES, kind: "void" })).statusCode).toBe(201);
+  });
+
+  it("a ticket recalled from ready is voidable only for lines not checked off", async () => {
+    const c = await setup([{ name: GELATO, qty: 2 }]);
+    const ticketId = String((await c.ticketOf("kitchen"))._id);
+    const kitchen = await session(c.s, "kitchen");
+    expect((await kitchen("POST", `/api/tickets/${ticketId}/bump`)).statusCode).toBe(200);
+    expect((await kitchen("POST", "/api/kds/kitchen/recall")).statusCode).toBe(200);
+    expect((await c.ticketOf("kitchen")).status).toBe("started");
+    // The bump checked every line off; the recall keeps them checked.
+    expect(code(await c.adjust(c.m, { name: GELATO, kind: "void" }))).toBe("409 void_after_ready");
+    expect((await kitchen("POST", `/api/tickets/${ticketId}/items/0/toggle`)).statusCode).toBe(200);
+    expect((await c.adjust(c.m, { name: GELATO, kind: "void" })).statusCode).toBe(201);
+  });
+});
+
 describe("undo", () => {
   it("reversing a void as Selin restores the bill, the ticket line and the portion; again → changed: false", async () => {
     const c = await setup([{ name: GELATO, qty: 2 }]);
@@ -305,6 +336,66 @@ describe("split locks", () => {
     const closed = await c.check();
     expect(closed.status).toBe("paid");
     expect(closed.closedAt).toEqual(NOW);
+  });
+});
+
+describe("undo during a split", () => {
+  const assigned = async (c: Awaited<ReturnType<typeof setup>>) =>
+    Object.fromEntries((await c.check()).split!.assignments.map((a) => [a.unit, a.labels]));
+
+  it("a reversed comp keeps its By item assignment", async () => {
+    const c = await setup([{ name: GELATO }, { name: FRIES }]);
+    const unit = `${c.ref(GELATO)}:0`;
+    const comp = await c.adjust(c.m, { name: GELATO, kind: "comp" });
+    expect(comp.statusCode).toBe(201);
+    expect((await c.w("PUT", `/api/checks/${c.checkId}/split`, { mode: "items", count: 2, assignments: [{ unit, labels: ["B"] }] })).statusCode).toBe(200);
+    expect((await c.m("DELETE", `/api/checks/${c.checkId}/adjustments/${comp.json().adjustment.id}`)).statusCode).toBe(200);
+    expect(await assigned(c)).toEqual({ [unit]: ["B"] });
+    const view = (await c.w("GET", `/api/checks/${c.checkId}/split`)).json();
+    expect(view.shares.find((x: { label: string }) => x.label === "B").amount).toBe(c.items[GELATO]!.price);
+  });
+
+  it("a reversed void's unit comes back unassigned", async () => {
+    const c = await setup([{ name: GELATO }, { name: FRIES }]);
+    const unit = (n: string) => `${c.ref(n)}:0`;
+    const put = await c.w("PUT", `/api/checks/${c.checkId}/split`, {
+      mode: "items",
+      count: 2,
+      assignments: [
+        { unit: unit(GELATO), labels: ["A"] },
+        { unit: unit(FRIES), labels: ["B"] },
+      ],
+    });
+    expect(put.statusCode).toBe(200);
+    const v = await c.adjust(c.m, { name: GELATO, kind: "void" });
+    expect(v.statusCode).toBe(201);
+    expect(await assigned(c)).toEqual({ [unit(FRIES)]: ["B"] });
+    expect((await c.m("DELETE", `/api/checks/${c.checkId}/adjustments/${v.json().adjustment.id}`)).statusCode).toBe(200);
+    expect(await assigned(c)).toEqual({ [unit(FRIES)]: ["B"] });
+    const view = (await c.w("GET", `/api/checks/${c.checkId}/split`)).json();
+    expect(view.units.find((u: { ref: string }) => u.ref === unit(GELATO))).toMatchObject({ labels: [], unitAmount: c.items[GELATO]!.price });
+    expect(view.unassigned).toEqual({ count: 1, amount: c.items[GELATO]!.price });
+  });
+
+  it("reversing a comp whose unit is in a paid By item share → 409 split_locked", async () => {
+    const c = await setup([{ name: GELATO }, { name: FRIES }]);
+    const unit = `${c.ref(GELATO)}:0`;
+    const comp = await c.adjust(c.m, { name: GELATO, kind: "comp" });
+    expect(comp.statusCode).toBe(201);
+    const put = await c.w("PUT", `/api/checks/${c.checkId}/split`, {
+      mode: "items",
+      count: 2,
+      assignments: [
+        { unit, labels: ["A"] },
+        { unit: `${c.ref(FRIES)}:0`, labels: ["A"] },
+      ],
+    });
+    expect(put.statusCode).toBe(200);
+    expect((await c.w("POST", `/api/checks/${c.checkId}/shares/A/pay`, { method: "card", amount: c.items[FRIES]!.price })).statusCode).toBe(200);
+    expect(code(await c.m("DELETE", `/api/checks/${c.checkId}/adjustments/${comp.json().adjustment.id}`))).toBe("409 split_locked");
+    const stored = await runWithTenant(c.s.tenantId, () => t.models.Adjustment.findById(comp.json().adjustment.id).lean().orFail());
+    expect(stored.reversedAt).toBeNull();
+    expect((await c.line(GELATO)).compedQty).toBe(1);
   });
 });
 
