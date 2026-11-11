@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import Fastify, { type FastifyInstance } from "fastify";
 import { Server } from "socket.io";
 import { registerAuthRoutes } from "./auth/routes";
+import { registerCheckRoutes } from "./checks/routes";
 import { CLEANUP_INTERVAL_MS, runCleanup } from "./demo/cleanup";
 import { SIMULATOR_INTERVAL_MS, runSimulatorDue } from "./demo/simulator";
 import { registerDemoRoutes } from "./demo/routes";
@@ -105,6 +106,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerAuthRoutes(app);
   registerKdsRoutes(app);
   registerFloorRoutes(app);
+  registerCheckRoutes(app);
   registerManagerRoutes(app);
   registerMenuRoutes(app);
   registerGuestRoutes(app);

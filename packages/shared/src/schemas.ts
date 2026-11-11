@@ -114,3 +114,23 @@ export const ApprovalBody = z.object({
   pin: PinSchema,
 });
 export type ApprovalBody = z.infer<typeof ApprovalBody>;
+
+const ShareCount = z.number().int().min(2).max(20);
+
+/** PUT /api/checks/:id/split. `full` removes the split; `items` sends every assignment (units absent are unassigned). */
+export const SplitBody = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("full") }),
+  z.object({ mode: z.literal("even"), count: ShareCount }),
+  z.object({
+    mode: z.literal("items"),
+    count: ShareCount,
+    assignments: z
+      .array(z.object({ unit: z.string().min(1).max(100), labels: z.array(z.string().min(1).max(2)).max(20) }))
+      .max(1000),
+  }),
+]);
+export type SplitBody = z.infer<typeof SplitBody>;
+
+/** POST /api/checks/:id/shares/:label/pay. `amount` confirms the share amount the client was shown (kuruş). */
+export const PayShareBody = z.object({ method: z.enum(["card", "cash"]), amount: z.number().int().min(0) });
+export type PayShareBody = z.infer<typeof PayShareBody>;

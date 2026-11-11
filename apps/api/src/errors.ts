@@ -15,7 +15,9 @@ export type ErrorCode =
   | "conflict"
   | "demo_busy"
   | "approval_required"
-  | "not_a_manager";
+  | "not_a_manager"
+  | "split_locked"
+  | "amount_changed";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

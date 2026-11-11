@@ -164,9 +164,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(before.checks.length).toBeGreaterThan(0);
     expect(before.calls.length).toBeGreaterThan(0);
     const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
-    const req = (method: "GET" | "POST", url: string, payload?: object) =>
+    const req = (method: "GET" | "POST" | "PUT", url: string, payload?: object) =>
       t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
-    const expect404 = async (method: "GET" | "POST", url: string, payload?: object) => {
+    const expect404 = async (method: "GET" | "POST" | "PUT", url: string, payload?: object) => {
       const res = await req(method, url, payload);
       expect(res.statusCode, `${method} ${url}`).toBe(404);
     };
@@ -180,6 +180,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     for (const c of before.checks) {
       await expect404("GET", `/api/checks/${String(c._id)}/print`);
       await expect404("POST", `/api/checks/${String(c._id)}/close`, { method: "card" });
+      await expect404("GET", `/api/checks/${String(c._id)}/split`);
+      await expect404("PUT", `/api/checks/${String(c._id)}/split`, { mode: "even", count: 2 });
+      await expect404("POST", `/api/checks/${String(c._id)}/shares/A/pay`, { method: "card", amount: 0 });
     }
     for (const tk of before.tickets) await expect404("POST", `/api/tickets/${String(tk._id)}/served`);
     for (const c of before.calls) await expect404("POST", `/api/calls/${String(c._id)}/answer`);

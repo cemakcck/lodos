@@ -69,6 +69,28 @@ describe("cross-sandbox isolation over sockets", () => {
     expect(bManager.events.every((e) => !e.tableId || e.tableId === b.t7Id)).toBe(true);
   });
 
+  it("split.updated reaches only its own tenant's floor", async () => {
+    const aw = await visitor("waiter");
+    const splitT7 = async (v: Visitor) => {
+      const req = (method: "POST" | "PUT", path: string, payload: object) => t.inject({ method, url: path, cookies: { lodos_sid: v.sid }, payload });
+      const seat = await req("POST", `/api/tables/${v.t7Id}/seat`, { covers: 2 });
+      expect([200, 201]).toContain(seat.statusCode); // B's T7 may already have a QR-opened check
+      const checkId = seat.json().checkId as string;
+      expect((await req("PUT", `/api/checks/${checkId}/split`, { mode: "even", count: 2 })).statusCode).toBe(200);
+      return checkId;
+    };
+    const aFloor = await connect(url, { sid: aw.sid });
+    const bManager = await connect(url, { sid: b.sid });
+    const bCheck = await splitT7(b);
+    await bManager.next((e) => e.type === "split.updated" && e.ids.includes(bCheck));
+    // Barrier: A's own split arrives; nothing of B's may have come before it.
+    const aCheck = await splitT7(aw);
+    await aFloor.next((e) => e.type === "split.updated");
+    const splits = aFloor.events.filter((e) => e.type === "split.updated");
+    expect(splits.map((e) => e.ids)).toEqual([[aCheck]]);
+    for (const e of aFloor.events) if (e.tableId) expect(e.tableId).toBe(aw.t7Id);
+  });
+
   it("a guest socket with A's token joins only A's rooms, whatever B cookies the browser holds", async () => {
     const g = await connect(url, {
       tableToken: a.t7Token,

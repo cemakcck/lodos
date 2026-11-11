@@ -1,5 +1,6 @@
+import { randomInt } from "node:crypto";
 import { deriveTableState, maskProfanity, type TableState } from "@lodos/shared";
-import type { Types } from "mongoose";
+import type { ClientSession, Types } from "mongoose";
 import { billOf, billsOf } from "../checks/bill";
 import type { Models } from "../db/models";
 import { ApiError } from "../errors";
@@ -52,6 +53,8 @@ export type FloorTable = {
   covers: number | null;
   seatedAt: Date | null;
   checkId: string | null;
+  /** The open check's split progress, once at least one share is paid ("Paying · 2 of 4"). */
+  paying: { paid: number; of: number } | null;
 };
 export type FloorStats = { seated: number; totalTables: number; covers: number; avgTurnMs: number; openChecksTotal: number };
 export type FloorSnapshot = { now: Date; rooms: { id: string; name: string }[]; tables: FloorTable[]; chips: FloorChip[]; stats: FloorStats };
@@ -99,6 +102,7 @@ export async function floorSnapshot(models: Models, now: Date): Promise<FloorSna
     if (bill) chips.push({ kind: "bill", tableId: id, tableName: table.name, since: bill });
     const serverStaffId = idOf(check?.serverStaffId ?? table.sectionStaffId);
     const serverName = serverStaffId ? nameOf.get(serverStaffId) : undefined;
+    const paidShares = check?.split?.shares.filter((x) => x.payment != null).length ?? 0;
     return {
       id,
       name: table.name,
@@ -116,6 +120,7 @@ export async function floorSnapshot(models: Models, now: Date): Promise<FloorSna
       covers: check?.covers ?? null,
       seatedAt: check?.openedAt ?? null,
       checkId: check ? String(check._id) : null,
+      paying: check?.split && paidShares > 0 ? { paid: paidShares, of: check.split.shares.length } : null,
     };
   });
   chips.sort(
@@ -200,7 +205,15 @@ export async function tableCheck(models: Models, tableId: string): Promise<Table
   };
 }
 
-export type Payment = { method: "card" | "cash"; amount: number; at: Date };
+export type Payment = { method: "card" | "cash"; amount: number; at: Date; last4: string | null };
+
+/** A simulated payment: a card gets four random "last 4" digits (plan ruling "Card last 4"), cash gets null. */
+export function newPayment(method: "card" | "cash", amount: number, at: Date): Payment {
+  return { method, amount, at, last4: method === "card" ? String(randomInt(0, 10_000)).padStart(4, "0") : null };
+}
+
+const paymentView = (p: { method: "card" | "cash"; amount: number; at: Date; last4?: string | null } | null | undefined): Payment | null =>
+  p ? { method: p.method, amount: p.amount, at: p.at, last4: p.last4 ?? null } : null;
 export type CheckPrintView = {
   table: { id: string; name: string };
   check: {
@@ -235,7 +248,7 @@ export async function checkPrint(models: Models, checkId: string): Promise<Check
       openedAt: check.openedAt,
       closedAt: check.closedAt ?? null,
       serverName,
-      payment: check.payment ? { method: check.payment.method, amount: check.payment.amount, at: check.payment.at } : null,
+      payment: paymentView(check.payment),
     },
     ...lines,
   };
@@ -340,13 +353,62 @@ export type CloseResult = {
 };
 
 /** The check was not open in our snapshot's write (should not happen inside a transaction): re-run fresh. */
-class CheckChangedError extends Error {}
+export class CheckChangedError extends Error {}
+
+/**
+ * Runs `fn` in a transaction on a fresh session; `withTransaction` retries write conflicts, and a `CheckChangedError`
+ * (a conditional write that matched nothing) re-runs it up to 5 times.
+ */
+export async function inCheckTransaction<T>(models: Models, fn: (session: ClientSession) => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const session = await models.Check.db.startSession();
+    try {
+      let result: { value: T } | undefined;
+      await session.withTransaction(async () => {
+        result = { value: await fn(session) };
+      });
+      if (!result) throw new Error("transaction finished without a result");
+      return result.value;
+    } catch (err) {
+      if (!(err instanceof CheckChangedError) || attempt >= 5) throw err;
+    } finally {
+      await session.endSession();
+    }
+  }
+}
+
+type PaidCheckLean = Parameters<typeof closedView>[0];
+
+/**
+ * The shared end of a check, inside the caller's transaction: moves the check `open → paid` conditionally (with
+ * `set`, e.g. the full payment), and answers the table's open calls. Not open → `CheckChangedError` (the caller
+ * re-runs on a fresh snapshot). Used by `closeCheck` (in full) and `payShare` (the last share).
+ */
+export async function markPaid(
+  models: Models,
+  session: ClientSession,
+  input: { checkId: Id; tableId: Id; staffId: string; now: Date; set?: Record<string, unknown> },
+): Promise<{ check: ClosedCheck; answeredCallIds: string[] }> {
+  const { checkId, tableId, staffId, now, set } = input;
+  const paid = await models.Check.findOneAndUpdate(
+    { _id: checkId, status: "open" },
+    { $set: { ...set, status: "paid", closedAt: now } },
+    { session, returnDocument: "after" },
+  ).lean<PaidCheckLean>();
+  if (!paid) throw new CheckChangedError();
+  const calls = await models.Call.find({ tableId, answeredAt: null }, { _id: 1 }).session(session).lean();
+  if (calls.length > 0) {
+    await models.Call.updateMany({ _id: { $in: calls.map((c) => c._id) }, answeredAt: null }, { $set: { answeredAt: now, answeredBy: staffId } }, { session });
+  }
+  return { check: closedView(paid), answeredCallIds: calls.map((c) => String(c._id)) };
+}
 
 /**
  * Closes a check with a simulated payment, in one transaction: the amount is the bill total (`billOf`: order
  * snapshots minus active comps and voids) read in the same transaction, the check moves `open → paid` conditionally,
  * and the table's open calls are answered. Already paid → `changed: false` with the stored payment (never charged
- * twice, amount never changed).
+ * twice, amount never changed). A split with any paid share → `split_locked` (pay the shares instead); an unpaid split
+ * is dropped. A card payment gets a random "last 4".
  *
  * Concurrency: `placeOrder` writes the check (`$inc orderCount` conditional on `open`) and so do we, so an order and
  * a close that overlap write-conflict and `withTransaction` re-runs the loser on a fresh snapshot. An order that
@@ -359,43 +421,16 @@ export async function closeCheck(
 ): Promise<CloseResult> {
   const { checkId, method, staffId, now } = input;
   if (!isOid(checkId)) throw notFound();
-  for (let attempt = 1; ; attempt++) {
-    const session = await models.Check.db.startSession();
-    try {
-      let result: CloseResult | undefined;
-      await session.withTransaction(async () => {
-        result = undefined;
-        const check = await models.Check.findOne({ _id: checkId }).session(session).lean();
-        if (!check) throw notFound();
-        if (check.status === "paid") {
-          result = { check: closedView(check), changed: false, answeredCallIds: [] };
-          return;
-        }
-        const amount = (await billOf(models, check._id, session)).total;
-        const paid = await models.Check.findOneAndUpdate(
-          { _id: check._id, status: "open" },
-          { $set: { status: "paid", closedAt: now, payment: { method, amount, at: now } } },
-          { session, returnDocument: "after" },
-        ).lean();
-        if (!paid) throw new CheckChangedError();
-        const calls = await models.Call.find({ tableId: check.tableId, answeredAt: null }, { _id: 1 }).session(session).lean();
-        if (calls.length > 0) {
-          await models.Call.updateMany(
-            { _id: { $in: calls.map((c) => c._id) }, answeredAt: null },
-            { $set: { answeredAt: now, answeredBy: staffId } },
-            { session },
-          );
-        }
-        result = { check: closedView(paid), changed: true, answeredCallIds: calls.map((c) => String(c._id)) };
-      });
-      if (!result) throw new Error("closeCheck: transaction finished without a result");
-      return result;
-    } catch (err) {
-      if (!(err instanceof CheckChangedError) || attempt >= 5) throw err;
-    } finally {
-      await session.endSession();
-    }
-  }
+  return inCheckTransaction(models, async (session) => {
+    const check = await models.Check.findOne({ _id: checkId }).session(session).lean();
+    if (!check) throw notFound();
+    if (check.status === "paid") return { check: closedView(check), changed: false, answeredCallIds: [] };
+    if (check.split?.shares.some((x) => x.payment != null)) throw new ApiError(409, "split_locked", "Part of this check is already paid");
+    const amount = (await billOf(models, check._id, session)).total;
+    // Paying in full drops an unpaid split.
+    const r = await markPaid(models, session, { checkId: check._id, tableId: check.tableId, staffId, now, set: { payment: newPayment(method, amount, now), split: null } });
+    return { ...r, changed: true };
+  });
 }
 
 function closedView(c: {
@@ -405,7 +440,7 @@ function closedView(c: {
   covers?: number | null;
   openedAt: Date;
   closedAt?: Date | null;
-  payment?: Payment | null;
+  payment?: { method: "card" | "cash"; amount: number; at: Date; last4?: string | null } | null;
 }): ClosedCheck {
   return {
     id: String(c._id),
@@ -414,6 +449,6 @@ function closedView(c: {
     covers: c.covers ?? null,
     openedAt: c.openedAt,
     closedAt: c.closedAt ?? null,
-    payment: c.payment ? { method: c.payment.method, amount: c.payment.amount, at: c.payment.at } : null,
+    payment: paymentView(c.payment),
   };
 }
