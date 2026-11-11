@@ -55,7 +55,7 @@ describe("GET /api/floor", () => {
     const s = await seedTenant(t, LIVE_NO_HISTORY);
     const open = await runWithTenant(s.tenantId, () => t.models.Check.find({ status: "open" }).lean());
     const totals = await runWithTenant(s.tenantId, () => Promise.all(open.map((c) => billOf(t.models, c._id))));
-    const before = (await floor(s)).stats.openChecksTotal;
+    const before = (await floor(s)).stats.openChecksTotal!;
     expect(before).toBe(totals.reduce((n, b) => n + b.total, 0));
     const target = totals.find((b) => b.lines.some((l) => l.lineTotal > 0))!;
     const line = target.lines.find((l) => l.lineTotal > 0 && l.qty - l.compedQty - l.voidedQty > 0)!;
