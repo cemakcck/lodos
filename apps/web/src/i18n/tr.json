@@ -720,6 +720,8 @@
       "priceHint": "Lira olarak; ör. 640 ya da 640,50",
       "station": "İstasyon",
       "stationHint": "İçecekler bara gider.",
+      "vat": "KDV",
+      "vatHint": "Fiyatlara KDV dahil",
       "dietary": "Beslenme",
       "dietaryNames": {
         "vegetarian": "Vejetaryen",

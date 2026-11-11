@@ -16,6 +16,7 @@ export type ItemView = {
   story: Loc;
   price: number;
   station: "kitchen" | "bar";
+  vatRate: 10 | 20;
   dietary: string[];
   allergens: string[];
   photo: string | null;
@@ -47,6 +48,7 @@ function itemView(i: Lean<Awaited<ReturnType<Models["MenuItem"]["findOne"]>> & o
     story: loc(d.story ?? { en: "", tr: "" }),
     price: d.price,
     station: d.station,
+    vatRate: d.vatRate === 20 ? 20 : 10,
     dietary: [...d.dietary],
     allergens: [...d.allergens],
     photo: d.photo ?? null,

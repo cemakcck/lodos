@@ -86,3 +86,14 @@ describe("GET /api/menu (staff)", () => {
     expect(JSON.stringify(res.json())).not.toContain(b.tenantId);
   });
 });
+
+describe("seeded VAT rates", () => {
+  it("cocktails and wine carry 20, food and zero-proof drinks 10", async () => {
+    const s = await seedTenant(t);
+    const rate = (name: string) =>
+      runWithTenant(s.tenantId, async () => (await t.models.MenuItem.findOne({ "name.en": new RegExp(`^${name}`) }).lean())?.vatRate);
+    expect(await rate("Lodos Negroni")).toBe(20);
+    expect(await rate("Burrata")).toBe(10);
+    expect(await rate("Mint and salt")).toBe(10);
+  });
+});

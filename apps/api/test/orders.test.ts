@@ -1,6 +1,7 @@
 import { checkTotals, lineTotal, serviceDayOf, type OrderRequest } from "@lodos/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { createSession } from "../src/auth/sessions";
 import { runWithTenant } from "../src/db/tenancy";
 import type { Realtime } from "../src/realtime/emit";
 import { placeOrder } from "../src/orders/place";
@@ -258,5 +259,29 @@ describe("placeOrder for staff orders", () => {
     expect(result.tickets[0]!.serverName).toBe("Deniz");
     expect(result.tickets[0]!.covers).toBe(4);
     expect(result.tickets[0]!.tableName).toBe("B1");
+  });
+});
+
+describe("VAT rate snapshot", () => {
+  it("a placed line keeps the item's rate after the manager changes it", async () => {
+    const s = await seedTenant(t);
+    const staffSid = await createSession(t.models, s.seed.staff.waiter, s.tenantId, "person", NOW);
+    const mgrSid = await createSession(t.models, s.seed.staff.manager, s.tenantId, "person", NOW);
+    const T7 = s.seed.tables.T7!.id;
+    const negroni = await itemNamed(t, s.tenantId, "Lodos Negroni");
+    const seat = await t.inject({ method: "POST", url: `/api/tables/${T7}/seat`, cookies: { lodos_sid: staffSid }, payload: { covers: 2 } });
+    expect(seat.statusCode).toBe(201);
+    const placed = await t.inject({
+      method: "POST",
+      url: `/api/tables/${T7}/orders`,
+      cookies: { lodos_sid: staffSid },
+      payload: orderBody([{ itemId: negroni.id, options: [{ groupId: "gin", optionIds: ["barrel-aged"] }] }]),
+    });
+    expect(placed.statusCode).toBe(201);
+    const stored = () => runWithTenant(s.tenantId, () => t.models.Order.findOne({ checkId: seat.json().checkId }).lean().orFail());
+    expect((await stored()).items[0]!.vatRate).toBe(20);
+    const patch = await t.inject({ method: "PATCH", url: `/api/manager/items/${negroni.id}`, cookies: { lodos_sid: mgrSid }, payload: { vatRate: 10 } });
+    expect(patch.statusCode).toBe(200);
+    expect((await stored()).items[0]!.vatRate).toBe(20);
   });
 });

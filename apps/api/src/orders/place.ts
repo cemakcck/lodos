@@ -122,6 +122,7 @@ async function place(models: Models, input: PlaceOrderInput, session: ClientSess
       note: line.note?.trim() || null,
       seat: line.seat ?? null,
       station: item.station,
+      vatRate: item.vatRate,
       allergens: [...item.allergens],
       lineTotal: lineTotal(item.price, options.map((o) => o.priceDelta), line.qty),
     };

@@ -17,6 +17,8 @@ const orderLineSchema = new Schema(
     note: { type: String, default: null },
     seat: { type: Number, default: null },
     station: { type: String, enum: STATIONS, required: true },
+    /** VAT rate in percent (KDV). Readers treat a missing value (phase 1 data) as 10. */
+    vatRate: { type: Number, enum: [10, 20], required: true, default: 10 },
     allergens: { type: [{ type: String, enum: ALLERGENS }], default: [] },
     lineTotal: { type: Number, required: true },
   },

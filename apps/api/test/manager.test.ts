@@ -399,3 +399,22 @@ describe("tonight", () => {
     expect(body.avgTicketMs).toBe(120_000);
   });
 });
+
+describe("item vatRate", () => {
+  it("defaults to 10, round-trips 20, and rejects other rates with 400 validation", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const c = String((await anyCategory(s))._id);
+    const made = await m("POST", "/api/manager/items", validItem(c));
+    expect(made.statusCode).toBe(201);
+    expect(made.json().vatRate).toBe(10);
+    const id = made.json().id as string;
+    const up = await m("PATCH", `/api/manager/items/${id}`, { vatRate: 20 });
+    expect(up.json().vatRate).toBe(20);
+    const bad = await m("PATCH", `/api/manager/items/${id}`, { vatRate: 18 });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error.code).toBe("validation");
+    const menu = (await m("GET", "/api/manager/menu")).json() as { items: { id: string; vatRate: number }[] };
+    expect(menu.items.find((i) => i.id === id)!.vatRate).toBe(20);
+  });
+});

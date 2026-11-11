@@ -25,6 +25,7 @@ interface FormState {
   /** Lira as typed. */
   price: string;
   station: Station;
+  vatRate: 10 | 20;
   dietary: string[];
   allergens: string[];
   active: boolean;
@@ -39,6 +40,7 @@ const initial = (item: ItemView | null, lang: "en" | "tr", categoryId: string): 
   descTr: item?.description.tr ?? "",
   price: item ? kurusToLira(item.price, lang) : "",
   station: item?.station ?? "kitchen",
+  vatRate: item?.vatRate ?? 10,
   dietary: item?.dietary ?? [],
   allergens: item?.allergens ?? [],
   active: item?.active ?? true,
@@ -156,6 +158,7 @@ export function ItemForm({ item, categories, defaultCategoryId, onSaved, onClose
       ...(item ? { story: item.story } : {}),
       price: price ?? 1,
       station: f.station,
+      vatRate: f.vatRate,
       dietary: f.dietary as MenuItemInput["dietary"],
       allergens: f.allergens as MenuItemInput["allergens"],
       optionGroups: g.groups,
@@ -313,6 +316,18 @@ export function ItemForm({ item, categories, defaultCategoryId, onSaved, onClose
                 ))}
               </div>
               {hint("station", t("manager.item.stationHint"))}
+            </fieldset>
+            <fieldset className="mg-field">
+              <legend>{t("manager.item.vat")}</legend>
+              <div className="mg-radios" aria-describedby={`${idOf("vat")}-hint`}>
+                {([10, 20] as const).map((r) => (
+                  <label key={r} className={f.vatRate === r ? "is-on" : undefined}>
+                    <input type="radio" name={`${base}-vat`} checked={f.vatRate === r} onChange={() => set({ vatRate: r })} />
+                    {r}%
+                  </label>
+                ))}
+              </div>
+              {hint("vat", t("manager.item.vatHint"))}
             </fieldset>
           </div>
         </section>

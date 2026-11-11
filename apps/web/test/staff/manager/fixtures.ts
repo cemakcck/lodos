@@ -17,6 +17,7 @@ export const burrata: ItemView = {
   story: n("", ""),
   price: 54000,
   station: "kitchen",
+  vatRate: 10,
   dietary: ["vegetarian"],
   allergens: ["milk"],
   photo: "/photos/burrata.jpg",

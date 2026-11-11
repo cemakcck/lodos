@@ -207,4 +207,24 @@ describe("ItemForm", () => {
     expect(box("Ad (Türkçe)")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Ürünü oluştur" })).toBeTruthy();
   });
+
+  it("shows the item's VAT rate and submits the chosen one", async () => {
+    setup({ ...ribeye, vatRate: 20 });
+    const group = screen.getByRole("group", { name: "VAT" });
+    expect(within(group).getByRole("radio", { name: "20%" })).toHaveProperty("checked", true);
+    expect(within(group).getByRole("radio", { name: "10%" })).toHaveProperty("checked", false);
+    expect(screen.getByText("Prices include VAT")).toBeTruthy();
+    await userEvent.click(within(group).getByRole("radio", { name: "10%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PATCH")).toBe(true));
+    expect(calls.find((c) => c.method === "PATCH")!.body).toMatchObject({ vatRate: 10 });
+  });
+
+  it("a new item defaults to 10%", async () => {
+    setup(null);
+    await fillBasics();
+    await userEvent.click(screen.getByRole("button", { name: "Create item" }));
+    await waitFor(() => expect(posts()).toHaveLength(1));
+    expect(posts()[0]!.body).toMatchObject({ vatRate: 10 });
+  });
 });

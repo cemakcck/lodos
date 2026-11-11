@@ -720,6 +720,8 @@
       "priceHint": "In lira, e.g. 640 or 640,50",
       "station": "Station",
       "stationHint": "Drinks go to the bar.",
+      "vat": "VAT",
+      "vatHint": "Prices include VAT",
       "dietary": "Dietary",
       "dietaryNames": {
         "vegetarian": "Vegetarian",

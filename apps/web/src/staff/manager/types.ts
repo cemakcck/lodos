@@ -31,6 +31,8 @@ export interface ItemView {
   story: Loc;
   price: number;
   station: Station;
+  /** VAT (KDV) rate in percent. */
+  vatRate: 10 | 20;
   dietary: string[];
   allergens: string[];
   /** "/photos/x.jpg" (seeded, served by the web app) or "/api/photos/<id>" (uploaded). */

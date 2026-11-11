@@ -31,6 +31,8 @@ export const menuItemSchema = new Schema({
   /** Kuruş. */
   price: { type: Number, required: true, min: 1, validate: Number.isInteger },
   station: { type: String, enum: STATIONS, required: true },
+  /** VAT rate in percent (KDV). Readers treat a missing value (phase 1 data) as 10. */
+  vatRate: { type: Number, enum: [10, 20], required: true, default: 10 },
   dietary: { type: [String], default: [] },
   allergens: { type: [{ type: String, enum: ALLERGENS }], default: [] },
   photo: { type: String, default: null },

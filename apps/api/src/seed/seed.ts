@@ -4,7 +4,7 @@ import argon2 from "argon2";
 import { Types } from "mongoose";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
-import { CATEGORIES, ITEMS, ROOMS, STAFF, TABLES, type SeedItem, type Station } from "./content";
+import { CATEGORIES, ITEMS, ROOMS, STAFF, TABLES, vatRateOf, type SeedItem, type Station } from "./content";
 
 export type SeedResult = {
   /** Keyed by table name. `token` is the raw guest QR token. */
@@ -95,6 +95,7 @@ export async function seedRestaurant(
     story: i.story,
     price: kurus(i.price),
     station: stationOf[i.category],
+    vatRate: vatRateOf(i.category),
     dietary: i.dietary,
     allergens: i.allergens,
     photo: `/photos/${i.slug}.jpg`,
@@ -187,6 +188,7 @@ export async function seedRestaurant(
           note: l.note ?? null,
           seat: null,
           station: stationOf[item.category] as Station,
+          vatRate: vatRateOf(item.category),
           allergens: item.allergens,
           lineTotal: lineTotal(unitPrice, chosen.map((c) => c.priceDelta), qty),
         };

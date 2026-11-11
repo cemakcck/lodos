@@ -26,6 +26,10 @@ export type SeedItem = {
   groups?: SeedOptionGroup[];
 };
 
+/** VAT (KDV) rate by category: alcohol is 20, everything else 10. */
+export const VAT_BY_CATEGORY: Record<string, 10 | 20> = { cocktails: 20, wine: 20 };
+export const vatRateOf = (category: string): 10 | 20 => VAT_BY_CATEGORY[category] ?? 10;
+
 const t = (en: string, tr: string): Txt => ({ en, tr });
 
 export const CATEGORIES: { key: string; name: Txt; station: Station }[] = [

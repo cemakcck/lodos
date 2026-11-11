@@ -57,6 +57,7 @@ export const MenuItemInput = z.object({
   story: LocOptional.optional(),
   price: z.number().int().min(1),
   station: z.enum(["kitchen", "bar"]),
+  vatRate: z.union([z.literal(10), z.literal(20)]).default(10),
   dietary: z.array(z.enum(DIETARY)).max(DIETARY.length).default([]),
   allergens: z.array(z.enum(ALLERGENS)).default([]),
   optionGroups: z
