@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { addDays, lineTotal, mondayOf, serviceDayOf, serviceDayStartOf, shiftSpan } from "@lodos/shared";
+import { addDays, lineTotal, mondayOf, ROOM_DEFAULT_HEIGHT, ROOM_DEFAULT_WIDTH, serviceDayOf, serviceDayStartOf, shiftSpan } from "@lodos/shared";
 import argon2 from "argon2";
 import { Types } from "mongoose";
 import type { Models } from "../db/models";
@@ -140,7 +140,8 @@ export async function seedRestaurant(
       m.ShiftTemplate.insertMany(SHIFT_TEMPLATES.map((x, i) => ({ ...x, sort: i }))),
       // A real install (no schedule team) starts with an empty schedule.
       withTeam ? m.Shift.insertMany(demoShifts()) : Promise.resolve(),
-      m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort }))),
+      // Every seeded table fits the default 800 × 480 canvas (the widest reaches x 716, the lowest y 386).
+      m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort, width: ROOM_DEFAULT_WIDTH, height: ROOM_DEFAULT_HEIGHT, version: 0 }))),
       m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i, defaultVatRate: vatRateOf(c.key) }))),
       m.MenuItem.insertMany(menuItems),
       m.Table.insertMany(

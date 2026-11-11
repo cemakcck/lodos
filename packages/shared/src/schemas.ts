@@ -109,6 +109,59 @@ export const TableEdit = z.object({
 });
 export type TableEdit = z.infer<typeof TableEdit>;
 
+/** Floor plan editor (spec §7). Every room is this size unless it says otherwise. */
+export const ROOM_DEFAULT_WIDTH = 800;
+export const ROOM_DEFAULT_HEIGHT = 480;
+export const TABLE_MAX_SIZE = 400;
+export const TABLE_CAPACITY_MIN = 1;
+export const TABLE_CAPACITY_MAX = 12;
+
+/** Per-table reasons a layout save is refused (`400 layout_invalid`, `details.problems: [{ key, code }]`). */
+export const LAYOUT_PROBLEM_CODES = [
+  "name_invalid",
+  "name_taken",
+  "out_of_bounds",
+  "overlap",
+  "capacity",
+  "waiter",
+  "unknown",
+  "open_check_rename",
+  "open_check_delete",
+] as const;
+export type LayoutProblemCode = (typeof LAYOUT_PROBLEM_CODES)[number];
+export type LayoutProblem = { key: string; code: LayoutProblemCode };
+
+/**
+ * One table of a layout save. `id` is set for an existing table of the room (clients send `key = id` then); a new
+ * table has only a `key`. Name, capacity and position are checked by the server and reported as problems, so they
+ * are only shape-checked here; sizes are hard limits.
+ */
+export const LayoutTableInput = z.object({
+  id: z.string().optional(),
+  key: z.string().min(1).max(64),
+  name: z.string().max(16),
+  shape: z.enum(["round", "rect"]),
+  x: z.number().int(),
+  y: z.number().int(),
+  w: z.number().int().min(1).max(TABLE_MAX_SIZE),
+  h: z.number().int().min(1).max(TABLE_MAX_SIZE),
+  capacity: z.number().int(),
+  sectionStaffId: z.string().nullable(),
+});
+export type LayoutTableInput = z.infer<typeof LayoutTableInput>;
+
+const distinct = (xs: string[]) => new Set(xs).size === xs.length;
+
+/** PUT /api/rooms/:id/layout: the whole room, saved against the `version` it was loaded at. */
+export const LayoutBody = z
+  .object({ version: z.number().int().min(0), tables: z.array(LayoutTableInput).max(300) })
+  .refine((b) => distinct(b.tables.map((x) => x.key)), "Table keys must be unique")
+  .refine((b) => distinct(b.tables.flatMap((x) => (x.id === undefined ? [] : [x.id]))), "Table ids must be unique");
+export type LayoutBody = z.infer<typeof LayoutBody>;
+
+export const RoomBody = z.object({ name: z.string().trim().min(1).max(40) });
+export type RoomBody = z.infer<typeof RoomBody>;
+
 /** 4 to 6 digits. The one PIN rule: the API's login and approval both use it. */
 export const PinSchema = z.string().regex(/^\d{4,6}$/, "PIN must be 4 to 6 digits");
 

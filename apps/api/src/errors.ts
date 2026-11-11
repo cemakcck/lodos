@@ -26,7 +26,10 @@ export type ErrorCode =
   | "station"
   | "demo_protected"
   | "shift_too_long"
-  | "shift_overlap";
+  | "shift_overlap"
+  | "layout_invalid"
+  | "version_conflict"
+  | "room_not_empty";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

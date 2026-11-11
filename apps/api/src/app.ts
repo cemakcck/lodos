@@ -16,6 +16,7 @@ import { registerErrorHandling } from "./errors";
 import { registerFloorRoutes } from "./floor/routes";
 import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
+import { registerLayoutRoutes } from "./layout/routes";
 import { registerManagerRoutes } from "./manager/routes";
 import { registerMenuRoutes } from "./menu/routes";
 import { registerSalesRoutes } from "./sales/routes";
@@ -115,6 +116,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerSalesRoutes(app);
   registerStaffRoutes(app);
   registerShiftRoutes(app);
+  registerLayoutRoutes(app);
   registerMenuRoutes(app);
   registerGuestRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });

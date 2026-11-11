@@ -42,6 +42,7 @@ const snapshot = (tenantId: string) =>
     adjustments: await t.models.Adjustment.find({}).sort({ _id: 1 }).lean(),
     shifts: await t.models.Shift.find({}).sort({ _id: 1 }).lean(),
     shiftTemplates: await t.models.ShiftTemplate.find({}).sort({ _id: 1 }).lean(),
+    rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
   }));
 
 const t7 = (tenantId: string) => runWithTenant(tenantId, () => t.models.Table.findOne({ name: "T7" }).lean().orFail());
@@ -325,6 +326,53 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect((await call("POST", "/api/shifts/copy-last-week", { week: "2026-11-16" })).statusCode).toBe(200);
     expect(await snapshot(b.tenantId)).toEqual(before);
   }, 30_000);
+
+  it("Phase 2 Task 21: A's manager gets 404 on B's rooms, and A's layout can't take B's tables or waiters; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const call = (method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", url: string, payload?: object) =>
+      t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
+    expect(before.rooms.length).toBeGreaterThan(0);
+    for (const r of before.rooms) {
+      const id = String(r._id);
+      for (const [method, url, payload] of [
+        ["GET", `/api/rooms/${id}/layout`, undefined],
+        ["PUT", `/api/rooms/${id}/layout`, { version: r.version, tables: [] }],
+        ["PATCH", `/api/rooms/${id}`, { name: "Hacked" }],
+        ["DELETE", `/api/rooms/${id}`, undefined],
+      ] as const) {
+        expect((await call(method, url, payload)).statusCode, `${method} ${url}`).toBe(404);
+      }
+    }
+    // A's own room: B's table ids are unknown, B's waiters are not waiters here.
+    const aT7 = await t7(a.tenantId);
+    const aRoom = String(aT7.roomId);
+    const layout = (await call("GET", `/api/rooms/${aRoom}/layout`)).json() as {
+      room: { version: number };
+      tables: { id: string; openCheck: boolean; sectionStaffId: string | null }[];
+    };
+    // `openCheck` is read-only; the body schema strips it.
+    const rows = layout.tables.map((x) => ({ ...x, key: x.id }));
+    const bT7 = await t7(b.tenantId);
+    const bWaiter = String(before.staff.find((s) => s.role === "waiter")!._id);
+    const res = await call("PUT", `/api/rooms/${aRoom}/layout`, {
+      version: layout.room.version,
+      tables: [
+        ...rows.map((x) => (x.id === String(aT7._id) ? { ...x, sectionStaffId: bWaiter } : x)),
+        { id: String(bT7._id), key: "b", name: "T99", shape: "round", x: 700, y: 400, w: 64, h: 64, capacity: 2, sectionStaffId: null },
+      ],
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.details.problems).toEqual([
+      { key: "b", code: "unknown" },
+      { key: String(aT7._id), code: "waiter" },
+    ]);
+    for (const r of before.rooms) {
+      expect((await call("GET", `/api/rooms/${aRoom}/layout`)).body).not.toContain(String(r._id));
+    }
+    expect((await call("POST", "/api/rooms", { name: "A only" })).statusCode).toBe(201);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  }, 20_000);
 
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";
