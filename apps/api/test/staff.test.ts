@@ -135,6 +135,24 @@ describe("staff list and add", () => {
     expect((await staffNamed(f.tenantId, "Mert")).name).toBe("Mert");
   });
 
+  it("tables go only to an active waiter: inactive → 409 conflict, other roles → 400; nothing written", async () => {
+    const f = await fresh();
+    const [t1] = await f.tableIds("T1");
+    const owner = async () => String((await runWithTenant(f.tenantId, () => t.models.Table.findById(t1).lean().orFail())).sectionStaffId);
+    const before = await owner();
+    expect((await f.call("POST", `/api/staff/${f.seed.staff.waiter}/deactivate`)).statusCode).toBe(200);
+    const inactive = await f.call("PATCH", `/api/staff/${f.seed.staff.waiter}`, { tableIds: [t1] });
+    expect(inactive.statusCode).toBe(409);
+    expect(inactive.json().error.code).toBe("conflict");
+    const cook = await staffNamed(f.tenantId, "Emre Yıldız");
+    expect((await f.call("PATCH", `/api/staff/${String(cook._id)}`, { tableIds: [t1] })).json().error.code).toBe("validation");
+    expect((await f.call("PATCH", `/api/staff/${f.seed.staff.manager}`, { tableIds: [t1] })).json().error.code).toBe("validation");
+    expect((await f.call("POST", "/api/staff", { name: "Oya", role: "manager", pin: "1357", tableIds: [t1] })).statusCode).toBe(400);
+    expect(await owner()).toBe(before);
+    // An empty list is fine for anyone (it only unassigns).
+    expect((await f.call("PATCH", `/api/staff/${f.seed.staff.waiter}`, { tableIds: [] })).statusCode).toBe(200);
+  });
+
   it("validates role and PIN on add", async () => {
     const f = await fresh();
     const noPin = await f.call("POST", "/api/staff", { name: "Ayla", role: "waiter" });
@@ -154,6 +172,8 @@ describe("staff list and add", () => {
     expect(dup.json().error.code).toBe("name_taken");
     // Turkish folding: "İPEK AYDIN" is "ipek aydın".
     expect((await f.call("POST", "/api/staff", { name: " İPEK AYDIN ", role: "host" })).json().error.code).toBe("name_taken");
+    // Dotless ı folds to i, so "DENIZ" (ASCII capitals, "denız" under tr) can't sit beside Deniz.
+    expect((await f.call("POST", "/api/staff", { name: "DENIZ", role: "cook" })).json().error.code).toBe("name_taken");
     const mert = await staffNamed(f.tenantId, "Mert");
     expect((await f.call("PATCH", `/api/staff/${String(mert._id)}`, { name: "DENİZ" })).statusCode).toBe(409);
   });

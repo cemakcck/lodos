@@ -50,8 +50,11 @@ type TableLean = { _id: Types.ObjectId; name: string; roomId: Types.ObjectId; se
 
 const noEffects = (): StaffEffects => ({ changedTableIds: [], unassignedTables: [], sessionsEnded: false, roleMoved: null });
 
-/** Names compare trimmed and case-folded the Turkish way ("İpek" = "ipek", "IŞIK" = "ışık"). */
-export const foldName = (name: string): string => name.trim().toLocaleLowerCase("tr");
+/**
+ * Names compare trimmed and case-folded the Turkish way ("İpek" = "ipek"), with dotless ı folded to i so look-alikes
+ * collide too ("DENIZ" → "denız" → "deniz").
+ */
+export const foldName = (name: string): string => name.trim().toLocaleLowerCase("tr").replaceAll("ı", "i");
 
 /**
  * Names are unique among active staff (the login picker shows names). The one place this rule lives, so a unique
@@ -123,6 +126,8 @@ async function findStaff(models: Models, id: string): Promise<StaffDoc> {
 }
 
 const invalid = (message: string) => new ApiError(400, "validation", message);
+/** Sections belong to active waiters: tables for another role are a bad request (400), for an inactive waiter a state conflict (409). */
+const ONLY_WAITERS = "Only waiters have tables";
 
 /** Schedule-only people have no PIN; waiters and managers must have one. */
 function checkPin(role: StaffRole, hasPin: boolean, pinSent: boolean): void {
@@ -168,7 +173,7 @@ async function cutOff(models: Models, staffId: Types.ObjectId, fx: StaffEffects)
 /** POST /api/staff. Stations are fixed (the body schema refuses their roles). */
 export async function createStaff(models: Models, body: StaffCreateBody, ctx: StaffCtx): Promise<{ row: StaffRow; fx: StaffEffects }> {
   checkPin(body.role, false, body.pin !== undefined);
-  if (isScheduleRole(body.role) && body.tableIds?.length) throw invalid("Only waiters and managers have tables");
+  if (body.role !== "waiter" && body.tableIds?.length) throw invalid(ONLY_WAITERS);
   await assertNameFree(models, body.name);
   const section = await sectionTables(models, body.tableIds);
   const fx = noEffects();
@@ -200,7 +205,10 @@ export async function updateStaff(
     if (String(s._id) === ctx.requesterId) throw new ApiError(409, "self", "You can't change your own role");
   }
   checkPin(to, Boolean(s.pinHash) && isLoginRole(from), body.pin !== undefined);
-  if (isScheduleRole(to) && body.tableIds?.length) throw invalid("Only waiters and managers have tables");
+  if (body.tableIds?.length) {
+    if (to !== "waiter") throw invalid(ONLY_WAITERS);
+    if (!s.active) throw new ApiError(409, "conflict", "Reactivate them before giving them tables");
+  }
   if (body.name !== undefined && s.active && foldName(body.name) !== foldName(s.name)) await assertNameFree(models, body.name, s._id);
   const section = await sectionTables(models, body.tableIds);
 
