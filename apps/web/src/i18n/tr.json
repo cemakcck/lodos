@@ -977,7 +977,11 @@
       "voidedLine": "İptal edildi"
     },
     "undo": "Geri al",
-    "undoAria": "Geri al: {{what}}",
+    "undoAria": {
+      "comp": "İkramı geri al: {{reason}}",
+      "void_one": "{{count}} iptali geri al: {{reason}}",
+      "void_other": "{{count}} iptali geri al: {{reason}}"
+    },
     "undoFailed": "Geri alınamadı.",
     "voidedHidden": "iptal edildi",
     "voidedOf": "{{count}} iptal",

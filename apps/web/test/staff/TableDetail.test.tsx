@@ -275,6 +275,21 @@ describe("TableDetail", () => {
       await waitFor(() => expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/checks/c1/adjustments/a1")).toBe(true));
     });
 
+    it("Undo has its own accessible name per kind, in Turkish without lowercasing translated words", async () => {
+      const me = { "GET /api/auth/me": { staff: { id: "m", name: "Selin Kaya", role: "manager" } } };
+      setup({ "GET /api/tables/t12/check": withLines(), ...me });
+      await panel();
+      expect(await within(lineRow(/Olive oil gelato/)).findByRole("button", { name: "Undo comp, Birthday / celebration" })).toBeTruthy();
+      expect(within(lineRow(/Tiramisu/)).getByRole("button", { name: "Undo 1 voided, Wrong item" })).toBeTruthy();
+      cleanup();
+      await setLanguage("tr");
+      setup({ "GET /api/tables/t12/check": withLines(), ...me });
+      await panel();
+      const comp = await screen.findByRole("button", { name: /^İkramı geri al/ });
+      expect(comp.getAttribute("aria-label")).not.toContain("i\u0307");
+      expect(screen.getByRole("button", { name: /^1 iptali geri al/ })).toBeTruthy();
+    });
+
     it("a waiter sees no Undo", async () => {
       setup({ "GET /api/tables/t12/check": withLines(), "GET /api/auth/me": { staff: { id: "w", name: "Deniz", role: "waiter" } } });
       await panel();

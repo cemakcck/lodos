@@ -536,7 +536,7 @@ function AdjustTag({ adj, canUndo, undoing, onUndo }: { adj: LineAdjustment; can
           type="button"
           className="fl-tag-undo"
           disabled={undoing}
-          aria-label={t("adjust.undoAria", { what: adj.kind === "comp" ? t("adjust.menu.comp").toLowerCase() + ", " + reason : t("adjust.tag.voided", { count: adj.qty }) + ", " + reason })}
+          aria-label={adj.kind === "comp" ? t("adjust.undoAria.comp", { reason }) : t("adjust.undoAria.void", { count: adj.qty, reason })}
           onClick={onUndo}
         >
           {t("adjust.undo")}

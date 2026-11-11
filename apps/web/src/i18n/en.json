@@ -977,7 +977,11 @@
       "voidedLine": "Voided"
     },
     "undo": "Undo",
-    "undoAria": "Undo {{what}}",
+    "undoAria": {
+      "comp": "Undo comp, {{reason}}",
+      "void_one": "Undo {{count}} voided, {{reason}}",
+      "void_other": "Undo {{count}} voided, {{reason}}"
+    },
     "undoFailed": "Couldn't undo that.",
     "voidedHidden": "voided",
     "voidedOf": "{{count}} voided",
