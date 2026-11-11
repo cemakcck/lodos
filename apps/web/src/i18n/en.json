@@ -35,7 +35,10 @@
     "last_manager": "At least one manager must stay active.",
     "self": "You can't do that to your own account.",
     "demo_protected": "This account is protected in the demo.",
-    "pin_required": "Waiters and managers need a PIN."
+    "pin_required": "Waiters and managers need a PIN.",
+    "shift_too_long": "A shift can be at most 16 hours",
+    "shift_overlap": "Overlaps another shift for {{name}}",
+    "station": "Station accounts can't be put on the schedule."
   },
   "guest": {
     "hero": {
@@ -198,7 +201,9 @@
       "menu": "Menu",
       "tables": "Tables",
       "sales": "Sales",
-      "people": "Staff"
+      "people": "Staff",
+      "schedule": "Schedule",
+      "myShifts": "My shifts"
     },
     "roles": {
       "waiter": "Waiter",
@@ -1113,5 +1118,108 @@
       "unassigned_one": "{{ranges}} is now unassigned",
       "unassigned_other": "{{ranges}} are now unassigned"
     }
+  },
+  "schedule": {
+    "title": "Schedule",
+    "loadError": "We couldn't load the schedule.",
+    "caption": "Shifts for {{range}}",
+    "col": {
+      "person": "Person",
+      "total": "Week"
+    },
+    "dayTotal": "Day total",
+    "hours": "{{n}} h",
+    "inactive": "Inactive",
+    "group": {
+      "floor": "Floor",
+      "kitchen": "Kitchen",
+      "bar": "Bar",
+      "managers": "Managers"
+    },
+    "area": {
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Terrace",
+      "kitchen": "Kitchen",
+      "bar_station": "Bar station"
+    },
+    "addFor": "Add shift for {{name}}, {{day}}",
+    "moveHere": "Move here: {{name}}, {{day}}",
+    "warningPrefix": "Warning: {{text}}",
+    "warningsTitle_one": "{{count}} warning",
+    "warningsTitle_other": "{{count}} warnings",
+    "warn": {
+      "week": "{{hours}} h this week (limit {{limit}})",
+      "day": "{{hours}} h on {{day}} (limit {{limit}})",
+      "rest": "only {{hours}} h rest before {{day}} (at least {{limit}})",
+      "inactive": "inactive, but has shifts this week"
+    },
+    "week": {
+      "label": "Week",
+      "prev": "Previous week",
+      "next": "Next week",
+      "this": "This week"
+    },
+    "copyLastWeek": "Copy last week",
+    "pdf": {
+      "button": "PDF",
+      "week": "Week roster",
+      "people": "All personal PDFs",
+      "person": "Download PDF for {{name}}"
+    },
+    "move": {
+      "region": "Move",
+      "hint": "Press M to move this shift.",
+      "keys": "Moving {{span}} to {{target}}. Arrow keys choose a cell, Enter moves, Escape cancels.",
+      "tap": "Moving {{span}} to {{target}}. Tap a cell to move it there.",
+      "cancel": "Cancel move"
+    },
+    "status": {
+      "copied": "Copied {{copied}} · skipped {{skipped}}",
+      "added": "Added {{span}} for {{name}}",
+      "saved": "Saved {{span}} for {{name}}",
+      "deleted": "Deleted {{span}} for {{name}}",
+      "moved": "Moved {{span}} to {{name}}, {{day}}"
+    },
+    "sheet": {
+      "newTitle": "New shift",
+      "editTitle": "Edit shift",
+      "templates": "Templates",
+      "start": "Start",
+      "end": "End",
+      "nextDay": "ends the next day",
+      "area": "Area",
+      "note": "Note (optional)",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "move": "Move",
+      "timesRequired": "Enter a start and an end time."
+    },
+    "templates": {
+      "button": "Templates",
+      "title": "Shift templates",
+      "empty": "No templates yet.",
+      "newTitle": "New template",
+      "editTitle": "Edit template",
+      "name": "Name",
+      "nameRequired": "Give the template a name.",
+      "add": "Add template",
+      "save": "Save template",
+      "done": "Done",
+      "edit": "Edit {{name}}",
+      "delete": "Delete {{name}}",
+      "saved": "Saved {{name}}",
+      "deleted": "Deleted {{name}}"
+    }
+  },
+  "myShifts": {
+    "title": "My shifts",
+    "loadError": "We couldn't load your shifts.",
+    "thisWeek": "This week",
+    "nextWeek": "Next week",
+    "total": "Total",
+    "pdf": "Download PDF",
+    "none": "No shifts this week."
   }
 }

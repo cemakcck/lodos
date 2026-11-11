@@ -15,6 +15,8 @@ import { Tables } from "./staff/manager/Tables";
 import { QrSheet } from "./staff/manager/QrSheet";
 import { Sales } from "./staff/sales/Sales";
 import { Staff } from "./staff/people/Staff";
+import { Schedule } from "./staff/schedule/Schedule";
+import { MyShifts } from "./staff/schedule/MyShifts";
 import type { StaffRole } from "./staff/auth";
 
 function NotFound() {
@@ -51,12 +53,15 @@ export const routes: RouteObject[] = [
             { path: "/staff/check/:id/receipt", element: <Receipt /> },
             { path: "/staff/check/:id/close", element: <CloseView /> },
           ]),
+          // Every login role; the manager passes every guard.
+          guarded(["waiter", "kitchen", "bar"], [{ path: "/staff/my-shifts", element: <MyShifts /> }]),
           guarded(["manager"], [
             { path: "/staff/menu", element: <MenuEditor /> },
             { path: "/staff/tables", element: <Tables /> },
             { path: "/staff/tables/qr", element: <QrSheet /> },
             { path: "/staff/sales", element: <Sales /> },
             { path: "/staff/people", element: <Staff /> },
+            { path: "/staff/schedule", element: <Schedule /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],

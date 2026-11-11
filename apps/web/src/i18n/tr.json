@@ -35,7 +35,10 @@
     "last_manager": "En az bir yönetici aktif kalmalı.",
     "self": "Bunu kendi hesabınızda yapamazsınız.",
     "demo_protected": "Bu hesap demoda korunuyor.",
-    "pin_required": "Garson ve yöneticiler için PIN gerekli."
+    "pin_required": "Garson ve yöneticiler için PIN gerekli.",
+    "shift_too_long": "Bir vardiya en fazla 16 saat olabilir",
+    "shift_overlap": "{{name}} için başka bir vardiyayla çakışıyor",
+    "station": "İstasyon hesapları vardiya planına eklenemez."
   },
   "guest": {
     "hero": {
@@ -198,7 +201,9 @@
       "menu": "Menü",
       "tables": "Masalar",
       "sales": "Satış",
-      "people": "Personel"
+      "people": "Personel",
+      "schedule": "Vardiya planı",
+      "myShifts": "Vardiyalarım"
     },
     "roles": {
       "waiter": "Garson",
@@ -1113,5 +1118,108 @@
       "unassigned_one": "{{ranges}} artık atanmamış",
       "unassigned_other": "{{ranges}} artık atanmamış"
     }
+  },
+  "schedule": {
+    "title": "Vardiya planı",
+    "loadError": "Vardiya planı yüklenemedi.",
+    "caption": "{{range}} vardiyaları",
+    "col": {
+      "person": "Kişi",
+      "total": "Hafta"
+    },
+    "dayTotal": "Gün toplamı",
+    "hours": "{{n}} sa",
+    "inactive": "Pasif",
+    "group": {
+      "floor": "Salon ekibi",
+      "kitchen": "Mutfak",
+      "bar": "Bar",
+      "managers": "Yöneticiler"
+    },
+    "area": {
+      "salon": "Salon",
+      "bar": "Bar",
+      "terrace": "Teras",
+      "kitchen": "Mutfak",
+      "bar_station": "Bar istasyonu"
+    },
+    "addFor": "{{name}} için vardiya ekle, {{day}}",
+    "moveHere": "Buraya taşı: {{name}}, {{day}}",
+    "warningPrefix": "Uyarı: {{text}}",
+    "warningsTitle_one": "{{count}} uyarı",
+    "warningsTitle_other": "{{count}} uyarı",
+    "warn": {
+      "week": "bu hafta {{hours}} sa (sınır {{limit}})",
+      "day": "{{day}} günü {{hours}} sa (sınır {{limit}})",
+      "rest": "{{day}} öncesi yalnızca {{hours}} sa dinlenme (en az {{limit}})",
+      "inactive": "pasif ama bu hafta vardiyası var"
+    },
+    "week": {
+      "label": "Hafta",
+      "prev": "Önceki hafta",
+      "next": "Sonraki hafta",
+      "this": "Bu hafta"
+    },
+    "copyLastWeek": "Geçen haftayı kopyala",
+    "pdf": {
+      "button": "PDF",
+      "week": "Haftalık plan",
+      "people": "Tüm kişisel PDF'ler",
+      "person": "{{name}} için PDF indir"
+    },
+    "move": {
+      "region": "Taşı",
+      "hint": "Bu vardiyayı taşımak için M tuşuna basın.",
+      "keys": "{{span}} vardiyası {{target}} hücresine taşınıyor. Ok tuşlarıyla hücre seçin, Enter ile taşıyın, Escape ile vazgeçin.",
+      "tap": "{{span}} vardiyası {{target}} hücresine taşınıyor. Taşımak için bir hücreye dokunun.",
+      "cancel": "Taşımaktan vazgeç"
+    },
+    "status": {
+      "copied": "{{copied}} kopyalandı · {{skipped}} atlandı",
+      "added": "{{name}} için {{span}} eklendi",
+      "saved": "{{name}} için {{span}} kaydedildi",
+      "deleted": "{{name}} için {{span}} silindi",
+      "moved": "{{span}} taşındı: {{name}}, {{day}}"
+    },
+    "sheet": {
+      "newTitle": "Yeni vardiya",
+      "editTitle": "Vardiyayı düzenle",
+      "templates": "Şablonlar",
+      "start": "Başlangıç",
+      "end": "Bitiş",
+      "nextDay": "ertesi gün biter",
+      "area": "Alan",
+      "note": "Not (isteğe bağlı)",
+      "save": "Kaydet",
+      "cancel": "Vazgeç",
+      "delete": "Sil",
+      "move": "Taşı",
+      "timesRequired": "Başlangıç ve bitiş saatini girin."
+    },
+    "templates": {
+      "button": "Şablonlar",
+      "title": "Vardiya şablonları",
+      "empty": "Henüz şablon yok.",
+      "newTitle": "Yeni şablon",
+      "editTitle": "Şablonu düzenle",
+      "name": "Ad",
+      "nameRequired": "Şablona bir ad verin.",
+      "add": "Şablon ekle",
+      "save": "Şablonu kaydet",
+      "done": "Tamam",
+      "edit": "{{name}} şablonunu düzenle",
+      "delete": "{{name}} şablonunu sil",
+      "saved": "{{name}} kaydedildi",
+      "deleted": "{{name}} silindi"
+    }
+  },
+  "myShifts": {
+    "title": "Vardiyalarım",
+    "loadError": "Vardiyalarınız yüklenemedi.",
+    "thisWeek": "Bu hafta",
+    "nextWeek": "Gelecek hafta",
+    "total": "Toplam",
+    "pdf": "PDF indir",
+    "none": "Bu hafta vardiya yok."
   }
 }
