@@ -30,7 +30,12 @@
     "demo_busy": "Demo şu anda yoğun. Lütfen birazdan tekrar deneyin.",
     "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
     "split_locked": "Hesabın bir kısmı ödendi, bu yüzden bölüşüm değiştirilemez.",
-    "amount_changed": "Tutar değişti. Lütfen yeni tutarı onaylayın."
+    "amount_changed": "Tutar değişti. Lütfen yeni tutarı onaylayın.",
+    "name_taken": "Aktif biri zaten bu adı kullanıyor.",
+    "last_manager": "En az bir yönetici aktif kalmalı.",
+    "self": "Bunu kendi hesabınızda yapamazsınız.",
+    "demo_protected": "Bu hesap demoda korunuyor.",
+    "pin_required": "Garson ve yöneticiler için PIN gerekli."
   },
   "guest": {
     "hero": {
@@ -192,13 +197,18 @@
       "floor": "Salon",
       "menu": "Menü",
       "tables": "Masalar",
-      "sales": "Satış"
+      "sales": "Satış",
+      "people": "Personel"
     },
     "roles": {
       "waiter": "Garson",
       "kitchen": "Mutfak",
       "bar": "Bar",
-      "manager": "Yönetici"
+      "manager": "Yönetici",
+      "cook": "Aşçı",
+      "bartender": "Barmen",
+      "host": "Karşılama",
+      "dishwasher": "Bulaşıkçı"
     },
     "account": {
       "open": "{{name}}, hesap menüsü",
@@ -230,7 +240,8 @@
       "continueAs": "{{name}} olarak devam et",
       "demoTitle": "Ya da bir rolü hemen deneyin",
       "demoHint": "Demoda PIN gerekmez.",
-      "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin."
+      "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin.",
+      "ended": "Bir yönetici oturumunu kapattı"
     }
   },
   "demo": {
@@ -1027,5 +1038,80 @@
       "none": "–"
     },
     "updated": "Dakikada bir güncellenir"
+  },
+  "people": {
+    "title": "Personel",
+    "add": "Personel ekle",
+    "counts": "{{active}} aktif · {{inactive}} pasif",
+    "caption": "Personel: ad, rol, masalar, son giriş ve durum",
+    "col": {
+      "name": "Ad",
+      "role": "Rol",
+      "tables": "Masalar",
+      "lastSignIn": "Son giriş",
+      "status": "Durum"
+    },
+    "allTables": "Hepsi",
+    "never": "Hiç",
+    "today": "bugün {{time}}",
+    "yesterday": "dün {{time}}",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "stations": "İstasyonlar",
+    "stationsHint": "Mutfak ve bar ekranlarının ortak girişleri. PIN'lerini buradan sıfırlayabilirsiniz.",
+    "resetPin": "PIN'i sıfırla",
+    "resetPinFor": "{{name}} için PIN'i sıfırla",
+    "newPin": "Yeni PIN",
+    "pin": "PIN",
+    "pinConfirm": "PIN'i doğrula",
+    "pinHint": "4 ila 6 rakam.",
+    "deactivate": "Pasifleştir",
+    "reactivate": "Yeniden etkinleştir",
+    "loadError": "Personel listesi yüklenemedi.",
+    "form": {
+      "newTitle": "Yeni personel",
+      "name": "Ad",
+      "role": "Rol",
+      "tables": "Masalar",
+      "cancel": "Vazgeç",
+      "close": "Kapat",
+      "save": "Değişiklikleri kaydet",
+      "add": "Personel ekle",
+      "nameRequired": "Bir ad girin.",
+      "nameTaken": "Aktif biri zaten bu adı kullanıyor.",
+      "pinInvalid": "PIN 4 ila 6 rakam olmalı.",
+      "pinMismatch": "PIN'ler eşleşmiyor.",
+      "scheduleOnly": "{{role}} için PIN yok ve giriş yapmaz. Yalnızca haftalık vardiya planında görünür.",
+      "tablesHint": "Kesik çizgili masalar başka bir garsona ait. Dokunursanız {{name}} adlı kişiye geçer.",
+      "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır."
+    },
+    "chip": {
+      "mine": "{{table}}, {{name}} kişisinin masası",
+      "other": "{{table}}, {{owner}} kişisinin masası. Taşımak için dokunun",
+      "free": "{{table}}, garson yok",
+      "thisPerson": "bu kişi"
+    },
+    "why": {
+      "self": "Kendi hesabınızı pasifleştiremezsiniz.",
+      "last_manager": "En az bir yönetici aktif kalmalı.",
+      "station": "İstasyon hesapları pasifleştirilemez.",
+      "demo_protected": "Bu hesap demoda korunuyor."
+    },
+    "dialog": {
+      "deactivateTitle": "{{name}} pasifleştirilsin mi?",
+      "deactivateBody": "Giriş yapamaz ve açık oturumu hemen kapanır. Geçmiş hesapları ve onayları kalır.",
+      "tablesLabel": "Bu masaların ataması kalkacak",
+      "noTables": "Hiç masası yok.",
+      "resetTitle": "{{name}} için PIN'i sıfırla"
+    },
+    "status": {
+      "saved": "{{name}} kaydedildi.",
+      "added": "{{name}} eklendi.",
+      "reactivated": "{{name}} yeniden aktif.",
+      "deactivated": "{{name}} pasifleştirildi.",
+      "pinReset": "{{name}} için PIN sıfırlandı.",
+      "unassigned_one": "{{ranges}} artık atanmamış",
+      "unassigned_other": "{{ranges}} artık atanmamış"
+    }
   }
 }

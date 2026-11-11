@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, ChevronRight, CornerDownLeft, Delete, Lock } from "lucide-react";
@@ -26,6 +26,13 @@ export function Login() {
     retry: false,
   });
   const [picked, setPicked] = useState<StaffMember | null>(null);
+  const qc = useQueryClient();
+  const ended = useSearchParams()[0].get("ended") === "1";
+  // Signed out (by a manager or by a 401): nothing of the last session's staff data stays in memory.
+  const signedOut = me.data === null;
+  useEffect(() => {
+    if (signedOut) qc.removeQueries({ predicate: (q) => !["auth", "demo", "guest"].includes(String(q.queryKey[0])) });
+  }, [signedOut, qc]);
   const noSandbox = staff.error instanceof ApiClientError && staff.error.status === 401;
 
   return (
@@ -50,6 +57,10 @@ export function Login() {
               </span>
               <ArrowRight size={16} strokeWidth={1.75} aria-hidden="true" />
             </Link>
+          )}
+
+          {ended && !picked && (
+            <p role="status" className="mb-4 rounded-lg border border-staff-line bg-staff-sunk px-3 py-2.5 text-[13px] text-staff-fg-2">{t("staff.login.ended")}</p>
           )}
 
           <section className="rounded-xl border border-staff-line bg-staff-panel p-6 shadow-[0_1px_2px_rgba(24,22,26,0.04)]">

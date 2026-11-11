@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient, type QueryClient, type QueryKey } from "@tanstack/react-query";
 import { api, ApiClientError } from "../lib/api";
 
-export type StaffRole = "waiter" | "kitchen" | "bar" | "manager";
+/** Login roles, station accounts and the schedule-only roles (cook, bartender, host, dishwasher never sign in). */
+export type StaffRole = "waiter" | "kitchen" | "bar" | "manager" | "cook" | "bartender" | "host" | "dishwasher";
 export interface StaffMember {
   id: string;
   name: string;
@@ -31,12 +32,24 @@ export function markSignedOut(qc: QueryClient): void {
   qc.setQueryData(meKey, null);
 }
 
+/** Forget the session after a manager ended it: clear every staff cache and show the login with the reason. */
+export function endSession(qc: QueryClient, navigate: (to: string, o?: { replace?: boolean }) => unknown): void {
+  markSignedOut(qc);
+  qc.removeQueries({ predicate: (q) => !["auth", "demo", "guest"].includes(String(q.queryKey[0])) });
+  void navigate("/staff/login?ended=1", { replace: true });
+}
+
 /** Where each role starts. Matches the demo redirects. */
 export const ROLE_HOME: Record<StaffRole, string> = {
   waiter: "/staff/floor",
   kitchen: "/staff/kitchen",
   bar: "/staff/bar",
   manager: "/staff/menu",
+  // Schedule-only people have no PIN and never hold a session; this only keeps the map total.
+  cook: "/staff/login",
+  bartender: "/staff/login",
+  host: "/staff/login",
+  dishwasher: "/staff/login",
 };
 
 /** The manager passes every role check. */

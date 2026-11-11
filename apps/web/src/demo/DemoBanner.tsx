@@ -6,7 +6,7 @@ import { api } from "../lib/api";
 import { fetchMe, meKey } from "../staff/auth";
 import { DemoRoleButtons } from "./DemoRoleButtons";
 import { PhoneQr } from "./PhoneQr";
-import { demoKey, useDemo, type DemoRole, type DemoState } from "./useDemo";
+import { DEMO_ROLES, demoKey, useDemo, type DemoRole, type DemoState } from "./useDemo";
 
 /**
  * The slim "Demo restaurant, not real" bar shown on every guest and staff page in demo mode: role buttons,
@@ -21,7 +21,7 @@ export function DemoBanner({ surface }: { surface: "guest" | "staff" }) {
   if (!demo.isDemo) return null;
 
   const info = demo.info;
-  const current: DemoRole | undefined = surface === "guest" ? "guest" : (me.data?.role ?? undefined);
+  const current: DemoRole | undefined = surface === "guest" ? "guest" : (DEMO_ROLES.find((r) => r === me.data?.role));
   const s = surface === "staff";
 
   return (

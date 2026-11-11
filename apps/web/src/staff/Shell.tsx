@@ -2,16 +2,16 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, ChartLine, Flame, LayoutGrid, LogOut, QrCode, Wine, type LucideIcon } from "lucide-react";
+import { BookOpen, ChartLine, Flame, LayoutGrid, LogOut, QrCode, Users, Wine, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useFormat } from "../lib/format";
 import { useLive } from "../lib/useLive";
 import { usePopover } from "../lib/usePopover";
 import { setLanguage } from "../i18n";
 import { ConnectionBanner } from "./ConnectionBanner";
-import { canAccess, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
+import { canAccess, endSession, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
 
-export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "sales";
+export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "sales" | "people";
 
 interface RailItem {
   key: RailKey;
@@ -30,6 +30,7 @@ export const RAIL: readonly RailItem[] = [
   { key: "menu", to: "/staff/menu", icon: BookOpen, roles: [], match: ["/staff/menu"] },
   { key: "tables", to: "/staff/tables", icon: QrCode, roles: [], match: ["/staff/tables"] },
   { key: "sales", to: "/staff/sales", icon: ChartLine, roles: [], match: ["/staff/sales", "/staff/tonight"] },
+  { key: "people", to: "/staff/people", icon: Users, roles: [], match: ["/staff/people"] },
 ];
 
 export const railFor = (role: StaffRole | undefined) => (role ? RAIL.filter((i) => canAccess(role, i.roles)) : []);
@@ -69,7 +70,11 @@ export function Shell({ leading, title, subtitle, toolbar, actions, stats, stats
   const qc = useQueryClient();
   const me = useMe().data ?? undefined;
   const { pathname } = useLocation();
-  const live = useLive({ audience: "staff" });
+  const navigate = useNavigate();
+  // A manager deactivated this person: the server sends this, then drops the socket.
+  const live = useLive({ audience: "staff" }, (e) => {
+    if (e.type === "session.ended") endSession(qc, navigate);
+  });
 
   useEffect(() => {
     if (live.authFailed) markSignedOut(qc);

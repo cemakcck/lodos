@@ -14,6 +14,7 @@ import { MenuEditor } from "./staff/manager/MenuEditor";
 import { Tables } from "./staff/manager/Tables";
 import { QrSheet } from "./staff/manager/QrSheet";
 import { Sales } from "./staff/sales/Sales";
+import { Staff } from "./staff/people/Staff";
 import type { StaffRole } from "./staff/auth";
 
 function NotFound() {
@@ -55,6 +56,7 @@ export const routes: RouteObject[] = [
             { path: "/staff/tables", element: <Tables /> },
             { path: "/staff/tables/qr", element: <QrSheet /> },
             { path: "/staff/sales", element: <Sales /> },
+            { path: "/staff/people", element: <Staff /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],

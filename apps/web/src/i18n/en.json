@@ -30,7 +30,12 @@
     "demo_busy": "The demo is busy right now. Please try again shortly.",
     "internal": "Something went wrong on our side. Please try again.",
     "split_locked": "Part of this check is already paid, so the split can't change.",
-    "amount_changed": "The amount changed. Please confirm the new amount."
+    "amount_changed": "The amount changed. Please confirm the new amount.",
+    "name_taken": "Someone active already has that name.",
+    "last_manager": "At least one manager must stay active.",
+    "self": "You can't do that to your own account.",
+    "demo_protected": "This account is protected in the demo.",
+    "pin_required": "Waiters and managers need a PIN."
   },
   "guest": {
     "hero": {
@@ -192,13 +197,18 @@
       "floor": "Floor",
       "menu": "Menu",
       "tables": "Tables",
-      "sales": "Sales"
+      "sales": "Sales",
+      "people": "Staff"
     },
     "roles": {
       "waiter": "Waiter",
       "kitchen": "Kitchen",
       "bar": "Bar",
-      "manager": "Manager"
+      "manager": "Manager",
+      "cook": "Cook",
+      "bartender": "Bartender",
+      "host": "Host",
+      "dishwasher": "Dishwasher"
     },
     "account": {
       "open": "{{name}}, account menu",
@@ -230,7 +240,8 @@
       "continueAs": "Continue as {{name}}",
       "demoTitle": "Or try a role instantly",
       "demoHint": "No PIN needed in the demo.",
-      "demoStart": "Pick a role below to open your private copy of the demo restaurant."
+      "demoStart": "Pick a role below to open your private copy of the demo restaurant.",
+      "ended": "You were signed out by a manager"
     }
   },
   "demo": {
@@ -1027,5 +1038,80 @@
       "none": "–"
     },
     "updated": "Updated every minute"
+  },
+  "people": {
+    "title": "Staff",
+    "add": "Add staff",
+    "counts": "{{active}} active · {{inactive}} inactive",
+    "caption": "Staff: name, role, tables, last sign-in and status",
+    "col": {
+      "name": "Name",
+      "role": "Role",
+      "tables": "Tables",
+      "lastSignIn": "Last sign-in",
+      "status": "Status"
+    },
+    "allTables": "All",
+    "never": "Never",
+    "today": "today {{time}}",
+    "yesterday": "yesterday {{time}}",
+    "active": "Active",
+    "inactive": "Inactive",
+    "stations": "Stations",
+    "stationsHint": "Shared sign-ins for the kitchen and bar screens. You can reset their PIN here.",
+    "resetPin": "Reset PIN",
+    "resetPinFor": "Reset PIN for {{name}}",
+    "newPin": "New PIN",
+    "pin": "PIN",
+    "pinConfirm": "Confirm PIN",
+    "pinHint": "4 to 6 digits.",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "loadError": "Couldn't load the staff list.",
+    "form": {
+      "newTitle": "New staff member",
+      "name": "Name",
+      "role": "Role",
+      "tables": "Tables",
+      "cancel": "Cancel",
+      "close": "Close",
+      "save": "Save changes",
+      "add": "Add staff",
+      "nameRequired": "Enter a name.",
+      "nameTaken": "Someone active already has that name.",
+      "pinInvalid": "PIN must be 4 to 6 digits.",
+      "pinMismatch": "PINs don't match.",
+      "scheduleOnly": "{{role}} has no PIN and doesn't sign in. They appear on the weekly schedule only.",
+      "tablesHint": "Dashed tables belong to another waiter. Tapping one moves it to {{name}}.",
+      "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept."
+    },
+    "chip": {
+      "mine": "{{table}}, {{name}}'s table",
+      "other": "{{table}}, {{owner}}'s table. Tap to move it",
+      "free": "{{table}}, no waiter",
+      "thisPerson": "this person"
+    },
+    "why": {
+      "self": "You can't deactivate your own account.",
+      "last_manager": "At least one manager must stay active.",
+      "station": "Station accounts can't be deactivated.",
+      "demo_protected": "This account is protected in the demo."
+    },
+    "dialog": {
+      "deactivateTitle": "Deactivate {{name}}?",
+      "deactivateBody": "They won't be able to sign in and any open session ends now. Their past checks and approvals stay.",
+      "tablesLabel": "These tables will be unassigned",
+      "noTables": "They have no tables.",
+      "resetTitle": "Reset PIN for {{name}}"
+    },
+    "status": {
+      "saved": "{{name}} saved.",
+      "added": "{{name}} added.",
+      "reactivated": "{{name}} is active again.",
+      "deactivated": "{{name}} is deactivated.",
+      "pinReset": "PIN reset for {{name}}.",
+      "unassigned_one": "{{ranges}} is now unassigned",
+      "unassigned_other": "{{ranges}} are now unassigned"
+    }
   }
 }
