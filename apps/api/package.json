@@ -13,8 +13,10 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "@types/pdfkit": "^0.17.7",
     "esbuild": "^0.28.2",
     "mongodb-memory-server": "^11.3.0",
+    "pdfjs-dist": "^6.5.438",
     "socket.io-client": "^4.8.4",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
@@ -30,6 +32,7 @@
     "argon2": "^0.45.2",
     "fastify": "^5.12.8",
     "mongoose": "^9.12.1",
+    "pdfkit": "^0.20.2",
     "socket.io": "^4.8.4",
     "zod": "^4.6.7"
   }

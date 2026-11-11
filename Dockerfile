@@ -19,6 +19,7 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/apps/api/package.json ./apps/api/
 COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/assets ./apps/api/assets
 COPY --from=build /app/apps/web/dist ./apps/web/dist
 USER node
 EXPOSE 4100
