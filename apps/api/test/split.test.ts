@@ -290,6 +290,46 @@ describe("by item", () => {
     expect((await c.check()).status).toBe("paid");
   });
 
+  it("dropping the last unpaid, empty share settles and closes the check", async () => {
+    const c = await itemCheck();
+    const [burrata] = await c.unitsOf("Burrata");
+    const [ribeye] = await c.unitsOf("Ribeye");
+    const [wine] = await c.unitsOf("Wine");
+    const [fries] = await c.unitsOf("Fries");
+    const all = [
+      { unit: burrata, labels: ["A"] },
+      { unit: ribeye, labels: ["A"] },
+      { unit: wine, labels: ["B"] },
+      { unit: fries, labels: ["B"] },
+    ];
+    expect((await c.put({ mode: "items", count: 3, assignments: all })).statusCode).toBe(200);
+    expect((await c.pay("A", 54001 + 245000)).json()).toMatchObject({ changed: true, closed: false });
+    expect((await c.pay("B", 180003 + 38000)).json()).toMatchObject({ changed: true, closed: false });
+    expect((await c.pay("C", 0)).statusCode).toBe(409);
+    expect((await c.check()).status).toBe("open");
+    await runWithTenant(c.s.tenantId, () => t.models.Call.create({ tableId: c.T7, checkId: c.checkId, reason: "other", openedAt: NOW }));
+
+    const emit = vi.spyOn(t.app.realtime, "emit");
+    let res;
+    try {
+      res = await c.put({ mode: "items", count: 2, assignments: all });
+      expect(emit.mock.calls.filter((call) => call[1] === "check.updated")).toEqual([
+        [c.s.tenantId, "check.updated", { ids: [c.checkId], tableId: c.T7 }, ["floor", "manager", "table"]],
+      ]);
+      expect(emit.mock.calls.filter((call) => call[1] === "call.answered")).toHaveLength(1);
+    } finally {
+      emit.mockRestore();
+    }
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ status: "paid", mode: "items", count: 2, paidCount: 2, left: 0 });
+    const check = await c.check();
+    expect(check.status).toBe("paid");
+    expect(check.closedAt).toEqual(NOW);
+    expect(await runWithTenant(c.s.tenantId, () => t.models.Call.countDocuments({ tableId: c.T7, answeredAt: null }))).toBe(0);
+    const t7 = (await c.w("GET", "/api/floor")).json().tables.find((x: { name: string }) => x.name === "T7");
+    expect(t7).toMatchObject({ state: "free", checkId: null, paying: null });
+  });
+
   it("a new order during a split lands unassigned", async () => {
     const c = await itemCheck();
     const [ribeye] = await c.unitsOf("Ribeye");

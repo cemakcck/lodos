@@ -2,13 +2,19 @@ import { PayShareBody, SHARE_LABELS, SplitBody } from "@lodos/shared";
 import type { FastifyInstance } from "fastify";
 import { staffRoute } from "../auth/guard";
 import { notFound } from "../kds/service";
-import type { Audience } from "../realtime/emit";
+import type { Audience, Realtime } from "../realtime/emit";
 import { getSplit, payShare, setSplit } from "./split";
 
 const WAITER = ["waiter"] as const;
 /** Split changes interest the staff only; the guest page learns about a close through `check.updated`. */
 const SPLIT_AUDIENCE: readonly Audience[] = ["floor", "manager"];
 const TABLE_AUDIENCE: readonly Audience[] = ["floor", "manager", "table"];
+
+/** A split check was settled and closed: the answered calls, then the check (the guest page shows "visit ended"). */
+function emitClosed(realtime: Realtime, tenantId: string, checkId: string, tableId: string, answeredCallIds: string[]): void {
+  if (answeredCallIds.length > 0) realtime.emit(tenantId, "call.answered", { ids: answeredCallIds, tableId }, TABLE_AUDIENCE);
+  realtime.emit(tenantId, "check.updated", { ids: [checkId], tableId }, TABLE_AUDIENCE);
+}
 
 type IdParams = { Params: { id: string } };
 type ShareParams = { Params: { id: string; label: string } };
@@ -24,9 +30,10 @@ export function registerCheckRoutes(app: FastifyInstance): void {
     "/api/checks/:id/split",
     staffRoute(WAITER, async (req) => {
       const body = SplitBody.parse(req.body);
-      const { view, tableId } = await setSplit(req.server.models, { checkId: req.params.id, body });
-      req.server.realtime.emit(req.staff.tenantId, "split.updated", { ids: [view.checkId], tableId }, SPLIT_AUDIENCE);
-      return view;
+      const r = await setSplit(req.server.models, { checkId: req.params.id, body, staffId: req.staff.id, now: req.server.clock.now() });
+      req.server.realtime.emit(req.staff.tenantId, "split.updated", { ids: [r.view.checkId], tableId: r.tableId }, SPLIT_AUDIENCE);
+      if (r.closed) emitClosed(req.server.realtime, req.staff.tenantId, r.view.checkId, r.tableId, r.answeredCallIds);
+      return r.view;
     }),
   );
 
@@ -47,10 +54,7 @@ export function registerCheckRoutes(app: FastifyInstance): void {
         const { tenantId } = req.staff;
         const ids = [r.checkId];
         req.server.realtime.emit(tenantId, "split.updated", { ids, tableId: r.tableId }, SPLIT_AUDIENCE);
-        if (r.closed) {
-          if (r.answeredCallIds.length > 0) req.server.realtime.emit(tenantId, "call.answered", { ids: r.answeredCallIds, tableId: r.tableId }, TABLE_AUDIENCE);
-          req.server.realtime.emit(tenantId, "check.updated", { ids, tableId: r.tableId }, TABLE_AUDIENCE);
-        }
+        if (r.closed) emitClosed(req.server.realtime, tenantId, r.checkId, r.tableId, r.answeredCallIds);
       }
       return { changed: r.changed, share: r.share, closed: r.closed };
     }),

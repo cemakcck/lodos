@@ -143,6 +143,24 @@ export function splitView(input: { check: SplitCheck; tableName: string; bill: B
   return { ...base, mode: split.mode, count: split.count, locked, shares, unassigned, paidCount: paidLabels.size, left: bill.total - paidSum };
 }
 
+/**
+ * The one auto-close rule for a split check, inside the caller's transaction: when every share is paid and nothing
+ * worth more than ₺0 is unassigned, the check is closed with `markPaid` (status paid, closedAt, the table's open calls
+ * answered). `view` must be computed from the check as just written in this transaction. Used by `payShare`,
+ * `setSplit` (dropping the last unpaid, empty share) and adjustments (a void that removes the last unassigned unit).
+ */
+export async function closeIfSettled(
+  models: Models,
+  session: ClientSession,
+  input: { checkId: Id; tableId: Id; view: SplitView; staffId: string; now: Date },
+): Promise<{ closed: boolean; answeredCallIds: string[] }> {
+  const { checkId, tableId, view, staffId, now } = input;
+  const settled = view.mode !== "full" && view.status === "open" && view.shares.every((s) => s.payment != null) && view.unassigned.amount === 0;
+  if (!settled) return { closed: false, answeredCallIds: [] };
+  const { answeredCallIds } = await markPaid(models, session, { checkId, tableId, staffId, now });
+  return { closed: true, answeredCallIds };
+}
+
 async function tableNameOf(models: Models, tableId: Id, session?: ClientSession): Promise<string> {
   return (await models.Table.findOne({ _id: tableId }, { name: 1 }).session(session ?? null).lean())?.name ?? "";
 }
@@ -161,9 +179,21 @@ export async function getSplit(models: Models, checkId: string): Promise<SplitVi
  * `placeOrder`, `payShare`, `closeCheck` and adjustments and is re-run on a fresh snapshot.
  * Locks (409 `split_locked`) once any share is paid: the mode can't change, nor an Evenly count; By item can add
  * letters but not drop a paid one, and a unit in a paid share (or a unit moving into one) keeps its labels.
+ * A change that leaves every share paid and nothing unassigned (e.g. dropping an empty unpaid letter) closes the check.
  */
-export async function setSplit(models: Models, input: { checkId: string; body: SplitBody }): Promise<{ view: SplitView; tableId: string }> {
-  const { checkId, body } = input;
+export type SetSplitResult = {
+  view: SplitView;
+  tableId: string;
+  /** The change settled the check (every share paid, nothing unassigned), so it was closed. */
+  closed: boolean;
+  answeredCallIds: string[];
+};
+
+export async function setSplit(
+  models: Models,
+  input: { checkId: string; body: SplitBody; staffId: string; now: Date },
+): Promise<SetSplitResult> {
+  const { checkId, body, staffId, now } = input;
   if (!isOid(checkId)) throw notFound();
   return inCheckTransaction(models, async (session) => {
     const check = await models.Check.findOne({ _id: checkId }).session(session).lean<SplitCheck & { tableId: Types.ObjectId }>();
@@ -219,7 +249,14 @@ export async function setSplit(models: Models, input: { checkId: string; body: S
     ).lean<SplitCheck>();
     if (!updated) throw new CheckChangedError();
     const tableName = await tableNameOf(models, check.tableId, session);
-    return { view: splitView({ check: updated, tableName, bill }), tableId: String(check.tableId) };
+    const view = splitView({ check: updated, tableName, bill });
+    const { closed, answeredCallIds } = await closeIfSettled(models, session, { checkId: check._id, tableId: check.tableId, view, staffId, now });
+    return {
+      view: closed ? splitView({ check: { ...updated, status: "paid" }, tableName, bill }) : view,
+      tableId: String(check.tableId),
+      closed,
+      answeredCallIds,
+    };
   });
 }
 
@@ -240,7 +277,7 @@ export type PayShareResult = {
  * (or a payment racing an order, a split change, a full close or an adjustment) write-conflict and the loser re-runs
  * on a fresh snapshot: a share is paid exactly once (the loser gets `changed: false` and the stored payment), and the
  * amount charged is the one computed in the same snapshot. When every share is paid and nothing is unassigned, the
- * check is closed in the same transaction (`markPaid`, shared with `closeCheck`).
+ * check is closed in the same transaction (`closeIfSettled` → `markPaid`, shared with `closeCheck`).
  */
 export async function payShare(
   models: Models,
@@ -272,9 +309,7 @@ export async function payShare(
     if (!updated) throw new CheckChangedError();
     const after = splitView({ check: updated, tableName: "", bill });
     const paidShare = after.shares.find((s) => s.label === label)!;
-    const closes = after.shares.every((s) => s.payment != null) && after.unassigned.amount === 0;
-    if (!closes) return { changed: true, share: paidShare, closed: false, ...ids, answeredCallIds: [] };
-    const { answeredCallIds } = await markPaid(models, session, { checkId: check._id, tableId: check.tableId, staffId, now });
-    return { changed: true, share: paidShare, closed: true, ...ids, answeredCallIds };
+    const { closed, answeredCallIds } = await closeIfSettled(models, session, { checkId: check._id, tableId: check.tableId, view: after, staffId, now });
+    return { changed: true, share: paidShare, closed, ...ids, answeredCallIds };
   });
 }
