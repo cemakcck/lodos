@@ -55,7 +55,7 @@ describe("whole check", () => {
     expect(r.total).toBe(bill.total);
     expect(r.payment).toMatchObject({ method: "card", amount: bill.total });
     expect(r.payment.last4).toMatch(/^\d{4}$/);
-    expect(r).toMatchObject({ paid: true, share: null, table: { name: "T7" }, covers: 2, payments: [] });
+    expect(r).toMatchObject({ paid: true, share: null, table: { id: c.s.seed.tables.T7!.id, name: "T7" }, covers: 2, payments: [] });
     expect(r.checkNo).toMatch(/^\d{4}$/);
     expect(r.lines).toHaveLength(3);
     expect(bill.grossByRate[10]).toBeGreaterThan(0);

@@ -7,7 +7,7 @@ import { Login } from "./staff/Login";
 import { RequireStaff, StaffHome } from "./staff/RequireStaff";
 import { Kds } from "./staff/kds/Kds";
 import { Floor } from "./staff/floor/Floor";
-import { PrintCheck } from "./staff/PrintCheck";
+import { Receipt } from "./staff/Receipt";
 import { CloseView } from "./staff/close/CloseView";
 import { OrderEntry } from "./staff/order/OrderEntry";
 import { MenuEditor } from "./staff/manager/MenuEditor";
@@ -46,7 +46,8 @@ export const routes: RouteObject[] = [
           guarded(["waiter"], [
             { path: "/staff/floor", element: <Floor /> },
             { path: "/staff/order/:tableId", element: <OrderEntry /> },
-            { path: "/staff/check/:id/print", element: <PrintCheck /> },
+            { path: "/staff/check/:id/print", element: <Receipt /> },
+            { path: "/staff/check/:id/receipt", element: <Receipt /> },
             { path: "/staff/check/:id/close", element: <CloseView /> },
           ]),
           guarded(["manager"], [

@@ -113,18 +113,22 @@ export type TableCheck = {
   calls: OpenCall[];
 } & ({ check: null } | { check: CheckInfo; food: CheckLine[]; drinks: CheckLine[]; totals: CheckTotals });
 
-/** `GET /api/checks/:id/print` (the whole-check `ReceiptView`; Task 10 rebuilds the print page around it). */
-export interface CheckPrint {
-  table: { name: string };
+/** `GET /api/checks/:id/print` (whole check) and `GET /api/checks/:id/receipt?share=A`: the API's `ReceiptView`. */
+export interface ReceiptView {
+  table: { id: string; name: string };
   checkNo: string;
   serverName: string | null;
   covers: number | null;
   printedAt: string;
   openedAt: string;
   closedAt: string | null;
+  share: { label: string; index: number; of: number } | null;
   lines: { label: string; name: Loc; options: Loc[]; amount: number; comp: string | null }[];
   total: number;
   vat: { rate: 10 | 20; amount: number }[];
   payment: { method: PayMethod; amount: number; at: string; last4: string | null } | null;
+  /** Whole-check receipt of a check closed by shares: how each share was paid. */
+  payments: { label: string; method: PayMethod; amount: number; last4: string | null }[];
+  comps: { count: number; amount: number };
   paid: boolean;
 }

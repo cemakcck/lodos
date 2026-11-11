@@ -14,7 +14,7 @@ import { splitView, type ShareView, type SplitCheck } from "./split";
 type Name = { en: string; tr: string };
 export type ReceiptLine = { label: string; name: Name; options: Name[]; amount: number; comp: string | null };
 export type ReceiptView = {
-  table: { name: string };
+  table: { id: string; name: string };
   checkNo: string;
   serverName: string | null;
   covers: number | null;
@@ -142,7 +142,7 @@ export async function receiptView(models: Models, checkId: string, opts: { share
 
   const active = bill.lines.flatMap((l) => l.adjustments).filter((a) => a.kind === "comp");
   return {
-    table: { name: table?.name ?? "" },
+    table: { id: String(check.tableId), name: table?.name ?? "" },
     checkNo,
     serverName: server?.name ?? null,
     covers: check.covers ?? null,
