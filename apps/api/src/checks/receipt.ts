@@ -1,4 +1,4 @@
-import { allocate, formatTRY, fractionLabel, vatBreakdown, vatOf } from "@lodos/shared";
+import { allocate, fractionLabel, vatBreakdown, vatOf } from "@lodos/shared";
 import type { Types } from "mongoose";
 import type { Models } from "../db/models";
 import { isOid, notFound } from "../kds/service";
@@ -124,10 +124,12 @@ export async function receiptView(models: Models, checkId: string, opts: { share
     if (view.mode === "even") {
       const [g10, g20] = allocate(share.amount, [bill.grossByRate[10], bill.grossByRate[20]]) as [number, number];
       vat = ([[10, g10], [20, g20]] as const).filter(([, g]) => g > 0).map(([rate, g]) => ({ rate, amount: vatOf(g, rate) }));
+      // The share itself, not a fraction of the check total: unpaid even shares are recalculated when the check
+      // changes after a payment, so "¼ of ₺460" would no longer match the amount printed beside it.
       lines = [
         {
-          label: fractionLabel(view.count),
-          name: { en: `of check #${checkNo} (${formatTRY(bill.total, "en")})`, tr: `#${checkNo} hesabın (${formatTRY(bill.total, "tr")})` },
+          label: "",
+          name: { en: `Guest ${share.label} of ${view.count} · check #${checkNo}`, tr: `Misafir ${share.label} / ${view.count} · hesap #${checkNo}` },
           options: [],
           amount: share.amount,
           comp: null,

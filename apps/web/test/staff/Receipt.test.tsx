@@ -118,6 +118,24 @@ describe("Receipt", () => {
     expect(cash.textContent).not.toContain("····");
   });
 
+  it("an even share prints one line for the share (no check total), in the chosen language", async () => {
+    const data: Partial<ReceiptView> = {
+      share: { label: "B", index: 1, of: 4 },
+      lines: [{ label: "", name: n("Guest B of 4 · check #0427", "Misafir B / 4 · hesap #0427"), options: [], amount: 120000, comp: null }],
+      total: 120000,
+      payment: { method: "cash", amount: 120000, at: base.printedAt, last4: null },
+    };
+    setup({ data, url: "/staff/check/c1/receipt?share=B" });
+    const doc = await screen.findByRole("article");
+    const items = within(doc).getAllByRole("listitem").filter((li) => li.closest("ul")?.className === "pc-lines");
+    expect(items.map((li) => (li.textContent ?? "").replace(/\u00a0/g, " "))).toEqual([`Guest B of 4 · check #0427${formatTRY(120000, "en").replace(/\u00a0/g, " ")}`]);
+    expect(doc.textContent).not.toContain(formatTRY(341000, "en"));
+    cleanup();
+    await setLanguage("tr");
+    setup({ data, url: "/staff/check/c1/receipt?share=B" });
+    expect((await screen.findByRole("article")).textContent).toContain("Misafir B / 4 · hesap #0427");
+  });
+
   it("prints one payment line per share of a split-paid check", async () => {
     setup({
       data: {

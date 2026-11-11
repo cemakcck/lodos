@@ -132,22 +132,82 @@ describe("shares", () => {
     expect(b.payment).toBeNull();
   });
 
-  it("even split of 4: one '¼' line, VAT allocated and ≤ the share's gross", async () => {
+  it("even split of 4: one 'Guest C of 4 · check #N' line for the share, no check total; VAT allocated by rate", async () => {
     const c = await setup();
     expect((await c.w("PUT", `/api/checks/${c.checkId}/split`, { mode: "even", count: 4 })).statusCode).toBe(200);
     const bill = await c.bill();
     const r = await c.receipt("?share=C");
     expect(r.lines).toHaveLength(1);
-    expect(r.lines[0].label).toBe("¼");
-    expect(r.lines[0].name.en).toMatch(/^of check #\d{4} \(₺/);
-    expect(r.lines[0].name.tr).toMatch(/^#\d{4} hesabın \(₺/);
-    expect(r.total).toBe(r.lines[0].amount);
+    expect(r.lines[0]).toEqual({ label: "", name: { en: `Guest C of 4 · check #${r.checkNo}`, tr: `Misafir C / 4 · hesap #${r.checkNo}` }, options: [], amount: r.total, comp: null });
     expect(r.share).toEqual({ label: "C", index: 2, of: 4 });
-    expect(r.vat).toHaveLength(2);
-    for (const v of r.vat as { rate: 10 | 20; amount: number }[]) expect(v.amount).toBeLessThanOrEqual(r.total);
-    const grossShare = r.vat.reduce((n: number, v: { rate: 10 | 20; amount: number }) => n + v.amount, 0);
-    expect(grossShare).toBeLessThan(r.total);
-    expect(bill.total).toBeGreaterThan(r.total);
+    // The share's gross split across the rates in the bill's proportion (largest remainder), then KDV per rate.
+    const g10 = Math.round((r.total * bill.grossByRate[10]) / bill.total);
+    const g20 = r.total - g10;
+    expect(Math.abs((r.total * bill.grossByRate[10]) / bill.total - g10)).toBeLessThanOrEqual(0.5);
+    expect(r.vat).toEqual([
+      { rate: 10, amount: vatOf(g10, 10) },
+      { rate: 20, amount: vatOf(g20, 20) },
+    ]);
+  });
+
+  it("even shares recalculated after an item is added: each receipt reads its own share and still adds up", async () => {
+    const c = await setup();
+    expect((await c.w("PUT", `/api/checks/${c.checkId}/split`, { mode: "even", count: 4 })).statusCode).toBe(200);
+    const a = (await c.w("GET", `/api/checks/${c.checkId}/split`)).json().shares[0].amount as number;
+    expect((await c.w("POST", `/api/checks/${c.checkId}/shares/A/pay`, { method: "card", amount: a })).statusCode).toBe(200);
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    expect((await c.w("POST", `/api/tables/${c.s.seed.tables.T7!.id}/orders`, orderBody([{ itemId: fries.id }]))).statusCode).toBe(201);
+    const shares = (await c.w("GET", `/api/checks/${c.checkId}/split`)).json().shares as { label: string; amount: number }[];
+    const bill = await c.bill();
+    expect(shares.reduce((n, x) => n + x.amount, 0)).toBe(bill.total);
+    for (const sh of shares) {
+      const r = await c.receipt(`?share=${sh.label}`);
+      expect(r.total).toBe(sh.amount);
+      expect(r.lines).toEqual([{ label: "", name: { en: `Guest ${sh.label} of 4 · check #${r.checkNo}`, tr: `Misafir ${sh.label} / 4 · hesap #${r.checkNo}` }, options: [], amount: sh.amount, comp: null }]);
+    }
+    expect(shares[1]!.amount).not.toBe(a);
+  });
+
+  it("labels: '2 ×' and a ₺0 comp line for a partly comped line; in a share '2 × ½', '2 ×' and a comped unit", async () => {
+    const c = await setup();
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    await runWithTenant(c.s.tenantId, () => t.models.Availability.deleteMany({ itemId: fries.id }));
+    const placed = await c.w("POST", `/api/tables/${c.s.seed.tables.T7!.id}/orders`, orderBody([{ itemId: fries.id, qty: 5 }]));
+    expect(placed.statusCode, placed.body).toBe(201);
+    const ref = `${placed.json().orderId}:0`;
+    expect((await c.m("POST", `/api/checks/${c.checkId}/adjustments`, { lineRef: ref, kind: "comp", qty: 1, reason: "regular" })).statusCode).toBe(201);
+
+    const whole = await c.receipt();
+    const friesLines = (whole.lines as Line[]).filter((l) => l.name.en.startsWith("Truffle"));
+    expect(friesLines.map((l) => [l.label, l.amount, l.comp])).toEqual([
+      ["4 ×", 4 * fries.price, null],
+      ["", 0, "regular"],
+    ]);
+
+    const units = (await c.w("GET", `/api/checks/${c.checkId}/split`)).json().units as { ref: string; lineRef: string; comp: unknown }[];
+    const fu = units.filter((u) => u.lineRef === ref);
+    const comped = fu.filter((u) => u.comp !== null);
+    const charged = fu.filter((u) => u.comp === null);
+    expect([comped.length, charged.length]).toEqual([1, 4]);
+    const put = await c.w("PUT", `/api/checks/${c.checkId}/split`, {
+      mode: "items",
+      count: 2,
+      assignments: [
+        { unit: charged[0]!.ref, labels: ["A", "B"] },
+        { unit: charged[1]!.ref, labels: ["A", "B"] },
+        { unit: charged[2]!.ref, labels: ["A"] },
+        { unit: charged[3]!.ref, labels: ["A"] },
+        { unit: comped[0]!.ref, labels: ["A"] },
+      ],
+    });
+    expect(put.statusCode, put.body).toBe(200);
+    const a = await c.receipt("?share=A");
+    expect((a.lines as Line[]).map((l) => [l.label, l.name.en.slice(0, 7), l.amount, l.comp])).toEqual([
+      ["2 ×", "Truffle", 2 * fries.price, null],
+      ["2 × ½", "Truffle", fries.price, null],
+      ["", "Truffle", 0, "regular"],
+    ]);
+    expect(a.total).toBe(3 * fries.price);
   });
 
   it("unknown share label, share on an unsplit check, unknown check → 404", async () => {
