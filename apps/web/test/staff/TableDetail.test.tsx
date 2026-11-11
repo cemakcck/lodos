@@ -40,11 +40,15 @@ function setup(routes: Record<string, unknown>) {
   function Order() {
     return <p>order entry {useParams().tableId}</p>;
   }
+  function Close() {
+    return <p>close view {useParams().id}</p>;
+  }
   const router = createMemoryRouter(
     [
       { path: "/staff/floor", element: <TableDetail tableId="t12" now={NOW} /> },
       { path: "/staff/order/:tableId", element: <Order /> },
       { path: "/staff/check/:id/print", element: <p>print page</p> },
+      { path: "/staff/check/:id/close", element: <Close /> },
     ],
     { initialEntries: ["/staff/floor"] },
   );
@@ -111,42 +115,12 @@ describe("TableDetail", () => {
     expect(region.textContent).not.toMatch(/course|fire/i);
   });
 
-  it("Close shows the total in the confirmation, closes by the chosen method and shows the table Free", async () => {
-    let closed = false;
-    setup({
-      "GET /api/tables/t12/check": () => ({ status: 200, body: closed ? free : open() }),
-      "POST /api/checks/c1/close": () => {
-        closed = true;
-        return { status: 200, body: { check: { id: "c1", tableId: "t12", status: "paid" } } };
-      },
-    });
+  it("Close check opens the close view for the check", async () => {
+    const { router } = setup({ "GET /api/tables/t12/check": open() });
     const region = await panel();
     await userEvent.click(within(region).getByRole("button", { name: "Close check" }));
-    const dialog = screen.getByRole("dialog", { name: "Close check · T12" });
-    expect(within(dialog).getByTestId("close-total").textContent).toBe(formatTRY(409000, "en"));
-    expect(within(dialog).getByTestId("close-total").className).toContain("font-mono");
-    await userEvent.click(within(dialog).getByRole("radio", { name: "Cash" }));
-    await userEvent.click(within(dialog).getByRole("button", { name: `Close check, ${formatTRY(409000, "en")} by cash` }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(calls.find((c) => c.path === "/api/checks/c1/close")?.body).toEqual({ method: "cash" });
-    expect(within(region).getByText("Free", { selector: ".fl-pill" })).toBeTruthy();
-    expect(within(region).getByRole("button", { name: "Seat table" })).toBeTruthy();
-  });
-
-  it("the close dialog traps focus, closes on Escape and gives focus back", async () => {
-    setup({ "GET /api/tables/t12/check": open() });
-    const region = await panel();
-    const opener = within(region).getByRole("button", { name: "Close check" });
-    await userEvent.click(opener);
-    const dialog = screen.getByRole("dialog");
-    expect(dialog.contains(document.activeElement)).toBe(true);
-    for (let i = 0; i < 6; i++) {
-      await userEvent.tab();
-      expect(dialog.contains(document.activeElement)).toBe(true);
-    }
-    await userEvent.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(opener);
+    expect(await screen.findByText("close view c1")).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/staff/check/c1/close");
   });
 
   it("Mark picked up is optimistic, one per ready ticket, and rolls back on error", async () => {

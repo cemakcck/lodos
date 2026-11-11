@@ -35,7 +35,11 @@ export function TableShape({ table, now, scale, selected, mine, dimmed, onSelect
   const left = table.x * scale - (w - table.w * scale) / 2;
   const top = table.y * scale - (h - table.h * scale) / 2;
   const free = table.state === "free";
-  const meta = free ? String(table.capacity) : `${table.covers ?? "–"} · ${hm(since(table.seatedAt, now), lang)}`;
+  const meta = free
+    ? String(table.capacity)
+    : table.paying
+      ? t("floor.table.paying", table.paying)
+      : `${table.covers ?? "–"} · ${hm(since(table.seatedAt, now), lang)}`;
   const dot = table.state === "seated" || table.state === "calling" || table.state === "bill";
   const cls = ["fl-tbl", round ? "is-round" : "is-rect", `is-${table.state}`, selected && "is-sel", mine && "is-mine", dimmed && "is-dim"]
     .filter(Boolean)
@@ -58,7 +62,7 @@ export function TableShape({ table, now, scale, selected, mine, dimmed, onSelect
         {table.name}
         <span className="sr-only">{spokenRest}</span>
       </span>
-      <span className="m" aria-hidden="true">{meta}</span>
+      <span className={`m ${table.paying ? "is-paying" : ""}`} aria-hidden="true">{meta}</span>
     </button>
   );
 }

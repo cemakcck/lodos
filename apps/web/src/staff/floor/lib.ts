@@ -38,6 +38,7 @@ export function tableLabel(table: FloorTable, now: Date, t: TFunction, mine: boo
   else {
     parts.push(table.covers == null ? t("floor.table.noCovers") : t("floor.table.covers", { count: table.covers }));
     parts.push(spokenHm(since(table.seatedAt, now), t));
+    if (table.paying) parts.push(t("floor.table.paying", table.paying));
   }
   if (mine) parts.push(t("floor.table.mine"));
   return parts.join(", ");

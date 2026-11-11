@@ -28,7 +28,9 @@
     "limit_exceeded": "Bunun için sınıra ulaştınız.",
     "conflict": "Siz işlem yaparken bu değişti. Lütfen sayfayı yenileyip tekrar deneyin.",
     "demo_busy": "Demo şu anda yoğun. Lütfen birazdan tekrar deneyin.",
-    "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin."
+    "internal": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
+    "split_locked": "Hesabın bir kısmı ödendi, bu yüzden bölüşüm değiştirilemez.",
+    "amount_changed": "Tutar değişti. Lütfen yeni tutarı onaylayın."
   },
   "guest": {
     "hero": {
@@ -403,7 +405,8 @@
       "covers_one": "{{count}} kişi",
       "covers_other": "{{count}} kişi",
       "noCovers": "kişi sayısı girilmedi",
-      "mine": "sizin bölümünüz"
+      "mine": "sizin bölümünüz",
+      "paying": "Ödeniyor · {{paid}}/{{of}}"
     },
     "time": {
       "underMinute": "bir dakikadan az",
@@ -499,8 +502,7 @@
         "close": "Hesabı kapat"
       },
       "failed": "İşlem tamamlanamadı. Tekrar deneyin.",
-      "conflict": "Bu masa az önce değişti. Yenileniyor…",
-      "closed": "{{table}} kapatıldı: {{amount}}, {{method}}"
+      "conflict": "Bu masa az önce değişti. Yenileniyor…"
     },
     "seat": {
       "title": "{{table}} masasını aç",
@@ -528,7 +530,6 @@
         "cash": "nakit"
       },
       "confirm": "Hesabı kapat",
-      "confirmAria": "Hesabı kapat, {{amount}}, {{method}}",
       "closing": "Kapatılıyor…",
       "simulated": "Ödeme yalnızca kaydedilir. Bu sistem karttan çekim yapmaz.",
       "asked": "Misafir {{method}} ile ödemek istedi."
@@ -852,5 +853,63 @@
       "loadError": "Bu akşamın rakamları yüklenemedi."
     },
     "retry": "Tekrar dene"
+  },
+  "close": {
+    "back": "Masa planına dön",
+    "checkTotal": "Hesap toplamı",
+    "shares": "Paylar",
+    "takePayment": "Ödeme al",
+    "payAria": "Ödeme al, {{amount}}",
+    "progress": "{{of}} kişiden {{paid}} ödedi · {{left}} kaldı",
+    "modes": {
+      "label": "Nasıl ödenecek",
+      "full": "Tek ödeme",
+      "even": "Eşit böl",
+      "items": "Ürüne göre",
+      "locked": "Bir pay ödendi, bu yüzden hesabın bölünüşü artık değişmez."
+    },
+    "pay": {
+      "title": "Ödeme al · Misafir {{label}}",
+      "confirmAria": "{{action}}, {{amount}}, {{method}}",
+      "taking": "Ödeme alınıyor…",
+      "changed": "Tutar {{amount}} olarak değişti"
+    },
+    "even": {
+      "guests": "Misafir",
+      "fewer": "Daha az misafir",
+      "more": "Daha fazla misafir",
+      "hint": "{{min}} ile {{max}} misafir arası eşit paylar. Artan kuruşlar ilk paylara eklenir."
+    },
+    "items": {
+      "onCheck": "Hesapta · {{count}}",
+      "addGuest": "Misafir ekle",
+      "addGuestShort": "Misafir",
+      "hint": "Bir ürün seçin, sonra ödeyecek misafirlere dokunun. Paylaşmak için birden fazlasına dokunun.",
+      "unitOf": "{{of}} adetten {{n}}.",
+      "comp": "İkram",
+      "frozen": "ödenmiş bir payda",
+      "nobody": "atanmadı",
+      "who": "ödeyen: {{guests}}",
+      "whoPays": "{{item}} için kim ödüyor",
+      "unassigned_one": "{{count}} ürün atanmadı · {{amount}}",
+      "unassigned_other": "{{count}} ürün atanmadı · {{amount}}"
+    },
+    "share": {
+      "guest": "Misafir {{label}}",
+      "open": "Açık",
+      "paid": "Ödendi · {{method}}",
+      "payAria": "Ödeme al, Misafir {{label}}, {{amount}}",
+      "receipt": "Fiş",
+      "receiptAria": "Misafir {{label}} için fiş",
+      "even_one": "{{count}} eşit pay",
+      "even_other": "{{count}} eşit paydan biri",
+      "empty": "Henüz bir şey atanmadı."
+    },
+    "closed": {
+      "title": "Hesap kapandı",
+      "body": "{{table}} tamamen ödendi: {{amount}}.",
+      "back": "Masa planına dön",
+      "already": "Bu hesap kapandı."
+    }
   }
 }

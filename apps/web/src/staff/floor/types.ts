@@ -26,6 +26,8 @@ export interface FloorTable {
   covers: number | null;
   seatedAt: string | null;
   checkId: string | null;
+  /** A split check with at least one share paid: "Paying · 2 of 4". */
+  paying: { paid: number; of: number } | null;
 }
 
 export interface FloorChip {

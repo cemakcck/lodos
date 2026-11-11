@@ -7,8 +7,9 @@ export type { LiveAudience, LiveEvent };
 /** Query keys to invalidate for a live event. Events carry ids only; clients refetch. */
 export function invalidationsFor(e: LiveEvent): QueryKey[] {
   const check: QueryKey[] = e.tableId ? [["check", e.tableId]] : [];
-  if (e.type.startsWith("ticket.")) return [["kds"], ["floor"], ...check, ["guest", "orders"]];
-  if (e.type === "check.updated") return [["floor"], ...check, ["guest", "orders"], ["guest", "table"]];
+  if (e.type.startsWith("ticket.")) return [["kds"], ["floor"], ...check, ["guest", "orders"], ["split"]];
+  if (e.type === "check.updated") return [["floor"], ...check, ["guest", "orders"], ["guest", "table"], ["split"]];
+  if (e.type === "split.updated" || e.type === "adjustment.changed") return [["split"], ["floor"], ...check];
   if (e.type.startsWith("call.")) return [["floor"], ...check];
   if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
   if (e.type === "tables.changed") return [["floor"], ["manager"]];
@@ -16,7 +17,7 @@ export function invalidationsFor(e: LiveEvent): QueryKey[] {
 }
 
 const LIVE_KEYS: Record<LiveAudience["audience"], QueryKey[]> = {
-  staff: [["kds"], ["floor"], ["check"], ["menu"], ["manager"]],
+  staff: [["kds"], ["floor"], ["check"], ["split"], ["menu"], ["manager"]],
   guest: [["guest"]],
 };
 

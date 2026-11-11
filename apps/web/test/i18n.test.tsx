@@ -58,13 +58,17 @@ describe("invalidationsFor", () => {
   const at = "2026-01-01T00:00:00Z";
   it("maps ticket events", () => {
     expect(invalidationsFor({ type: "ticket.created", ids: ["a"], tableId: "t1", at })).toEqual([
-      ["kds"], ["floor"], ["check", "t1"], ["guest", "orders"],
+      ["kds"], ["floor"], ["check", "t1"], ["guest", "orders"], ["split"],
     ]);
   });
   it("maps check.updated", () => {
     expect(invalidationsFor({ type: "check.updated", ids: [], tableId: "t1", at })).toEqual([
-      ["floor"], ["check", "t1"], ["guest", "orders"], ["guest", "table"],
+      ["floor"], ["check", "t1"], ["guest", "orders"], ["guest", "table"], ["split"],
     ]);
+  });
+  it("maps split and adjustment events to the split, the floor and the table's check", () => {
+    expect(invalidationsFor({ type: "split.updated", ids: ["c1"], tableId: "t1", at })).toEqual([["split"], ["floor"], ["check", "t1"]]);
+    expect(invalidationsFor({ type: "adjustment.changed", ids: ["a1"], tableId: "t1", at })).toEqual([["split"], ["floor"], ["check", "t1"]]);
   });
   it("maps call events", () => {
     expect(invalidationsFor({ type: "call.opened", ids: [], tableId: "t2", at })).toEqual([["floor"], ["check", "t2"]]);

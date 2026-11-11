@@ -3,15 +3,21 @@ import { useTranslation } from "react-i18next";
 import { Banknote, CreditCard } from "lucide-react";
 import { useFormat } from "../../lib/format";
 import { Dialog } from "../Dialog";
-import type { PayMethod } from "./types";
+import type { PayMethod } from "../floor/types";
 
-export interface CloseCheckDialogProps {
-  tableName: string;
-  /** Kuruş. */
-  total: number;
+export interface PayDialogProps {
+  /** "Close check · T4", "Take payment · Guest A". */
+  title: string;
+  /** Kuruş, as computed by the server; sent back to confirm it. */
+  amount: number;
+  /** The confirm button's words: "Close check", "Take payment". */
+  confirmLabel: string;
+  /** The confirm button's words while the request runs. */
+  pendingLabel: string;
   /** The guest's choice when they asked for the bill; preselected. */
-  suggested: PayMethod | null;
+  suggested?: PayMethod | null;
   pending: boolean;
+  /** Shown as an alert, e.g. "The amount changed to ₺X". */
   error: string | null;
   onConfirm: (method: PayMethod) => void;
   onCancel: () => void;
@@ -19,13 +25,16 @@ export interface CloseCheckDialogProps {
 
 const METHODS: readonly PayMethod[] = ["card", "cash"];
 
-/** Confirm closing a check: the total in JetBrains Mono, card or cash, then Close. Payment is recorded, not taken. */
-export function CloseCheckDialog({ tableName, total, suggested, pending, error, onConfirm, onCancel }: CloseCheckDialogProps) {
+/**
+ * Confirm a payment: the amount in JetBrains Mono, card or cash, then confirm. Used for closing in full and for one
+ * share. The payment is recorded, not taken.
+ */
+export function PayDialog({ title, amount, confirmLabel, pendingLabel, suggested = null, pending, error, onConfirm, onCancel }: PayDialogProps) {
   const { t } = useTranslation();
   const { money } = useFormat();
   const [method, setMethod] = useState<PayMethod>(suggested ?? "card");
   const radios = useRef<Record<PayMethod, HTMLButtonElement | null>>({ card: null, cash: null });
-  const amount = money(total);
+  const shown = money(amount);
   const pick = (m: PayMethod) => {
     setMethod(m);
     radios.current[m]?.focus();
@@ -33,7 +42,7 @@ export function CloseCheckDialog({ tableName, total, suggested, pending, error, 
 
   return (
     <Dialog
-      title={t("floor.close.title", { table: tableName })}
+      title={title}
       onClose={onCancel}
       width={380}
       footer={
@@ -45,10 +54,10 @@ export function CloseCheckDialog({ tableName, total, suggested, pending, error, 
             type="button"
             className="staff-btn primary"
             disabled={pending}
-            aria-label={t("floor.close.confirmAria", { amount, method: t(`floor.close.methodWord.${method}`) })}
+            aria-label={t("close.pay.confirmAria", { action: confirmLabel, amount: shown, method: t(`floor.close.methodWord.${method}`) })}
             onClick={() => onConfirm(method)}
           >
-            {pending ? t("floor.close.closing") : t("floor.close.confirm")}
+            {pending ? pendingLabel : confirmLabel}
           </button>
         </>
       }
@@ -56,7 +65,7 @@ export function CloseCheckDialog({ tableName, total, suggested, pending, error, 
       <div className="fl-close-total">
         <span className="staff-label">{t("floor.close.total")}</span>
         <span className="font-mono" data-testid="close-total">
-          {amount}
+          {shown}
         </span>
       </div>
       <p className="staff-label mt-4 mb-2" id="close-method-label">{t("floor.close.method")}</p>

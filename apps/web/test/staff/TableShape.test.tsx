@@ -27,6 +27,7 @@ const table = (over: Partial<FloorTable> = {}): FloorTable => ({
   covers: 4,
   seatedAt: ago(72),
   checkId: "c12",
+  paying: null,
   ...over,
 });
 

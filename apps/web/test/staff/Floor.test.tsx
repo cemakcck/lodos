@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { computeAccessibleName } from "dom-accessibility-api";
-import { render, screen, cleanup, within, act } from "@testing-library/react";
+import { render, screen, cleanup, within, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryRouter, useParams } from "react-router";
@@ -35,6 +35,7 @@ const tbl = (name: string, roomId: string, over: Partial<FloorTable> = {}): Floo
   covers: null,
   seatedAt: null,
   checkId: null,
+  paying: null,
   ...over,
 });
 const seated = (min: number, covers = 2) => ({ state: "seated" as const, covers, seatedAt: ago(min), checkId: "c" });
@@ -64,10 +65,10 @@ const checkOf = (id: string, name: string): TableCheck => ({
 });
 
 let calls: ReturnType<typeof mockFetch>["calls"];
-function setup(path = "/staff/floor") {
+function setup(path = "/staff/floor", snap: FloorSnapshot = snapshot()) {
   calls = mockFetch({
     "GET /api/auth/me": { staff: { id: ME, name: "Deniz", role: "waiter" } },
-    "GET /api/floor": snapshot(),
+    "GET /api/floor": snap,
     "GET /api/tables/t2/check": checkOf("t2", "T2"),
     "GET /api/tables/t9/check": checkOf("t9", "T9"),
     "GET /api/tables/t7/check": checkOf("t7", "T7"),
@@ -124,6 +125,15 @@ describe("Floor", () => {
     // Legend shows every state word.
     const legend = screen.getByRole("list", { name: "Legend" });
     expect(within(legend).getAllByRole("listitem").map((l) => l.textContent)).toEqual(["Free", "Seated", "Food ready", "Calling", "Bill"]);
+  });
+
+  it("a table that is part paid says Paying · 2 of 4 in its name and on the shape", async () => {
+    const snap = snapshot();
+    snap.tables = snap.tables.map((tb) => (tb.name === "T2" ? { ...tb, paying: { paid: 2, of: 4 } } : tb));
+    setup("/staff/floor", snap);
+    const t2 = await tableBtn(/^T2,/);
+    await waitFor(() => expect(computeAccessibleName(screen.getByRole("button", { name: /^T2,/ }))).toContain("Paying · 2 of 4"));
+    expect(t2.textContent).toContain("Paying · 2 of 4");
   });
 
   it("ticks elapsed times from the server clock", async () => {

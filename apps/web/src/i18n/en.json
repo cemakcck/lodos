@@ -28,7 +28,9 @@
     "limit_exceeded": "You've reached the limit for this.",
     "conflict": "That changed while you were working. Please refresh and try again.",
     "demo_busy": "The demo is busy right now. Please try again shortly.",
-    "internal": "Something went wrong on our side. Please try again."
+    "internal": "Something went wrong on our side. Please try again.",
+    "split_locked": "Part of this check is already paid, so the split can't change.",
+    "amount_changed": "The amount changed. Please confirm the new amount."
   },
   "guest": {
     "hero": {
@@ -403,7 +405,8 @@
       "covers_one": "{{count}} cover",
       "covers_other": "{{count}} covers",
       "noCovers": "covers not set",
-      "mine": "your section"
+      "mine": "your section",
+      "paying": "Paying · {{paid}} of {{of}}"
     },
     "time": {
       "underMinute": "under a minute",
@@ -499,8 +502,7 @@
         "close": "Close check"
       },
       "failed": "That didn't go through. Try again.",
-      "conflict": "This table just changed. Refreshing…",
-      "closed": "{{table}} closed: {{amount}} by {{method}}"
+      "conflict": "This table just changed. Refreshing…"
     },
     "seat": {
       "title": "Seat {{table}}",
@@ -528,7 +530,6 @@
         "cash": "cash"
       },
       "confirm": "Close check",
-      "confirmAria": "Close check, {{amount}} by {{method}}",
       "closing": "Closing…",
       "simulated": "The payment is recorded only. No card is charged by this system.",
       "asked": "The guest asked to pay by {{method}}."
@@ -852,5 +853,63 @@
       "loadError": "Couldn't load tonight's numbers."
     },
     "retry": "Try again"
+  },
+  "close": {
+    "back": "Back to floor",
+    "checkTotal": "Check total",
+    "shares": "Shares",
+    "takePayment": "Take payment",
+    "payAria": "Take payment, {{amount}}",
+    "progress": "{{paid}} of {{of}} paid · {{left}} left",
+    "modes": {
+      "label": "How to pay",
+      "full": "In full",
+      "even": "Evenly",
+      "items": "By item",
+      "locked": "A share is paid, so the way this check is split can't change."
+    },
+    "pay": {
+      "title": "Take payment · Guest {{label}}",
+      "confirmAria": "{{action}}, {{amount}} by {{method}}",
+      "taking": "Taking payment…",
+      "changed": "The amount changed to {{amount}}"
+    },
+    "even": {
+      "guests": "Guests",
+      "fewer": "Fewer guests",
+      "more": "More guests",
+      "hint": "Equal shares for {{min}} to {{max}} guests. Leftover kuruş go to the first shares."
+    },
+    "items": {
+      "onCheck": "On the check · {{count}}",
+      "addGuest": "Add a guest",
+      "addGuestShort": "Guest",
+      "hint": "Select an item, then tap the guests who pay for it. Tap several to share it.",
+      "unitOf": "{{n}} of {{of}}",
+      "comp": "Comp",
+      "frozen": "in a paid share",
+      "nobody": "not assigned",
+      "who": "paid by {{guests}}",
+      "whoPays": "Who pays for {{item}}",
+      "unassigned_one": "{{count}} item not assigned · {{amount}}",
+      "unassigned_other": "{{count}} items not assigned · {{amount}}"
+    },
+    "share": {
+      "guest": "Guest {{label}}",
+      "open": "Open",
+      "paid": "Paid · {{method}}",
+      "payAria": "Take payment, Guest {{label}}, {{amount}}",
+      "receipt": "Receipt",
+      "receiptAria": "Receipt for Guest {{label}}",
+      "even_one": "{{count}} equal share",
+      "even_other": "One of {{count}} equal shares",
+      "empty": "Nothing assigned yet."
+    },
+    "closed": {
+      "title": "Check closed",
+      "body": "{{table}} is paid in full: {{amount}}.",
+      "back": "Back to floor",
+      "already": "This check is closed."
+    }
   }
 }

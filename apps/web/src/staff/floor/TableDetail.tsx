@@ -8,11 +8,10 @@ import { errorMessage } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
 import { initials } from "../auth";
 import { loc } from "../kds/lib";
-import { CloseCheckDialog } from "./CloseCheckDialog";
 import { SeatDialog } from "./SeatDialog";
 import { checkKey, floorKey, patchFloorTable, snapshotCaches, syncFloorFromCheck } from "./cache";
 import { checkState, hm, readyTickets, since } from "./lib";
-import type { CheckLine, FloorTable, PayMethod, TableCheck } from "./types";
+import type { CheckLine, FloorTable, TableCheck } from "./types";
 
 type OpenCheck = Extract<TableCheck, { check: object }>;
 
@@ -47,7 +46,7 @@ export interface TableDetailProps {
   seatRequest?: SeatRequest | null;
 }
 
-type DialogState = null | { kind: "seat"; mode: "seat" | "set"; thenOrder: boolean } | { kind: "close" };
+type DialogState = null | { kind: "seat"; mode: "seat" | "set"; thenOrder: boolean };
 
 const MESSAGE_MS = 4000;
 
@@ -55,7 +54,7 @@ const MESSAGE_MS = 4000;
  * The floor's right panel for one table: name, status pill and server initials; covers, seated time and check;
  * the open check as Food and Drinks with line status and price, subtotals and the total; and the actions:
  * Seat table (free), or Answer call, Mark picked up (one per ready ticket), Set covers, Add items, Print check and
- * Close check. Mark picked up and Answer call are optimistic and roll back on error.
+ * Close check (which opens the close view). Mark picked up and Answer call are optimistic and roll back on error.
  */
 export function TableDetail({ tableId, now, table, seatRequest }: TableDetailProps) {
   const { t } = useTranslation();
@@ -153,23 +152,6 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
     onSettled: refresh,
   });
 
-  // ---- Close check (confirmed; the API is idempotent, so a double tap is safe) -----------------------------------
-  const close = useMutation({
-    mutationFn: (v: { checkId: string; method: PayMethod; total: number }) =>
-      api(`/api/checks/${v.checkId}/close`, { method: "POST", body: JSON.stringify({ method: v.method }) }),
-    onSuccess: (_r, v) => {
-      const freed = qc.setQueryData<TableCheck>(checkKey(tableId), (d) => (d ? { table: d.table, calls: [], check: null } : d));
-      if (freed) syncFloorFromCheck(qc, tableId, freed);
-      setDialog(null);
-      flash(t("floor.detail.closed", { table: name, amount: money(v.total), method: t(`floor.close.methodWord.${v.method}`) }));
-      refresh();
-    },
-    onError: (err) => {
-      setDialogError(errorMessage(t, err));
-      refresh();
-    },
-  });
-
   const openDialog = (d: DialogState) => {
     setDialogError(null);
     setDialog(d);
@@ -233,7 +215,8 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
     for (const u of urgent) u.wide = true;
     const add: Action = { key: "add", label: t("floor.detail.actions.addItems"), icon: Plus, onClick: () => void navigate(`/staff/order/${tableId}`) };
     const print: Action = { key: "print", label: t("floor.detail.actions.print"), icon: Printer, to: `/staff/check/${open.check.id}/print` };
-    const closeA: Action = { key: "close", label: t("floor.detail.actions.close"), icon: Receipt, onClick: () => openDialog({ kind: "close" }), disabled: close.isPending };
+    // The close view: In full, Evenly or By item (spec §3.1).
+    const closeA: Action = { key: "close", label: t("floor.detail.actions.close"), icon: Receipt, onClick: () => void navigate(`/staff/check/${open.check.id}/close`) };
     // The primary: the first urgent action, else Close when the bill is asked for, else Add items.
     if (urgent.length > 0) actions.push(...urgent, add, print, closeA);
     else if (state === "bill") actions.push({ ...closeA, wide: true }, add, print);
@@ -368,19 +351,6 @@ export function TableDetail({ tableId, now, table, seatRequest }: TableDetailPro
           error={dialogError}
           onCancel={() => setDialog(null)}
           onConfirm={(covers) => seat.mutate({ covers, thenOrder: dialog.thenOrder })}
-        />
-      )}
-      {dialog?.kind === "close" && open && (
-        <CloseCheckDialog
-          tableName={name}
-          total={open.totals.total}
-          suggested={open.check.billMethod}
-          pending={close.isPending}
-          error={dialogError}
-          onCancel={() => setDialog(null)}
-          onConfirm={(method) => {
-            if (!close.isPending) close.mutate({ checkId: open.check.id, method, total: open.totals.total });
-          }}
         />
       )}
     </section>
