@@ -32,7 +32,7 @@ interface FormState {
   groups: GroupDraft[];
 }
 
-const initial = (item: ItemView | null, lang: "en" | "tr", categoryId: string): FormState => ({
+const initial = (item: ItemView | null, lang: "en" | "tr", categoryId: string, categories: CategoryView[]): FormState => ({
   categoryId: item?.categoryId ?? categoryId,
   nameEn: item?.name.en ?? "",
   nameTr: item?.name.tr ?? "",
@@ -40,7 +40,7 @@ const initial = (item: ItemView | null, lang: "en" | "tr", categoryId: string): 
   descTr: item?.description.tr ?? "",
   price: item ? kurusToLira(item.price, lang) : "",
   station: item?.station ?? "kitchen",
-  vatRate: item?.vatRate ?? 10,
+  vatRate: item?.vatRate ?? categories.find((c) => c.id === categoryId)?.defaultVatRate ?? 10,
   dietary: item?.dietary ?? [],
   allergens: item?.allergens ?? [],
   active: item?.active ?? true,
@@ -77,8 +77,10 @@ export function ItemForm({ item, categories, defaultCategoryId, onSaved, onClose
   const base = useId();
   const formId = `${base}-form`;
   const formRef = useRef<HTMLFormElement>(null);
-  const [f, setF] = useState<FormState>(() => initial(item, lang, defaultCategoryId));
+  const [f, setF] = useState<FormState>(() => initial(item, lang, defaultCategoryId, categories));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** The manager chose a rate: a category change no longer moves it. */
+  const [vatTouched, setVatTouched] = useState(false);
   const [attempt, setAttempt] = useState(0);
   /** Set once a new item exists on the server, so a retry PATCHes instead of creating a second one. */
   const [savedId, setSavedId] = useState<string | undefined>(item?.id);
@@ -278,7 +280,11 @@ export function ItemForm({ item, categories, defaultCategoryId, onSaved, onClose
           <div className="mg-grid3">
             <div className="mg-field">
               <label htmlFor={idOf("categoryId")}>{t("manager.item.category")}</label>
-              <select className="mg-input" {...field("categoryId")} value={f.categoryId} onChange={(e) => set({ categoryId: e.target.value })}>
+              <select className="mg-input" {...field("categoryId")} value={f.categoryId} onChange={(e) => {
+                  const categoryId = e.target.value;
+                  const rate = categories.find((c) => c.id === categoryId)?.defaultVatRate;
+                  set({ categoryId, ...(!item && !vatTouched && rate ? { vatRate: rate } : {}) });
+                }}>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {loc(c.name, lang)}
@@ -322,7 +328,10 @@ export function ItemForm({ item, categories, defaultCategoryId, onSaved, onClose
               <div className="mg-radios" aria-describedby={`${idOf("vat")}-hint`}>
                 {([10, 20] as const).map((r) => (
                   <label key={r} className={f.vatRate === r ? "is-on" : undefined}>
-                    <input type="radio" name={`${base}-vat`} checked={f.vatRate === r} onChange={() => set({ vatRate: r })} />
+                    <input type="radio" name={`${base}-vat`} checked={f.vatRate === r} onChange={() => {
+                      setVatTouched(true);
+                      set({ vatRate: r });
+                    }} />
                     {r}%
                   </label>
                 ))}

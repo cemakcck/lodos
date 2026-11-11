@@ -4,9 +4,9 @@ import type { CategoryView, ItemView, ManagerMenu } from "../../../src/staff/man
 const n = (en: string, tr: string) => ({ en, tr });
 
 export const categories: CategoryView[] = [
-  { id: "share", name: n("To share", "Paylaşmalık"), sort: 10, active: true },
-  { id: "fire", name: n("From the fire", "Ateşten"), sort: 20, active: true },
-  { id: "cocktails", name: n("Cocktails", "Kokteyller"), sort: 30, active: true },
+  { id: "share", name: n("To share", "Paylaşmalık"), sort: 10, active: true, defaultVatRate: 10 },
+  { id: "fire", name: n("From the fire", "Ateşten"), sort: 20, active: true, defaultVatRate: 10 },
+  { id: "cocktails", name: n("Cocktails", "Kokteyller"), sort: 30, active: true, defaultVatRate: 20 },
 ];
 
 export const burrata: ItemView = {

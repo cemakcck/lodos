@@ -121,7 +121,7 @@ export async function seedRestaurant(
         STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i] })),
       ),
       m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort }))),
-      m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i }))),
+      m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i, defaultVatRate: vatRateOf(c.key) }))),
       m.MenuItem.insertMany(menuItems),
       m.Table.insertMany(
         TABLES.map((t) => ({

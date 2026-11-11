@@ -227,4 +227,23 @@ describe("ItemForm", () => {
     await waitFor(() => expect(posts()).toHaveLength(1));
     expect(posts()[0]!.body).toMatchObject({ vatRate: 10 });
   });
+
+  it("a new item's VAT follows the category until the control is touched", async () => {
+    setup(null);
+    const vat = () => within(screen.getByRole("group", { name: "VAT" }));
+    expect(vat().getByRole("radio", { name: "10%" })).toHaveProperty("checked", true);
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "cocktails");
+    expect(vat().getByRole("radio", { name: "20%" })).toHaveProperty("checked", true);
+    await userEvent.click(vat().getByRole("radio", { name: "10%" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "cocktails");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "share");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "cocktails");
+    expect(vat().getByRole("radio", { name: "10%" })).toHaveProperty("checked", true);
+  });
+
+  it("editing an existing item never changes its rate when the category changes", async () => {
+    setup(burrata);
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Category" }), "cocktails");
+    expect(within(screen.getByRole("group", { name: "VAT" })).getByRole("radio", { name: "10%" })).toHaveProperty("checked", true);
+  });
 });

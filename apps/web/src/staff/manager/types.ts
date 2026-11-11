@@ -48,6 +48,8 @@ export interface CategoryView {
   name: Loc;
   sort: number;
   active: boolean;
+  /** VAT rate a new item in this category starts with. */
+  defaultVatRate: 10 | 20;
 }
 
 export interface ManagerMenu {

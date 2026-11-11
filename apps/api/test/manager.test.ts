@@ -417,4 +417,25 @@ describe("item vatRate", () => {
     const menu = (await m("GET", "/api/manager/menu")).json() as { items: { id: string; vatRate: number }[] };
     expect(menu.items.find((i) => i.id === id)!.vatRate).toBe(20);
   });
+
+  it("a partial PATCH that does not mention vatRate leaves it alone", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const negroni = await itemNamed(t, s.tenantId, "Lodos Negroni");
+    const r = await m("PATCH", `/api/manager/items/${negroni.id}`, { price: negroni.price + 100 });
+    expect(r.statusCode).toBe(200);
+    expect(r.json().vatRate).toBe(20);
+    const doc = await runWithTenant(s.tenantId, () => t.models.MenuItem.findById(negroni.id).lean().orFail());
+    expect(doc.vatRate).toBe(20);
+  });
+});
+
+describe("category defaultVatRate", () => {
+  it("is seeded 20 for cocktails and wine and shown in the manager menu", async () => {
+    const s = await seedTenant(t);
+    const m = await mgr(s);
+    const menu = (await m("GET", "/api/manager/menu")).json() as { categories: { name: { en: string }; defaultVatRate: number }[] };
+    const rate = (n: string) => menu.categories.find((c) => c.name.en === n)!.defaultVatRate;
+    expect([rate("Cocktails"), rate("Wine"), rate("To share"), rate("Zero-proof")]).toEqual([20, 20, 10, 10]);
+  });
 });

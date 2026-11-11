@@ -88,6 +88,8 @@ export const CategoryInput = z.object({
   name: Loc,
   sort: z.number().int().optional(),
   active: z.boolean().optional(),
+  /** VAT rate a new item in this category starts with. */
+  defaultVatRate: z.union([z.literal(10), z.literal(20)]).optional(),
 });
 export type CategoryInput = z.infer<typeof CategoryInput>;
 

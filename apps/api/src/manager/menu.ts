@@ -25,7 +25,7 @@ export type ItemView = {
   sort: number;
   availability: { soldOut: boolean; remaining: number | null };
 };
-export type CategoryView = { id: string; name: Loc; sort: number; active: boolean };
+export type CategoryView = { id: string; name: Loc; sort: number; active: boolean; defaultVatRate: 10 | 20 };
 export type AvailabilityView = { itemId: string; serviceDay: string; soldOut: boolean; remaining: number | null };
 
 const newId = () => randomBytes(5).toString("hex");
@@ -58,11 +58,12 @@ function itemView(i: Lean<Awaited<ReturnType<Models["MenuItem"]["findOne"]>> & o
     availability: { soldOut: avail?.soldOut ?? false, remaining: avail?.remaining ?? null },
   };
 }
-const categoryView = (c: { _id: unknown; name: Loc; sort: number; active: boolean }): CategoryView => ({
+const categoryView = (c: { _id: unknown; name: Loc; sort: number; active: boolean; defaultVatRate?: number | null }): CategoryView => ({
   id: String(c._id),
   name: loc(c.name),
   sort: c.sort,
   active: c.active,
+  defaultVatRate: c.defaultVatRate === 20 ? 20 : 10,
 });
 
 /** Must run inside the manager's tenant. */
@@ -85,7 +86,7 @@ async function requireCategory(models: Models, id: string): Promise<void> {
 
 export async function createCategory(models: Models, body: CategoryInput): Promise<CategoryView> {
   const sort = body.sort ?? ((await models.Category.findOne({}).sort({ sort: -1 }).lean())?.sort ?? -1) + 1;
-  const c = await models.Category.create({ name: body.name, sort, active: body.active ?? true });
+  const c = await models.Category.create({ name: body.name, sort, active: body.active ?? true, defaultVatRate: body.defaultVatRate ?? 10 });
   return categoryView(c);
 }
 
