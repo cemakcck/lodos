@@ -52,6 +52,9 @@ export function TableShape({ table, now, scale, selected, mine, dimmed, onSelect
       type="button"
       className={cls}
       style={{ left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px` }}
+      // The plan position, unscaled (lets tests check where the layout put the table exactly).
+      data-x={table.x}
+      data-y={table.y}
       aria-pressed={selected}
       onClick={() => onSelect(table.id)}
     >

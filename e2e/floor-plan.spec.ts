@@ -19,9 +19,10 @@ test("a saved layout change reaches the waiter floor live", async ({ page, brows
     await waiter.goto("/staff/floor");
     await expect(waiter.getByText("Live", { exact: true })).toBeVisible();
     const t7 = floorTable(waiter, "T7");
-    await waiter.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
-    const before = await t7.boundingBox();
-    expect(before).not.toBeNull();
+    const planX = async () => Number(await t7.getAttribute("data-x"));
+    const planY = async () => Number(await t7.getAttribute("data-y"));
+    await expect(t7).toHaveAttribute("data-x", /^\d+$/);
+    const before = { x: await planX(), y: await planY() };
 
     await page.getByRole("link", { name: "Floor plan" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Floor plan" })).toBeVisible();
@@ -32,8 +33,9 @@ test("a saved layout change reaches the waiter floor live", async ({ page, brows
     await page.getByRole("button", { name: "Save layout" }).click();
     await expect(page.getByText("Layout saved")).toBeVisible();
 
-    // Two 16 px steps, scaled to the waiter's canvas: the table moves right.
-    await expect.poll(async () => (await t7.boundingBox())?.x ?? 0).toBeGreaterThan(before!.x + 5);
+    // Two 16 px grid steps: exactly 32 to the right in plan units, and no vertical move.
+    await expect(t7).toHaveAttribute("data-x", String(before.x + 32));
+    expect(await planY()).toBe(before.y);
   } finally {
     await waiterCtx.close();
   }
