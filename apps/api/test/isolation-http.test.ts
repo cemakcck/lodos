@@ -206,7 +206,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     const text = JSON.stringify(floor.json());
     for (const tb of before.tables) expect(text).not.toContain(String(tb._id));
     expect(await snapshot(b.tenantId)).toEqual(before);
-  }, 20_000);
+  });
   it("Phase 2 Task 6: A's manager cannot reverse or add to B's adjustments (404); B unchanged", async () => {
     const bCheck = (await snapshot(b.tenantId)).checks.find((c) => c.status === "open")!;
     const bOrder = (await snapshot(b.tenantId)).orders.find((o) => String(o.checkId) === String(bCheck._id))!;
@@ -291,7 +291,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     const aMert = await runWithTenant(a.tenantId, () => t.models.Staff.findOne({ name: "Mert" }).lean().orFail());
     expect((await call("PATCH", `/api/staff/${String(aMert._id)}`, { tableIds: [bTable] })).statusCode).toBe(404);
     expect(await snapshot(b.tenantId)).toEqual(before);
-  }, 20_000);
+  });
 
   it("Phase 2 Task 18: A's manager gets 404 on B's shifts, templates and people, and never sees them; B unchanged", async () => {
     const before = await snapshot(b.tenantId);
@@ -325,7 +325,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     // Copying last week works inside A only.
     expect((await call("POST", "/api/shifts/copy-last-week", { week: "2026-11-16" })).statusCode).toBe(200);
     expect(await snapshot(b.tenantId)).toEqual(before);
-  }, 30_000);
+  });
 
   it("Phase 2 Task 21: A's manager gets 404 on B's rooms, and A's layout can't take B's tables or waiters; B unchanged", async () => {
     const before = await snapshot(b.tenantId);
@@ -372,7 +372,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     }
     expect((await call("POST", "/api/rooms", { name: "A only" })).statusCode).toBe(201);
     expect(await snapshot(b.tenantId)).toEqual(before);
-  }, 20_000);
+  });
 
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";

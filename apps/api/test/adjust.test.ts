@@ -433,7 +433,7 @@ describe("Review Focus 2", () => {
         expect(await c.remaining(GELATO)).toBe(3);
       }
     }
-  }, 30_000);
+  });
 });
 
 describe("approvers", () => {

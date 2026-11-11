@@ -4,8 +4,9 @@ import { DEFAULT_MAX_SANDBOXES, DEFAULT_SANDBOXES_PER_IP_HOUR } from "../src/dem
 import { makeTestApp } from "./helpers";
 import { countAll, H, MIN, NOW, sandboxIds, signIn } from "./sandbox-helpers";
 
-// These create up to 7 sandboxes each (seed + 60 days of history), so they get more than the default 5 s.
-describe("cap and per-IP limit", { timeout: 20_000 }, () => {
+// Each test creates 4-7 demo sandboxes through the production path (full seed with 60 days of history), on purpose:
+// ~2 s apiece under a heavily loaded machine, so above the project's 15 s. 30 s still fails a hang.
+describe("cap and per-IP limit", { timeout: 30_000 }, () => {
   it("defaults are 200 sandboxes and 5 creations per IP per hour", () => {
     expect(DEFAULT_MAX_SANDBOXES).toBe(200);
     expect(DEFAULT_SANDBOXES_PER_IP_HOUR).toBe(5);
