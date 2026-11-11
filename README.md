@@ -193,3 +193,9 @@ Everything that can be dragged can also be done by keyboard and by tap (WCAG 2.2
 **Fonts.** The schedule PDFs embed Inter (Regular and SemiBold), released under the SIL Open Font License. The licence text is in [`apps/api/assets/fonts/OFL.txt`](apps/api/assets/fonts/OFL.txt).
 
 Still ahead: scaling out beyond one API instance, with the Socket.IO Redis adapter.
+
+### Known limits
+
+- **No indexes for very large tenants yet.** Sales and the CSV query checks by payment time and adjustments by service day without dedicated indexes. That is fine at demo scale; a busy real tenant needs them first.
+- **Two rules are check-then-write.** The shift overlap check and the "always one active manager" rule read, then write, without a transaction. Two simultaneous edits (two managers deactivating each other in the same instant, or two overlapping shifts saved at once) can slip through.
+- **Touch drag is untested on real devices.** Dragging in the schedule and the floor plan is covered by tests with synthetic pointer events only. Keyboard and tap alternatives exist for both.
