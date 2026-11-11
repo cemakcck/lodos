@@ -555,6 +555,7 @@
   }
   .cv-letters .cv-g { width: 44px; height: 44px; font-size: 14px; border-radius: 8px; }
   .cv-letters .cv-g:disabled { opacity: 0.45; cursor: not-allowed; }
+  .cv-who .cv-g[data-letter]::before { content: attr(data-letter); }
   .cv-g.is-none { border-style: dashed; }
   /* Guest letters are identities, not states: plum and neutral tones only (red, amber and green mean alerts). Every
      "on" pair is ≥ 7:1 (white on plum/ink/fg-2, plum on plum-100). */

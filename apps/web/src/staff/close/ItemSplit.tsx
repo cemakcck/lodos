@@ -130,9 +130,8 @@ export function ItemSplit({ view, onSend }: ItemSplitProps) {
                     <span className="cv-g is-none">–</span>
                   ) : (
                     ls.map((l) => (
-                      <span key={l} className={`cv-g is-${l.toLowerCase()} is-on`}>
-                        {l}
-                      </span>
+                      // The letter is drawn by CSS (data-letter): the button's accessible name already says who pays, in words.
+                      <span key={l} className={`cv-g is-${l.toLowerCase()} is-on`} data-letter={l} />
                     ))
                   )}
                 </span>

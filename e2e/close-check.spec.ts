@@ -36,16 +36,22 @@ test("the waiter closes a check, the guest's visit ends, and a new order opens a
   await floorTable(waiter, "T7").click();
   const panel = waiter.getByRole("region", { name: "Table T7" });
   await panel.getByRole("button", { name: "Close check" }).click();
+  await expect(waiter).toHaveURL(/\/staff\/check\/[^/]+\/close$/);
+  await expect(waiter.getByRole("heading", { name: "Close check · T7" })).toBeVisible();
+  await expect(waiter.getByRole("radio", { name: "In full" })).toBeChecked();
+  await waiter.getByRole("button", { name: "Take payment, ₺780" }).click();
   const dialog = waiter.getByRole("dialog", { name: "Close check · T7" });
   await dialog.getByRole("radio", { name: "Card" }).click();
   await expect(dialog.getByRole("radio", { name: "Card" })).toBeChecked();
   await dialog.getByRole("button", { name: /^Close check, ₺780 by card$/ }).click();
   await expect(dialog).toBeHidden();
 
+  // Back on the floor with T7 selected.
+  await expect(waiter).toHaveURL(/\/staff\/floor/);
   // T7 is free again.
-  await expect(panel.getByRole("button", { name: "Seat table" })).toBeVisible();
   await expect(floorTable(waiter, "T7")).toHaveAccessibleName(labelThen("T7", "free"));
-  await expect(panel.getByRole("status")).toContainText("T7 closed");
+  await floorTable(waiter, "T7").click();
+  await expect(panel.getByRole("button", { name: "Seat table" })).toBeVisible();
 
   // The guest page that is still open shows the visit has ended.
   await expect(guest.getByRole("heading", { level: 1, name: "This table's visit has ended. Thank you!" })).toBeVisible({

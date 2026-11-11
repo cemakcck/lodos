@@ -87,6 +87,51 @@ test.describe("staff", () => {
     await expectAccessible(page, "order entry");
   });
 
+  test("close view (each mode), approval pad and receipt", async ({ page }) => {
+    await demoAs(page, "waiter");
+    await floorTable(page, "T7").click();
+    const panel = page.getByRole("region", { name: "Table T7" });
+    await panel.getByRole("button", { name: "Seat table" }).click();
+    await page.getByRole("dialog", { name: "Seat T7" }).getByRole("button", { name: "Seat 2 covers" }).click();
+    await panel.getByRole("button", { name: "Add items" }).click();
+    await page.getByRole("button", { name: labelThen("Basque cheesecake, sour cherry") }).click();
+    await page.getByRole("button", { name: labelThen("Burrata, heirloom tomato") }).click();
+    await page.getByRole("button", { name: "Send to kitchen & bar" }).click();
+    await expect(page).toHaveURL(/\/staff\/floor\?table=/);
+
+    // The approval pad (a waiter comping a line).
+    const line = panel.getByRole("listitem").filter({ hasText: "Basque cheesecake" });
+    await line.getByRole("button").first().click();
+    await panel.getByRole("group", { name: /^Adjust Basque cheesecake/ }).getByRole("button", { name: "Comp" }).click();
+    const dialog = page.getByRole("dialog", { name: /^Basque cheesecake/ });
+    await dialog.getByRole("radio", { name: "Birthday / celebration" }).click();
+    await expect(dialog.getByRole("radio", { name: "Selin" })).toBeVisible();
+    await expectAccessible(page, "approval pad");
+    await dialog.locator("button.staff-btn", { hasText: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+
+    // The close view in each mode.
+    await panel.getByRole("button", { name: "Close check" }).click();
+    const checkId = new URL(page.url()).pathname.split("/")[3]!;
+    await expect(page.getByRole("heading", { name: "Close check · T7" })).toBeVisible();
+    await expectAccessible(page, "close view, in full");
+    await page.getByRole("radio", { name: "Evenly" }).click();
+    await expect(page.getByRole("radio", { name: "Evenly" })).toBeChecked();
+    await expect(page.getByRole("article", { name: "Guest A" })).toBeVisible();
+    await expectAccessible(page, "close view, evenly");
+    await page.getByRole("radio", { name: "By item" }).click();
+    await expect(page.getByRole("radio", { name: "By item" })).toBeChecked();
+    await page.getByRole("button", { name: /^Burrata, heirloom tomato/ }).click();
+    await page.getByRole("button", { name: "Guest A", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Guest A", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expectAccessible(page, "close view, by item");
+
+    // The receipt.
+    await page.goto(`/staff/check/${checkId}/print?noprint`);
+    await expect(page.getByRole("article", { name: /T7/ })).toContainText("Burrata");
+    await expectAccessible(page, "receipt");
+  });
+
   test("menu editor", async ({ page }) => {
     await demoAs(page, "manager");
     await expect(page.getByRole("heading", { level: 1, name: "Menu" })).toBeVisible();
