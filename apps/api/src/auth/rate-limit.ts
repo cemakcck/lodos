@@ -21,8 +21,11 @@ export async function hit(models: Models, key: string, limit: number, windowMs: 
   return (await recentHits(models, key, windowMs, now)) <= limit;
 }
 
+/** Forgets every hit and any `claimFirst` window held for `key`. */
 export function clearHits(models: Models, key: string): Promise<unknown> {
-  return unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteMany({ key }));
+  return unscoped("rate limits are keyed, not tenant-scoped", () =>
+    Promise.all([models.RateEvent.deleteMany({ key }), models.RateClaim.deleteOne({ key })]),
+  );
 }
 
 /**
@@ -38,18 +41,20 @@ export async function claim(models: Models, key: string, limit: number, windowMs
 }
 
 /**
- * Single-winner claim: exactly one of any set of parallel callers is allowed per window. Inserts an event, then the
- * caller wins iff its event is the earliest in the window (ties broken by `_id`), so a tie cannot refuse everyone
- * the way `claim`'s insert-then-count can. Refused events are removed, so refusals never extend the window.
+ * Single-winner claim: exactly one of any set of parallel callers is allowed per window. One document per key holds
+ * the winning claim's time; a caller wins by moving that time forward when it is at least `windowMs` old, or by
+ * inserting it when there is none. Both are one atomic upsert against the unique key, so a concurrent (or
+ * clock-skewed) second caller hits the duplicate key and is refused. Refusals write nothing, so they never extend
+ * the window.
  */
 export async function claimFirst(models: Models, key: string, windowMs: number, now: Date): Promise<boolean> {
-  const mine = await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.create({ key, at: now }));
-  const first = await unscoped("rate limits are keyed, not tenant-scoped", () =>
-    models.RateEvent.findOne({ key, at: { $gt: since(windowMs, now) } })
-      .sort({ at: 1, _id: 1 })
-      .lean(),
-  );
-  if (first && String(first._id) === String(mine._id)) return true;
-  await unscoped("rate limits are keyed, not tenant-scoped", () => models.RateEvent.deleteOne({ _id: mine._id }));
-  return false;
+  try {
+    await unscoped("rate limits are keyed, not tenant-scoped", () =>
+      models.RateClaim.updateOne({ key, at: { $lte: since(windowMs, now) } }, { $set: { at: now } }, { upsert: true }),
+    );
+    return true;
+  } catch (err) {
+    if ((err as { code?: number }).code === 11000) return false;
+    throw err;
+  }
 }

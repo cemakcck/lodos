@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { ApiError, registerErrorHandling } from "../src/errors";
 import { staffRoute } from "../src/auth/guard";
 import { registerAuthRoutes } from "../src/auth/routes";
-import { hit } from "../src/auth/rate-limit";
+import { claimFirst, clearHits, hit } from "../src/auth/rate-limit";
 import * as pin from "../src/auth/pin";
 import { SANDBOX_COOKIE } from "../src/auth/login-tenant";
 import { seedRestaurant, type SeedResult } from "../src/seed/seed";
@@ -295,5 +295,39 @@ describe("hit()", () => {
     for (let i = 0; i < 4; i++) results.push(await hit(t.models, key, 3, 10 * MIN, NOW));
     expect(results).toEqual([true, true, true, false]);
     expect(await hit(t.models, key, 3, 10 * MIN, new Date(NOW.getTime() + 10 * MIN))).toBe(true);
+  });
+});
+
+describe("claimFirst()", () => {
+  const W = 3000;
+  const at = (ms: number) => new Date(NOW.getTime() + ms);
+
+  it("admits exactly one of many parallel callers", async () => {
+    const key = `test:${newTenant()}`;
+    const results = await Promise.all(Array.from({ length: 8 }, () => claimFirst(t.models, key, W, NOW)));
+    expect(results.filter(Boolean)).toHaveLength(1);
+  });
+
+  it("refuses a later caller whose clock reads earlier than the winner's", async () => {
+    // Two API instances (or requests) whose `now` disagrees by a millisecond must not both win.
+    const key = `test:${newTenant()}`;
+    expect(await claimFirst(t.models, key, W, at(0))).toBe(true);
+    expect(await claimFirst(t.models, key, W, at(-1))).toBe(false);
+  });
+
+  it("refuses inside the window and reopens exactly windowMs after the winning claim", async () => {
+    const key = `test:${newTenant()}`;
+    expect(await claimFirst(t.models, key, W, at(0))).toBe(true);
+    expect(await claimFirst(t.models, key, W, at(W - 1))).toBe(false);
+    expect(await claimFirst(t.models, key, W, at(W))).toBe(true);
+    // A refusal never extended the window: the second winner's window runs from its own claim.
+    expect(await claimFirst(t.models, key, W, at(2 * W))).toBe(true);
+  });
+
+  it("clearHits releases the window", async () => {
+    const key = `test:${newTenant()}`;
+    expect(await claimFirst(t.models, key, W, at(0))).toBe(true);
+    await clearHits(t.models, key);
+    expect(await claimFirst(t.models, key, W, at(1))).toBe(true);
   });
 });

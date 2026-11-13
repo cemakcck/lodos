@@ -218,8 +218,8 @@ export const RECALL_WINDOW_MS = 3000;
 
 /**
  * Recall the latest bumped, unserved ticket of this service day on an open check. Double-tap safe in two layers:
- * 1. `claimFirst()` on a per-(tenant, station) marker admits exactly one recall per 3 s window (insert, then win only
- *    if ours is the earliest event, `_id` breaking ties), so parallel taps cannot both pass and cannot both be refused.
+ * 1. `claimFirst()` on a per-(tenant, station) marker admits exactly one recall per 3 s window (one atomic upsert
+ *    against a unique key), so parallel taps cannot both pass and cannot both be refused.
  *    Refused taps return the ticket recalled inside the window (changed:false), waiting briefly for the winner's write.
  * 2. The conditional update (status "ready", servedAt null) is the final guard; a lost race returns the ticket the
  *    winner took back instead of moving to a different ticket.

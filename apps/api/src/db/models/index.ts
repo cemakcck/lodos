@@ -8,6 +8,7 @@ import { dailySummarySchema } from "./dailySummary";
 import { menuItemSchema } from "./menuItem";
 import { orderSchema } from "./order";
 import { photoSchema } from "./photo";
+import { rateClaimSchema } from "./rateClaim";
 import { rateEventSchema } from "./rateEvent";
 import { roomSchema } from "./room";
 import { sandboxSchema } from "./sandbox";
@@ -37,6 +38,7 @@ export function registerModels(conn: Connection) {
     Staff: conn.model("Staff", staffSchema),
     Session: conn.model("Session", sessionSchema),
     RateEvent: conn.model("RateEvent", rateEventSchema),
+    RateClaim: conn.model("RateClaim", rateClaimSchema),
     Photo: conn.model("Photo", photoSchema),
     Setting: conn.model("Setting", settingSchema),
     Adjustment: conn.model("Adjustment", adjustmentSchema),
@@ -70,7 +72,7 @@ export type DailySummaryDoc = InstanceType<Models["DailySummary"]>;
 export type ShiftDoc = InstanceType<Models["Shift"]>;
 export type ShiftTemplateDoc = InstanceType<Models["ShiftTemplate"]>;
 
-/** Model names whose collections are tenant-scoped (everything except Sandbox and RateEvent). */
+/** Model names whose collections are tenant-scoped (everything except Sandbox, RateEvent and RateClaim). */
 export const TENANT_SCOPED_MODELS = [
   "Tenant",
   "Category",
