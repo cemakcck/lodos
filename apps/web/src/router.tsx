@@ -19,6 +19,7 @@ import { Schedule } from "./staff/schedule/Schedule";
 import { MyShifts } from "./staff/schedule/MyShifts";
 import { TimeClock } from "./staff/timeclock/TimeClock";
 import { Timesheets } from "./staff/timeclock/Timesheets";
+import { Monthly } from "./staff/business/Monthly";
 import { Expenses } from "./staff/expenses/Expenses";
 import { Ranking } from "./staff/performance/Ranking";
 import { Person } from "./staff/performance/Person";
@@ -71,6 +72,7 @@ export const routes: RouteObject[] = [
             { path: "/staff/tables/qr", element: <QrSheet /> },
             { path: "/staff/floor-plan", element: <FloorPlan /> },
             { path: "/staff/sales", element: <Sales /> },
+            { path: "/staff/business", element: <Monthly /> },
             { path: "/staff/people", element: <Staff /> },
             { path: "/staff/schedule", element: <Schedule /> },
             { path: "/staff/timesheets", element: <Timesheets /> },

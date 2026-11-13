@@ -214,6 +214,7 @@
       "tables": "Masalar",
       "floorPlan": "Kat planı",
       "sales": "Satış",
+      "business": "İşletme",
       "people": "Personel",
       "schedule": "Vardiya planı",
       "myShifts": "Vardiyalarım",
@@ -1577,6 +1578,160 @@
       "unhide": "Göster",
       "hidden": "Gizli",
       "error": "Yorum değiştirilemedi. Tekrar deneyin."
+    }
+  },
+  "business": {
+    "title": "İşletme",
+    "loadError": "Aylık rakamlar yüklenemedi.",
+    "retry": "Tekrar dene",
+    "pdf": "PDF indir",
+    "csv": "CSV indir",
+    "csvOf": "CSV indir: {{section}}",
+    "soFar": "Şimdiye kadar: {{month}} ayının {{days}} günü, geçen ayın aynı günleriyle karşılaştırılır.",
+    "full": "{{month}} ayıyla karşılaştırılır.",
+    "vs": {
+      "1": "Ocak'a göre",
+      "2": "Şubat'a göre",
+      "3": "Mart'a göre",
+      "4": "Nisan'a göre",
+      "5": "Mayıs'a göre",
+      "6": "Haziran'a göre",
+      "7": "Temmuz'a göre",
+      "8": "Ağustos'a göre",
+      "9": "Eylül'e göre",
+      "10": "Ekim'e göre",
+      "11": "Kasım'a göre",
+      "12": "Aralık'a göre"
+    },
+    "change": {
+      "pct": {
+        "up": "{{vs}} ↑ %{{n}}",
+        "down": "{{vs}} ↓ %{{n}}",
+        "flat": "{{vs}} değişim yok"
+      },
+      "pts": {
+        "up": "{{vs}} ↑ {{n}} puan",
+        "down": "{{vs}} ↓ {{n}} puan",
+        "flat": "{{vs}} değişim yok"
+      }
+    },
+    "none": "—",
+    "notEnough": "Henüz yeterli veri yok",
+    "hours": "{{n}} sa",
+    "ofSales": "satışa oranı %{{n}}",
+    "perHour": "saatte {{amount}}",
+    "margin": "Marj %{{n}}",
+    "pnl": {
+      "title": "Kâr ve zarar",
+      "sales": "Satış",
+      "foodDrink": "Yiyecek ve içecek maliyeti",
+      "labour": "İşçilik",
+      "other": "Diğer giderler",
+      "profit": "Kâr",
+      "otherBy": "Diğer giderler, kategoriye göre",
+      "noSales": "Bu dönemde satış yok."
+    },
+    "sales": {
+      "title": "Satış örüntüleri",
+      "byDay": "Güne göre satış",
+      "byWeekday": "Haftanın gününe göre satış",
+      "day": "Gün",
+      "revenue": "Ciro",
+      "bar": "{{day}}: {{amount}}",
+      "weekday": "Gün",
+      "nights": "Açık akşam",
+      "avg": "Akşam başına",
+      "empty": "Bu dönemde satış yok.",
+      "avgCheck": "Ortalama adisyon",
+      "avgCover": "Kişi başı ortalama",
+      "covers": "Kişi sayısı",
+      "perLabour": "İşçilik saati başına satış",
+      "turns": "Akşam başına masa devri",
+      "days": {
+        "1": "Pzt",
+        "2": "Sal",
+        "3": "Çar",
+        "4": "Per",
+        "5": "Cum",
+        "6": "Cmt",
+        "7": "Paz"
+      }
+    },
+    "menu": {
+      "title": "Menü: popülerlik × puan",
+      "groups": "Menü grupları",
+      "hint": {
+        "stars": "çok satar, yüksek puanlı",
+        "hidden_gems": "yüksek puanlı, az satar",
+        "fix": "çok satar, düşük puanlı",
+        "rethink": "az satar, düşük puanlı"
+      },
+      "none": "Yok",
+      "dish": "Yemek",
+      "group": "Grup",
+      "sold": "Satılan",
+      "rating": "Puan",
+      "revenue": "Ciro",
+      "empty": "Bu dönemde satılan yemek yok.",
+      "unrated": "Puanlanmamış"
+    },
+    "staff": {
+      "title": "Personel",
+      "name": "Ad",
+      "role": "Rol",
+      "hours": "Saat (planlanan)",
+      "late": "Geç",
+      "rating": "Puan",
+      "points": "Skor",
+      "labour": "İşçilik maliyeti",
+      "empty": "Bu dönem için personel verisi yok.",
+      "labourByRole": "Role göre işçilik maliyeti",
+      "overtime": "Fazla mesai saati",
+      "groups": {
+        "floor": "Salon",
+        "kitchen": "Mutfak",
+        "bar": "Bar",
+        "managers": "Yöneticiler"
+      }
+    },
+    "ratings": {
+      "title": "Misafirler ve değerlendirmeler",
+      "restaurant": "Restoran",
+      "food": "Yemek",
+      "cleanliness": "Temizlik",
+      "atmosphere": "Atmosfer",
+      "spread": "Puan dağılımı",
+      "spreadOf": "Puan dağılımı: {{what}}",
+      "forRestaurant": "Restoran kategorileri",
+      "forWaiter": "Garsonlar",
+      "forDish": "Yemekler",
+      "stars": "{{n}}★",
+      "count": "{{count}} değerlendirme",
+      "trend": "Haftaya göre restoran puanı",
+      "week": "Hafta başı",
+      "ratings": "Değerlendirme",
+      "comments": "Son yorumlar",
+      "noComments": "Bu dönemde yorum yok.",
+      "hide": "Gizle",
+      "hideComment": "Bu yorumu gizle",
+      "error": "Yorum gizlenemedi. Tekrar dene.",
+      "noData": "Bu dönemde değerlendirme yok."
+    },
+    "expenses": {
+      "title": "Giderler",
+      "category": "Kategori",
+      "spent": "Harcanan",
+      "budget": "Bütçe",
+      "status": "Durum",
+      "noBudget": "Bütçe yok",
+      "over": "{{amount}} aşıldı",
+      "under": "{{amount}} altında",
+      "total": "Toplam",
+      "biggest": "En büyük tekil giderler",
+      "date": "Tarih",
+      "payee": "Alıcı",
+      "amount": "Tutar",
+      "empty": "Bu dönemde gider yok."
     }
   }
 }

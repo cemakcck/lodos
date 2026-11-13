@@ -214,6 +214,7 @@
       "tables": "Tables",
       "floorPlan": "Floor plan",
       "sales": "Sales",
+      "business": "Business",
       "people": "Staff",
       "schedule": "Schedule",
       "myShifts": "My shifts",
@@ -1577,6 +1578,160 @@
       "unhide": "Unhide",
       "hidden": "Hidden",
       "error": "We couldn't change that comment. Try again."
+    }
+  },
+  "business": {
+    "title": "Business",
+    "loadError": "We couldn't load the monthly figures.",
+    "retry": "Try again",
+    "pdf": "Export PDF",
+    "csv": "Export CSV",
+    "csvOf": "Export CSV: {{section}}",
+    "soFar": "So far: {{days}} days of {{month}}, compared with the same days last month.",
+    "full": "Compared with {{month}}.",
+    "vs": {
+      "1": "vs January",
+      "2": "vs February",
+      "3": "vs March",
+      "4": "vs April",
+      "5": "vs May",
+      "6": "vs June",
+      "7": "vs July",
+      "8": "vs August",
+      "9": "vs September",
+      "10": "vs October",
+      "11": "vs November",
+      "12": "vs December"
+    },
+    "change": {
+      "pct": {
+        "up": "↑ {{n}}% {{vs}}",
+        "down": "↓ {{n}}% {{vs}}",
+        "flat": "No change {{vs}}"
+      },
+      "pts": {
+        "up": "↑ {{n}} pts {{vs}}",
+        "down": "↓ {{n}} pts {{vs}}",
+        "flat": "No change {{vs}}"
+      }
+    },
+    "none": "—",
+    "notEnough": "Not enough data yet",
+    "hours": "{{n}} h",
+    "ofSales": "{{n}}% of sales",
+    "perHour": "{{amount}} per hour",
+    "margin": "Margin {{n}}%",
+    "pnl": {
+      "title": "Profit and loss",
+      "sales": "Sales",
+      "foodDrink": "Food & drink cost",
+      "labour": "Labour",
+      "other": "Other costs",
+      "profit": "Profit",
+      "otherBy": "Other costs by category",
+      "noSales": "No sales in this period."
+    },
+    "sales": {
+      "title": "Sales patterns",
+      "byDay": "Sales by day",
+      "byWeekday": "Sales by weekday",
+      "day": "Day",
+      "revenue": "Revenue",
+      "bar": "{{day}}: {{amount}}",
+      "weekday": "Weekday",
+      "nights": "Open nights",
+      "avg": "Per open night",
+      "empty": "No sales in this period.",
+      "avgCheck": "Average check",
+      "avgCover": "Average per cover",
+      "covers": "Covers",
+      "perLabour": "Sales per labour hour",
+      "turns": "Table turns per night",
+      "days": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      }
+    },
+    "menu": {
+      "title": "Menu: popularity × rating",
+      "groups": "Menu groups",
+      "hint": {
+        "stars": "sell a lot, rated high",
+        "hidden_gems": "rated high, sell little",
+        "fix": "sell a lot, rated low",
+        "rethink": "sell little, rated low"
+      },
+      "none": "None",
+      "dish": "Dish",
+      "group": "Group",
+      "sold": "Sold",
+      "rating": "Rating",
+      "revenue": "Revenue",
+      "empty": "No dishes sold in this period.",
+      "unrated": "Not rated"
+    },
+    "staff": {
+      "title": "Staff",
+      "name": "Name",
+      "role": "Role",
+      "hours": "Hours (planned)",
+      "late": "Late",
+      "rating": "Rating",
+      "points": "Points",
+      "labour": "Labour cost",
+      "empty": "No staff figures for this period.",
+      "labourByRole": "Labour cost by role",
+      "overtime": "Overtime hours",
+      "groups": {
+        "floor": "Floor",
+        "kitchen": "Kitchen",
+        "bar": "Bar",
+        "managers": "Managers"
+      }
+    },
+    "ratings": {
+      "title": "Guests and ratings",
+      "restaurant": "Restaurant",
+      "food": "Food",
+      "cleanliness": "Cleanliness",
+      "atmosphere": "Atmosphere",
+      "spread": "Rating spread",
+      "spreadOf": "Rating spread: {{what}}",
+      "forRestaurant": "Restaurant categories",
+      "forWaiter": "Waiters",
+      "forDish": "Dishes",
+      "stars": "{{n}}★",
+      "count": "{{count}} ratings",
+      "trend": "Restaurant rating by week",
+      "week": "Week of",
+      "ratings": "Ratings",
+      "comments": "Latest comments",
+      "noComments": "No comments in this period.",
+      "hide": "Hide",
+      "hideComment": "Hide this comment",
+      "error": "We couldn't hide that comment. Try again.",
+      "noData": "No ratings in this period."
+    },
+    "expenses": {
+      "title": "Expenses",
+      "category": "Category",
+      "spent": "Spent",
+      "budget": "Budget",
+      "status": "Status",
+      "noBudget": "No budget",
+      "over": "Over by {{amount}}",
+      "under": "Under by {{amount}}",
+      "total": "Total",
+      "biggest": "Biggest single costs",
+      "date": "Date",
+      "payee": "Payee",
+      "amount": "Amount",
+      "empty": "No expenses in this period."
     }
   }
 }
