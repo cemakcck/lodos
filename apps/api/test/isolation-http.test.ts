@@ -43,6 +43,7 @@ const snapshot = (tenantId: string) =>
     shifts: await t.models.Shift.find({}).sort({ _id: 1 }).lean(),
     shiftTemplates: await t.models.ShiftTemplate.find({}).sort({ _id: 1 }).lean(),
     rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
+    ratings: await t.models.Rating.find({}).sort({ _id: 1 }).lean(),
   }));
 
 async function pdfText(body: Buffer): Promise<string> {
@@ -408,6 +409,36 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
       expect((await call("GET", `/api/rooms/${aRoom}/layout`)).body).not.toContain(String(r._id));
     }
     expect((await call("POST", "/api/rooms", { name: "A only" })).statusCode).toBe(201);
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 2: A's token and manager cannot rate, read or moderate B's checks and ratings; B unchanged", async () => {
+    const mgr = (v: Visitor) => runWithTenant(v.tenantId, () => t.models.Staff.findOne({ role: "manager" }).lean().orFail());
+    const paid = async (v: Visitor) => {
+      const check = await runWithTenant(v.tenantId, () => t.models.Check.findOne({ status: "paid" }).lean().orFail());
+      const table = await runWithTenant(v.tenantId, () => t.models.Table.findOne({ _id: check.tableId }).lean().orFail());
+      return { checkId: String(check._id), token: table.token };
+    };
+    const bPaid = await paid(b);
+    const rated = await t.inject({ method: "POST", url: "/api/guest/ratings", headers: { "x-table-token": bPaid.token }, payload: { checkId: bPaid.checkId, food: 4, comment: "ok" } });
+    expect(rated.statusCode, rated.body).toBe(201);
+    const bRatingId = rated.json().id as string;
+    const before = await snapshot(b.tenantId);
+    expect(before.ratings).toHaveLength(1);
+
+    const aPaid = await paid(a);
+    const headers = { "x-table-token": aPaid.token };
+    const card = await t.inject({ method: "GET", url: `/api/guest/rating?checkId=${bPaid.checkId}`, headers });
+    expect(card.json().state).toBe("closed");
+    const post = await t.inject({ method: "POST", url: "/api/guest/ratings", headers, payload: { checkId: bPaid.checkId, food: 1 } });
+    expect(post.statusCode).toBe(409);
+    expect(post.json().error.code).toBe("rating_closed");
+
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    for (const action of ["hide", "unhide"]) {
+      expect((await t.inject({ method: "POST", url: `/api/ratings/${bRatingId}/${action}`, cookies })).statusCode).toBe(404);
+    }
+    expect(await mgr(a)).toBeTruthy();
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 

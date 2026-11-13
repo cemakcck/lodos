@@ -149,6 +149,33 @@ describe("cross-sandbox isolation over sockets", () => {
     }
   });
 
+  it("rating.created reaches only its own tenant's managers, never kitchen or guests", async () => {
+    const am = await visitor("manager");
+    const rateOnePaid = async (v: Visitor) => {
+      const check = await runWithTenant(v.tenantId, () => t.models.Check.findOne({ status: "paid" }).lean().orFail());
+      const table = await runWithTenant(v.tenantId, () => t.models.Table.findOne({ _id: check.tableId }).lean().orFail());
+      const res = await guest(t, table.token).post("/api/guest/ratings", { checkId: String(check._id), food: 5 });
+      expect(res.statusCode, res.body).toBe(201);
+      return res.json().id as string;
+    };
+    const aManager = await connect(url, { sid: am.sid });
+    const kitchenStaff = await runWithTenant(am.tenantId, () => t.models.Staff.findOne({ role: "kitchen" }).lean().orFail());
+    const aKitchen = await connect(url, { sid: await createSession(t.models, String(kitchenStaff._id), am.tenantId, "station", NOW) });
+    const aGuest = await connect(url, { tableToken: am.t7Token });
+    const bManager = await connect(url, { sid: b.sid });
+    const bId = await rateOnePaid(b);
+    await bManager.next((e) => e.type === "rating.created" && e.ids.includes(bId));
+    // Barrier: A's own rating arrives; nothing of B's may have come before it.
+    const aId = await rateOnePaid(am);
+    await aManager.next((e) => e.type === "rating.created");
+    expect(aManager.events.filter((e) => e.type === "rating.created").map((e) => e.ids)).toEqual([[aId]]);
+    // Barrier for the sockets that must receive nothing: a later event they do get.
+    await foodOrder(am);
+    await aKitchen.next((e) => e.type === "ticket.created");
+    await aGuest.next((e) => e.type === "ticket.created");
+    for (const c of [aKitchen, aGuest]) expect(c.events.some((e) => e.type === "rating.created")).toBe(false);
+  });
+
   it("session.ended reaches only the deactivated person's sockets, in their own tenant", async () => {
     // B's manager deactivates B's Mert while A's Mert (another sandbox, another id) and A's floor are connected.
     const aw = await visitor("waiter");

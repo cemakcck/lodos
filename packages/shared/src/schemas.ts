@@ -285,3 +285,23 @@ export type ShiftTemplateBody = z.infer<typeof ShiftTemplateBody>;
 /** PATCH /api/shift-templates/:id. */
 export const ShiftTemplatePatchBody = ShiftTemplateBody.partial();
 export type ShiftTemplatePatchBody = z.infer<typeof ShiftTemplatePatchBody>;
+
+const Stars = z.number().int().min(1).max(5);
+
+/** A guest's rating of a paid check (phase 3): at least one star value, integers 1–5, comment up to 500. */
+export const GuestRatingBody = z
+  .object({
+    checkId: z.string().min(1).max(64),
+    waiter: Stars.optional(),
+    dishes: z.array(z.object({ itemId: z.string().min(1).max(64), stars: Stars })).max(60).optional(),
+    food: Stars.optional(),
+    cleanliness: Stars.optional(),
+    atmosphere: Stars.optional(),
+    comment: z.string().trim().max(500).optional(),
+  })
+  .refine(
+    (b) => b.waiter !== undefined || b.food !== undefined || b.cleanliness !== undefined || b.atmosphere !== undefined || (b.dishes?.length ?? 0) > 0,
+    "Give at least one rating",
+  )
+  .refine((b) => new Set(b.dishes?.map((d) => d.itemId)).size === (b.dishes?.length ?? 0), "Each dish can be rated once");
+export type GuestRatingBody = z.infer<typeof GuestRatingBody>;
