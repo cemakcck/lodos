@@ -1,4 +1,4 @@
-import { istanbulHour, serviceDayOf, serviceDayStartOf, serviceHourIndex } from "@lodos/shared";
+import { istanbulHour, serviceDayOf, serviceDayStartOf, serviceHourIndex, TICKET_THRESHOLDS } from "@lodos/shared";
 import { billsOf } from "../checks/bill";
 import type { Models } from "../db/models/index";
 import { runWithTenant, unscoped } from "../db/tenancy";
@@ -9,14 +9,17 @@ import { runWithTenant, unscoped } from "../db/tenancy";
  * except `summaryJob`, which iterates the tenants itself.
  *
  * Dating rules (plan rulings "Sales revenue"): revenue is the sum of payments (full or share) bucketed by payment
- * time; checks and covers by the check's close time; comps and voids by when they were made.
+ * time; checks and covers by the check's close time; comps and voids by when they were made. `byServer` follows the
+ * checks closed in the day: each check's covers and all its payments go to its server.
  */
 
 type Name = { en: string; tr: string };
 type Station = "kitchen" | "bar";
 
 export type HourSummary = { hour: number; revenue: number; covers: number; checks: number; comps: number };
-export type TicketHour = { hour: number; count: number; totalMs: number };
+/** `onTime`: tickets ready within the tenant's late threshold (`readyAt − sentAt ≤ lateMin`). */
+export type TicketHour = { hour: number; count: number; totalMs: number; onTime: number };
+export type ServerSummary = { staffId: string; checks: number; covers: number; sales: number };
 export type ItemSummary = { itemId: string | null; name: Name; qty: number; revenue: number };
 
 export type SummaryData = {
@@ -32,6 +35,8 @@ export type SummaryData = {
   /** Charged units and amounts, most sold first. */
   items: ItemSummary[];
   payments: { card: number; cash: number };
+  /** Per server of the day's closed checks, by staff id. */
+  byServer: ServerSummary[];
   generated: boolean;
 };
 
@@ -47,13 +52,15 @@ export async function summarizeDay(models: Models, serviceDay: string): Promise<
   const from = serviceDayStartOf(serviceDay);
   const to = new Date(from.getTime() + DAY_MS);
   const range = { $gte: from, $lt: to };
-  const [withPayments, closed, adjustments, tickets] = await Promise.all([
+  const [withPayments, closed, adjustments, tickets, setting] = await Promise.all([
     // Any check holding a payment made in the day: a full payment, or a share (of a check maybe still open).
     models.Check.find({ $or: [{ "payment.at": range }, { "split.shares.payment.at": range }] }, { payment: 1, split: 1 }).lean(),
-    models.Check.find({ status: "paid", closedAt: range }, { covers: 1, closedAt: 1 }).lean(),
+    models.Check.find({ status: "paid", closedAt: range }, { covers: 1, closedAt: 1, serverStaffId: 1, payment: 1, split: 1 }).lean(),
     models.Adjustment.find({ serviceDay, reversedAt: null }, { kind: 1, qty: 1, amount: 1, at: 1 }).lean(),
     models.Ticket.find({ sentAt: range, readyAt: { $ne: null }, voidedAt: null }, { station: 1, sentAt: 1, readyAt: 1 }).lean(),
+    models.Setting.findOne({}, { lateMin: 1 }).lean(),
   ]);
+  const lateMs = (setting?.lateMin ?? TICKET_THRESHOLDS.lateMin) * 60_000;
 
   const hours = new Map<number, HourSummary>();
   const hour = (at: Date) => {
@@ -77,11 +84,19 @@ export async function summarizeDay(models: Models, serviceDay: string): Promise<
   }
 
   let covers = 0;
+  const servers = new Map<string, ServerSummary>();
   for (const c of closed) {
     const b = hour(c.closedAt!);
     b.checks += 1;
     b.covers += c.covers ?? 0;
     covers += c.covers ?? 0;
+    if (!c.serverStaffId) continue;
+    const staffId = String(c.serverStaffId);
+    let s = servers.get(staffId);
+    if (!s) servers.set(staffId, (s = { staffId, checks: 0, covers: 0, sales: 0 }));
+    s.checks += 1;
+    s.covers += c.covers ?? 0;
+    s.sales += paidOn(c);
   }
 
   const comps = { count: 0, amount: 0 };
@@ -98,9 +113,11 @@ export async function summarizeDay(models: Models, serviceDay: string): Promise<
     const h = istanbulHour(tk.sentAt);
     const m = ticketHours[tk.station];
     let b = m.get(h);
-    if (!b) m.set(h, (b = { hour: h, count: 0, totalMs: 0 }));
+    if (!b) m.set(h, (b = { hour: h, count: 0, totalMs: 0, onTime: 0 }));
+    const ms = tk.readyAt!.getTime() - tk.sentAt.getTime();
     b.count += 1;
-    b.totalMs += tk.readyAt!.getTime() - tk.sentAt.getTime();
+    b.totalMs += ms;
+    if (ms <= lateMs) b.onTime += 1;
   }
 
   const items = new Map<string, ItemSummary>();
@@ -130,15 +147,22 @@ export async function summarizeDay(models: Models, serviceDay: string): Promise<
     },
     items: [...items.values()].sort((a, b) => b.qty - a.qty || b.revenue - a.revenue || a.name.en.localeCompare(b.name.en)),
     payments,
+    byServer: [...servers.values()].sort((a, b) => a.staffId.localeCompare(b.staffId)),
     generated: false,
   };
+}
+
+/** Everything paid on a check: its full payment, or its shares' payments. */
+function paidOn(c: { payment?: PaymentLean; split?: { shares?: { payment?: PaymentLean }[] } | null }): number {
+  return (c.payment?.amount ?? 0) + (c.split?.shares ?? []).reduce((n, s) => n + (s.payment?.amount ?? 0), 0);
 }
 
 type StoredLean = SummaryData & { _id?: unknown; tenantId?: string; __v?: number };
 
 /** A stored document as SummaryData (field by field, so ids and version keys never leak). */
 function fromStored(d: StoredLean): SummaryData {
-  const hourRow = (h: TicketHour) => ({ hour: h.hour, count: h.count, totalMs: h.totalMs });
+  // Summaries stored before phase 3 lack `onTime` and `byServer`: they read as empty.
+  const hourRow = (h: TicketHour) => ({ hour: h.hour, count: h.count, totalMs: h.totalMs, onTime: h.onTime ?? 0 });
   return {
     serviceDay: d.serviceDay,
     revenue: d.revenue,
@@ -150,6 +174,7 @@ function fromStored(d: StoredLean): SummaryData {
     ticketTimes: { kitchen: d.ticketTimes.kitchen.map(hourRow), bar: d.ticketTimes.bar.map(hourRow) },
     items: d.items.map((i) => ({ itemId: i.itemId ?? null, name: { en: i.name.en, tr: i.name.tr }, qty: i.qty, revenue: i.revenue })),
     payments: { card: d.payments.card, cash: d.payments.cash },
+    byServer: (d.byServer ?? []).map((s) => ({ staffId: s.staffId, checks: s.checks, covers: s.covers, sales: s.sales })),
     generated: d.generated,
   };
 }

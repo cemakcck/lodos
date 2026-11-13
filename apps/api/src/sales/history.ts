@@ -140,7 +140,7 @@ export async function generateHistory(
     if (dow === 1) {
       return {
         serviceDay, revenue: 0, covers: 0, checks: 0, comps: { count: 0, amount: 0 }, voids: { count: 0, amount: 0 },
-        byHour: [], ticketTimes: { kitchen: [], bar: [] }, items: [], payments: { card: 0, cash: 0 }, generated: true,
+        byHour: [], ticketTimes: { kitchen: [], bar: [] }, items: [], payments: { card: 0, cash: 0 }, byServer: [], generated: true,
       };
     }
     const covers = coversFor(dow, rand);
@@ -183,7 +183,7 @@ export async function generateHistory(
       byHour.map((b, i) => {
         const count = Math.max(1, Math.round(b.checks * perCheck));
         const avg = Math.min(hi, Math.max(lo, (minutes[i] as number) + (rand() - 0.5) * 1.2));
-        return { hour: b.hour, count, totalMs: Math.round(count * avg * 60_000) };
+        return { hour: b.hour, count, totalMs: Math.round(count * avg * 60_000), onTime: 0 };
       });
     const card = Math.round(revenue * (0.76 + rand() * 0.08));
     const sum = (kind: "comp" | "void") => {
@@ -201,6 +201,7 @@ export async function generateHistory(
       ticketTimes: { kitchen: ticketHours(2.1, KITCHEN_MIN, 9, 14.4), bar: ticketHours(1.9, BAR_MIN, 4, 7) },
       items: rows,
       payments: { card, cash: revenue - card },
+      byServer: [],
       generated: true,
     };
   });
