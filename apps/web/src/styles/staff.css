@@ -1310,6 +1310,34 @@
   }
   .qr-wordmark { font-family: "Bodoni Moda", Georgia, serif; font-style: italic; font-weight: 600; font-size: 20pt; line-height: 1; color: var(--color-staff-rail); }
   .qr-name { font-family: var(--font-staff-ui); font-size: 34pt; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  /* Performance */
+  .pf-period { display: inline-flex; align-items: center; gap: 8px; }
+  .pf-head { display: flex; flex-direction: column; gap: 14px; }
+  .pf-score { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+  .pf-rank-text { margin-top: 4px; font-size: 14px; color: var(--color-staff-fg-2); }
+  .pf-facts { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+  .pf-facts dt { font-size: 12px; color: var(--color-staff-fg-3); }
+  .pf-facts dd { font-size: 14px; font-weight: 600; }
+  .pf-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pf-table th, .pf-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--color-staff-line); font-weight: 400; }
+  .pf-table thead th { font-size: 12px; color: var(--color-staff-fg-3); font-weight: 600; }
+  .pf-table tbody th, .pf-table tfoot th { font-weight: 500; }
+  .pf-table tfoot th, .pf-table tfoot td { font-weight: 600; border-bottom: 0; }
+  .pf-table .r { text-align: right; }
+  .pf-na { color: var(--color-staff-fg-2); font-family: var(--font-staff-ui); }
+  .pf-stack { display: flex; height: 14px; margin: 8px 0 10px; border-radius: 7px; overflow: hidden; background: var(--color-staff-sunk); }
+  .pf-stack .seg, .pf-table .sw { background: var(--color-staff-rail); }
+  .pf-stack .s1, .pf-table .s1 { opacity: 0.75; }
+  .pf-stack .s2, .pf-table .s2 { opacity: 0.55; }
+  .pf-stack .s3, .pf-table .s3 { opacity: 0.4; }
+  .pf-table .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; }
+  .pf-comments { display: flex; flex-direction: column; gap: 10px; }
+  .pf-comment { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--color-staff-line); border-radius: 8px; justify-items: start; }
+  .pf-comment .meta { font-size: 12px; color: var(--color-staff-fg-2); }
+  .pf-comment.is-hidden { background: var(--color-staff-sunk); color: var(--color-staff-fg-2); }
+  .pf-comment.is-hidden p { text-decoration: line-through; }
+  .pf-tag { color: var(--color-staff-fg); }
+
   .qr-code, svg.qr-code { width: 46mm; height: 46mm; display: block; }
   .qr-line { font-size: 8.5pt; line-height: 1.35; color: #333; max-width: 70mm; }
 

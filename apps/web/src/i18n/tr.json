@@ -218,7 +218,9 @@
       "schedule": "Vardiya planı",
       "myShifts": "Vardiyalarım",
       "timesheets": "Mesai kayıtları",
-      "expenses": "Giderler"
+      "expenses": "Giderler",
+      "performance": "Performans",
+      "myPerformance": "Performansım"
     },
     "roles": {
       "waiter": "Garson",
@@ -1491,6 +1493,90 @@
         "name": "Her iki dilde de bir ad girin.",
         "budget": "Lira cinsinden bir bütçe girin ya da 0."
       }
+    }
+  },
+  "performance": {
+    "title": "Performans",
+    "myTitle": "Performansım",
+    "loadError": "Performans verileri yüklenemedi.",
+    "summary": "Özet",
+    "back": "Sıralamaya dön",
+    "empty": "Bu grupta henüz kimse yok.",
+    "rankingOf": "{{group}} sıralaması",
+    "notEnough": "Henüz yeterli veri yok",
+    "week": "Hafta",
+    "hours": "Saat",
+    "lateness": "Gecikme",
+    "hoursOf": "{{actual}} (planlanan {{planned}})",
+    "late_one": "{{count}} geç vardiya",
+    "late_other": "{{count}} geç vardiya",
+    "stars": "5 üzerinden {{n}}",
+    "group": {
+      "label": "Grup",
+      "floor": "Salon",
+      "kitchen": "Mutfak",
+      "bar": "Bar"
+    },
+    "period": {
+      "label": "Dönem",
+      "week": "Hafta",
+      "month": "Ay",
+      "range_week": "Hafta",
+      "range_month": "Ay",
+      "prev_week": "Önceki hafta",
+      "next_week": "Sonraki hafta",
+      "prev_month": "Önceki ay",
+      "next_month": "Sonraki ay",
+      "this_week": "Bu hafta",
+      "this_month": "Bu ay"
+    },
+    "col": {
+      "rank": "Sıra",
+      "name": "Ad",
+      "score": "Puan",
+      "rating": "Değerlendirme",
+      "hours": "Saat",
+      "late": "Geç vardiya"
+    },
+    "parts": {
+      "rating": "Misafir puanı",
+      "dishRating": "Yemek puanı",
+      "workload": "İş yükü",
+      "reliability": "Güvenilirlik",
+      "throughput": "Hız",
+      "onTime": "Zamanında"
+    },
+    "breakdown": {
+      "title": "Puan dökümü",
+      "bar": "100 üzerinden {{score}} puan",
+      "component": "Bileşen",
+      "points": "Puan",
+      "max": "Üst sınır",
+      "total": "Toplam"
+    },
+    "rank": {
+      "waiter_one": "{{count}} garsondan {{position}}.",
+      "waiter_other": "{{count}} garsondan {{position}}.",
+      "cook_one": "{{count}} aşçıdan {{position}}.",
+      "cook_other": "{{count}} aşçıdan {{position}}.",
+      "bartender_one": "{{count}} barmenden {{position}}.",
+      "bartender_other": "{{count}} barmenden {{position}}."
+    },
+    "trend": {
+      "title": "Puan eğilimi",
+      "avg": "Ortalama puan",
+      "count": "Değerlendirme"
+    },
+    "history": {
+      "title": "Puan geçmişi"
+    },
+    "comments": {
+      "title": "Misafir yorumları",
+      "none": "Son sekiz haftada yorum yok.",
+      "hide": "Gizle",
+      "unhide": "Göster",
+      "hidden": "Gizli",
+      "error": "Yorum değiştirilemedi. Tekrar deneyin."
     }
   }
 }

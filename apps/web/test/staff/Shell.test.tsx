@@ -34,13 +34,13 @@ describe("Shell", () => {
   it("the manager sees every rail item", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("manager") });
     renderApp("/staff/menu");
-    expect(await railNames()).toEqual(["Kitchen", "Bar", "Floor", "Menu", "Tables", "Floor plan", "Sales", "Staff", "Schedule", "Timesheets", "Expenses", "My shifts"]);
+    expect(await railNames()).toEqual(["Kitchen", "Bar", "Floor", "Menu", "Tables", "Floor plan", "Sales", "Staff", "Schedule", "Timesheets", "Expenses", "Performance", "My shifts", "My performance"]);
   });
 
-  it("the waiter sees the Floor and My shifts", async () => {
+  it("the waiter sees the Floor, My shifts and My performance", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("waiter", "Deniz") });
     renderApp("/staff/floor");
-    expect(await railNames()).toEqual(["Floor", "My shifts"]);
+    expect(await railNames()).toEqual(["Floor", "My shifts", "My performance"]);
   });
 
   it("rail items and the avatar menu follow the language", async () => {
@@ -52,7 +52,7 @@ describe("Shell", () => {
     expect(avatar.textContent).toBe("SK");
     await user.click(avatar);
     await user.click(screen.getByRole("button", { name: "Türkçe" }));
-    expect(await railNames("Personel")).toEqual(["Mutfak", "Bar", "Salon", "Menü", "Masalar", "Kat planı", "Satış", "Personel", "Vardiya planı", "Mesai kayıtları", "Giderler", "Vardiyalarım"]);
+    expect(await railNames("Personel")).toEqual(["Mutfak", "Bar", "Salon", "Menü", "Masalar", "Kat planı", "Satış", "Personel", "Vardiya planı", "Mesai kayıtları", "Giderler", "Performans", "Vardiyalarım", "Performansım"]);
   });
 
   it("sends a role to its own screen when it opens another role's page", async () => {

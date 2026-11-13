@@ -218,7 +218,9 @@
       "schedule": "Schedule",
       "myShifts": "My shifts",
       "timesheets": "Timesheets",
-      "expenses": "Expenses"
+      "expenses": "Expenses",
+      "performance": "Performance",
+      "myPerformance": "My performance"
     },
     "roles": {
       "waiter": "Waiter",
@@ -1491,6 +1493,90 @@
         "name": "Enter a name in both languages.",
         "budget": "Enter a budget in lira, or 0."
       }
+    }
+  },
+  "performance": {
+    "title": "Performance",
+    "myTitle": "My performance",
+    "loadError": "We couldn't load the performance figures.",
+    "summary": "Summary",
+    "back": "Back to the ranking",
+    "empty": "Nobody in this group yet.",
+    "rankingOf": "{{group}} ranking",
+    "notEnough": "Not enough data yet",
+    "week": "Week",
+    "hours": "Hours",
+    "lateness": "Lateness",
+    "hoursOf": "{{actual}} of {{planned}} planned",
+    "late_one": "{{count}} late shift",
+    "late_other": "{{count}} late shifts",
+    "stars": "{{n}} of 5",
+    "group": {
+      "label": "Group",
+      "floor": "Floor",
+      "kitchen": "Kitchen",
+      "bar": "Bar"
+    },
+    "period": {
+      "label": "Period",
+      "week": "Week",
+      "month": "Month",
+      "range_week": "Week",
+      "range_month": "Month",
+      "prev_week": "Previous week",
+      "next_week": "Next week",
+      "prev_month": "Previous month",
+      "next_month": "Next month",
+      "this_week": "This week",
+      "this_month": "This month"
+    },
+    "col": {
+      "rank": "Rank",
+      "name": "Name",
+      "score": "Score",
+      "rating": "Rating",
+      "hours": "Hours",
+      "late": "Late shifts"
+    },
+    "parts": {
+      "rating": "Guest rating",
+      "dishRating": "Dish rating",
+      "workload": "Workload",
+      "reliability": "Reliability",
+      "throughput": "Throughput",
+      "onTime": "On time"
+    },
+    "breakdown": {
+      "title": "Score breakdown",
+      "bar": "Score {{score}} out of 100",
+      "component": "Component",
+      "points": "Points",
+      "max": "Out of",
+      "total": "Total"
+    },
+    "rank": {
+      "waiter_one": "{{position}} of {{count}} waiter",
+      "waiter_other": "{{position}} of {{count}} waiters",
+      "cook_one": "{{position}} of {{count}} cook",
+      "cook_other": "{{position}} of {{count}} cooks",
+      "bartender_one": "{{position}} of {{count}} bartender",
+      "bartender_other": "{{position}} of {{count}} bartenders"
+    },
+    "trend": {
+      "title": "Rating trend",
+      "avg": "Average rating",
+      "count": "Ratings"
+    },
+    "history": {
+      "title": "Points history"
+    },
+    "comments": {
+      "title": "Guest comments",
+      "none": "No comments in the last eight weeks.",
+      "hide": "Hide",
+      "unhide": "Unhide",
+      "hidden": "Hidden",
+      "error": "We couldn't change that comment. Try again."
     }
   }
 }

@@ -20,6 +20,9 @@ import { MyShifts } from "./staff/schedule/MyShifts";
 import { TimeClock } from "./staff/timeclock/TimeClock";
 import { Timesheets } from "./staff/timeclock/Timesheets";
 import { Expenses } from "./staff/expenses/Expenses";
+import { Ranking } from "./staff/performance/Ranking";
+import { Person } from "./staff/performance/Person";
+import { MyPerformance } from "./staff/performance/MyPerformance";
 import { FloorPlan } from "./staff/floorplan/FloorPlan";
 import type { StaffRole } from "./staff/auth";
 
@@ -61,6 +64,7 @@ export const routes: RouteObject[] = [
           ]),
           // Every login role; the manager passes every guard.
           guarded(["waiter", "kitchen", "bar"], [{ path: "/staff/my-shifts", element: <MyShifts /> }]),
+          guarded(["waiter", "kitchen", "bar"], [{ path: "/staff/my-performance", element: <MyPerformance /> }]),
           guarded(["manager"], [
             { path: "/staff/menu", element: <MenuEditor /> },
             { path: "/staff/tables", element: <Tables /> },
@@ -71,6 +75,8 @@ export const routes: RouteObject[] = [
             { path: "/staff/schedule", element: <Schedule /> },
             { path: "/staff/timesheets", element: <Timesheets /> },
             { path: "/staff/expenses", element: <Expenses /> },
+            { path: "/staff/performance", element: <Ranking /> },
+            { path: "/staff/performance/:staffId", element: <Person /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],
