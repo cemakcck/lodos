@@ -1,12 +1,17 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { GuestFooter } from "./PhotoCredits";
+import { RateVisit } from "./RateVisit";
 import { LangToggle, LeopardBand, MirrorScene, Ornament } from "./ui";
 
 /** Shown when the waiter closed the check (or the order was refused with check_closed). No ordering from here. */
-export function VisitEnded() {
+export function VisitEnded({ checkId }: { checkId?: string }) {
   const { t } = useTranslation();
   return (
-    <Farewell title={t("guest.ended.title")} body={t("guest.ended.body")} kicker={t("guest.ended.farewell")} />
+    <Farewell title={t("guest.ended.title")} body={t("guest.ended.body")} kicker={t("guest.ended.farewell")}>
+      {/* The card asks the API; an unpaid or expired visit answers "closed" and renders nothing. */}
+      {checkId && <RateVisit checkId={checkId} />}
+    </Farewell>
   );
 }
 
@@ -16,7 +21,7 @@ export function InvalidTable() {
   return <Farewell title={t("guest.invalid.title")} body={t("guest.invalid.body")} />;
 }
 
-function Farewell({ title, body, kicker }: { title: string; body: string; kicker?: string }) {
+function Farewell({ title, body, kicker, children }: { title: string; body: string; kicker?: string; children?: ReactNode }) {
   return (
     <>
       <header>
@@ -36,6 +41,7 @@ function Farewell({ title, body, kicker }: { title: string; body: string; kicker
         <Ornament className="mx-auto mt-5 block text-guest-brass" />
         <p className="mt-5 text-[14px] leading-relaxed text-guest-beige">{body}</p>
       </main>
+      {children}
       <GuestFooter />
     </>
   );

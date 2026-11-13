@@ -186,6 +186,21 @@
       "creditsFile": "Full credits file",
       "by": "by {{author}}",
       "source": "Source"
+    },
+    "rate": {
+      "title": "How was your visit?",
+      "waiter": "Your waiter",
+      "waiterNamed": "Your waiter, {{name}}",
+      "dishes": "Dishes",
+      "food": "Food",
+      "cleanliness": "Cleanliness",
+      "atmosphere": "Atmosphere",
+      "star": "{{count}} of 5 stars",
+      "comment": "Anything to add? (optional)",
+      "counter": "{{count}} / 500",
+      "send": "Send rating",
+      "sending": "Sending…",
+      "thanks": "Thanks for your rating!"
     }
   },
   "staff": {

@@ -186,6 +186,21 @@
       "creditsFile": "Kaynak dosyasının tamamı",
       "by": "{{author}}",
       "source": "Kaynak"
+    },
+    "rate": {
+      "title": "Ziyaretiniz nasıldı?",
+      "waiter": "Garsonunuz",
+      "waiterNamed": "Garsonunuz, {{name}}",
+      "dishes": "Tabaklar",
+      "food": "Yemek",
+      "cleanliness": "Temizlik",
+      "atmosphere": "Atmosfer",
+      "star": "5 yıldızdan {{count}}",
+      "comment": "Eklemek istediğiniz bir şey var mı? (isteğe bağlı)",
+      "counter": "{{count}} / 500",
+      "send": "Değerlendirmeyi gönder",
+      "sending": "Gönderiliyor…",
+      "thanks": "Değerlendirmeniz için teşekkürler!"
     }
   },
   "staff": {
