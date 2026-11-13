@@ -533,6 +533,35 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 
+  it("Phase 3 Task 12: A's monthly business data, PDF and CSV read only A's sales, expenses and comments; B unchanged", async () => {
+    const mk = (v: Visitor, amount: number, comment: string) =>
+      runWithTenant(v.tenantId, async () => {
+        const cat = await t.models.ExpenseCategory.create({ name: { en: `Cat ${comment}`, tr: `Kat ${comment}` }, kind: "other", monthlyBudget: 0, sort: 99 });
+        await t.models.Expense.create({ categoryId: cat._id, amount, date: "2026-11-04", payee: comment, createdBy: cat._id });
+        await t.models.Rating.create({ serviceDay: "2026-11-10", paidAt: NOW, submittedAt: NOW, comment });
+      });
+    await mk(a, 7_777_777, "monthly-only-in-a");
+    await mk(b, 9_999_999, "monthly-only-in-b");
+    const before = await snapshot(b.tenantId);
+    const bSummaries = await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}));
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const view = await t.inject({ method: "GET", url: "/api/business/monthly?month=2026-11", cookies });
+    expect(view.statusCode, view.body).toBe(200);
+    expect(view.body).toContain("monthly-only-in-a");
+    expect(view.body).not.toContain("monthly-only-in-b");
+    expect(view.json().expenses.biggest[0].amount).toBe(7_777_777);
+    const pdf = await t.inject({ method: "GET", url: "/api/business/monthly.pdf?month=2026-11", cookies });
+    expect(pdf.statusCode).toBe(200);
+    const text = await pdfText(pdf.rawPayload);
+    expect(text).toContain("monthly-only-in-a");
+    expect(text).not.toContain("monthly-only-in-b");
+    const csv = await t.inject({ method: "GET", url: "/api/business/monthly.csv?month=2026-11&section=expenses", cookies });
+    expect(csv.body).toContain("Cat monthly-only-in-a");
+    expect(csv.body).not.toContain("Cat monthly-only-in-b");
+    expect(await snapshot(b.tenantId)).toEqual(before);
+    expect(await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}))).toBe(bSummaries);
+  });
+
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";
     await runWithTenant(b.tenantId, () =>

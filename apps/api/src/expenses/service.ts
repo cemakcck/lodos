@@ -86,15 +86,19 @@ export async function updateCategory(models: Models, id: string, body: ExpenseCa
   return catRow(cat);
 }
 
-/** The month's spending per category: active categories always, archived ones only when they have spending. */
-async function spendOf(models: Models, month: string, categoryId?: Types.ObjectId) {
+/**
+ * The month's spending per category: active categories always, archived ones only when they have spending.
+ * `through` ("YYYY-MM-DD") stops at that date (the monthly page's "same point of the previous month").
+ */
+async function spendOf(models: Models, month: string, categoryId?: Types.ObjectId, through?: string) {
+  const dates = { $gte: `${month}-01`, $lte: through ?? `${month}-31` };
   const [cats, sums, rows] = await Promise.all([
     models.ExpenseCategory.find({}).sort({ sort: 1, _id: 1 }).lean(),
     models.Expense.aggregate<{ _id: Types.ObjectId; spent: number }>([
-      { $match: { date: { $gte: `${month}-01`, $lte: `${month}-31` } } },
+      { $match: { date: dates } },
       { $group: { _id: "$categoryId", spent: { $sum: "$amount" } } },
     ]),
-    models.Expense.find({ date: { $gte: `${month}-01`, $lte: `${month}-31` }, ...(categoryId ? { categoryId } : {}) })
+    models.Expense.find({ date: dates, ...(categoryId ? { categoryId } : {}) })
       .sort({ date: -1, _id: -1 })
       .lean(),
   ]);
@@ -105,9 +109,9 @@ async function spendOf(models: Models, month: string, categoryId?: Types.ObjectI
   return { byCategory, rows };
 }
 
-/** Food-and-drink and other spending of calendar month `month` ("YYYY-MM"), for the profit view. */
-export async function expensesForMonth(models: Models, month: string): Promise<MonthSpend> {
-  const { byCategory } = await spendOf(models, month);
+/** Food-and-drink and other spending of calendar month `month` ("YYYY-MM"), up to `through` when given, for the profit view. */
+export async function expensesForMonth(models: Models, month: string, through?: string): Promise<MonthSpend> {
+  const { byCategory } = await spendOf(models, month, undefined, through);
   const sum = (kind: Kind) => byCategory.filter((c) => c.kind === kind).reduce((n, c) => n + c.spent, 0);
   return { foodDrink: sum("food_drink"), other: sum("other"), byCategory };
 }

@@ -8,7 +8,8 @@ import { opsForDays, type DayOps } from "../ops/daily";
 
 /** Staff performance (phase 3): rankings per group, one person's page, and "my performance". Run inside the tenant. */
 export const RANKED_GROUPS = ["floor", "kitchen", "bar"] as const;
-type Group = (typeof RANKED_GROUPS)[number];
+export type RankedGroup = (typeof RANKED_GROUPS)[number];
+type Group = RankedGroup;
 const GROUP_OF_ROLE: Record<string, Group> = { waiter: "floor", cook: "kitchen", bartender: "bar" };
 
 export const HISTORY_WEEKS = 8;
@@ -114,11 +115,13 @@ const staffList = async (models: Models) =>
     id: String(s._id), name: s.name, role: s.role as string, active: s.active,
   }));
 
-async function groupsFor(models: Models, q: PerformanceQuery, now: Date) {
-  const { days } = periodDays(q, serviceDayOf(now));
+/** The ranked groups over any set of service days (a week, a month, or the monthly page's comparison days). */
+export async function rankingForDays(models: Models, days: string[], now: Date): Promise<Record<Group, Row[]>> {
   const [staff, planned, ops] = await Promise.all([staffList(models), plannedMinutes(models, days), opsForDays(models, days, now)]);
   return rankedGroups(figuresFor(staff, days.map((d) => ops.get(d)!), planned));
 }
+
+const groupsFor = (models: Models, q: PerformanceQuery, now: Date) => rankingForDays(models, periodDays(q, serviceDayOf(now)).days, now);
 
 /** GET /api/performance/ranking. */
 export async function ranking(models: Models, q: PerformanceQuery, now: Date): Promise<{ groups: Record<Group, Row[]> }> {

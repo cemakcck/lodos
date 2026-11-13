@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import Fastify, { type FastifyInstance } from "fastify";
 import { Server } from "socket.io";
 import { registerAuthRoutes } from "./auth/routes";
+import { registerBusinessRoutes } from "./business/routes";
 import { registerCheckRoutes } from "./checks/routes";
 import { CLEANUP_INTERVAL_MS, runCleanup } from "./demo/cleanup";
 import { SIMULATOR_INTERVAL_MS, runSimulatorDue } from "./demo/simulator";
@@ -127,6 +128,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerRatingRoutes(app);
   registerExpenseRoutes(app);
   registerPerformanceRoutes(app);
+  registerBusinessRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
   const io = new Server(app.server, { cors: { origin: opts.webOrigin, credentials: true } });

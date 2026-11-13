@@ -142,7 +142,8 @@ async function sameTimeLastWeek(models: Models, now: Date, today: string): Promi
 
 const inServiceOrder = <T extends { hour: number }>(m: Map<number, T>) => SERVICE_HOURS.filter((h) => m.has(h)).map((h) => m.get(h)!);
 
-function byHourOf(days: SummaryData[]): SalesView["byHour"] {
+/** Average revenue per open night (a day with checks) for each hour with sales, in service-hour order. */
+export function byHourOf(days: SummaryData[]): SalesView["byHour"] {
   const nights = Math.max(1, days.filter((d) => d.checks > 0).length);
   const sums = new Map<number, { hour: number; revenue: number }>();
   for (const d of days) {
