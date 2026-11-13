@@ -2,6 +2,7 @@ export const EVENTS = [
   "ticket.created", "ticket.updated", "check.updated", "call.opened",
   "call.answered", "availability.changed", "menu.changed", "tables.changed",
   "split.updated", "adjustment.changed", "session.ended", "layout.saved",
+  "clock.changed", "rating.created", "expense.changed",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 

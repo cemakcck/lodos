@@ -4,10 +4,14 @@ import { availabilitySchema } from "./availability";
 import { callSchema } from "./call";
 import { categorySchema } from "./category";
 import { checkSchema } from "./check";
+import { clockEntrySchema } from "./clockEntry";
 import { dailySummarySchema } from "./dailySummary";
+import { expenseSchema } from "./expense";
+import { expenseCategorySchema } from "./expenseCategory";
 import { menuItemSchema } from "./menuItem";
 import { orderSchema } from "./order";
 import { photoSchema } from "./photo";
+import { ratingSchema } from "./rating";
 import { rateClaimSchema } from "./rateClaim";
 import { rateEventSchema } from "./rateEvent";
 import { roomSchema } from "./room";
@@ -45,6 +49,10 @@ export function registerModels(conn: Connection) {
     DailySummary: conn.model("DailySummary", dailySummarySchema),
     Shift: conn.model("Shift", shiftSchema),
     ShiftTemplate: conn.model("ShiftTemplate", shiftTemplateSchema),
+    Rating: conn.model("Rating", ratingSchema),
+    ClockEntry: conn.model("ClockEntry", clockEntrySchema),
+    Expense: conn.model("Expense", expenseSchema),
+    ExpenseCategory: conn.model("ExpenseCategory", expenseCategorySchema),
   };
 }
 
@@ -71,6 +79,10 @@ export type AdjustmentDoc = InstanceType<Models["Adjustment"]>;
 export type DailySummaryDoc = InstanceType<Models["DailySummary"]>;
 export type ShiftDoc = InstanceType<Models["Shift"]>;
 export type ShiftTemplateDoc = InstanceType<Models["ShiftTemplate"]>;
+export type RatingDoc = InstanceType<Models["Rating"]>;
+export type ClockEntryDoc = InstanceType<Models["ClockEntry"]>;
+export type ExpenseDoc = InstanceType<Models["Expense"]>;
+export type ExpenseCategoryDoc = InstanceType<Models["ExpenseCategory"]>;
 
 /** Model names whose collections are tenant-scoped (everything except Sandbox, RateEvent and RateClaim). */
 export const TENANT_SCOPED_MODELS = [
@@ -92,6 +104,10 @@ export const TENANT_SCOPED_MODELS = [
   "DailySummary",
   "Shift",
   "ShiftTemplate",
+  "Rating",
+  "ClockEntry",
+  "Expense",
+  "ExpenseCategory",
 ] as const satisfies readonly (keyof Models)[];
 
 /**
