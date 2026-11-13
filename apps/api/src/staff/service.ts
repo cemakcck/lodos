@@ -36,7 +36,7 @@ export type StaffRow = {
 };
 
 /** Who is asking, for the per-row `canDeactivate`/`whyNot`. */
-export type StaffCtx = { requesterId: string; demoMode: boolean; tenantId: string };
+export type StaffCtx = { requesterId: string; demoMode: boolean; tenantId: string; now: Date };
 
 /** What a write changed besides the person, for the route to announce (tables, sessions, socket rooms). */
 export type StaffEffects = {
@@ -101,7 +101,7 @@ function rowOf(s: Lean, tables: TableLean[], ctx: StaffCtx, managers: number): S
     tables: own.map((t) => ({ id: String(t._id), name: t.name, roomId: String(t.roomId) })),
     tableRanges: tableRanges(own.map((t) => t.name)),
     demoProtected: s.demoProtected,
-    hourlyRate: rateAt(s.rates ?? [], new Date()),
+    hourlyRate: rateAt(s.rates ?? [], ctx.now),
     hasClockPin: Boolean(s.clockPinHash),
     canDeactivate: s.active && whyNot === null,
     whyNot,
@@ -252,10 +252,10 @@ export async function resetPin(models: Models, id: string, pin: string, ctx: Sta
 }
 
 /** PUT /api/staff/:id/rate: the new rate applies from now; earlier entries keep the rate they were priced at. */
-export async function setRate(models: Models, id: string, body: StaffRateBody, now: Date, ctx: StaffCtx): Promise<StaffRow> {
+export async function setRate(models: Models, id: string, body: StaffRateBody, ctx: StaffCtx): Promise<StaffRow> {
   const s = await findStaff(models, id);
   if (isStationRole(s.role)) throw invalid("Station accounts have no hourly rate");
-  await models.Staff.updateOne({ _id: s._id }, { $push: { rates: { from: now, kurusPerHour: body.kurusPerHour } } });
+  await models.Staff.updateOne({ _id: s._id }, { $push: { rates: { from: ctx.now, kurusPerHour: body.kurusPerHour } } });
   return rowFor(models, s._id, ctx);
 }
 

@@ -34,7 +34,7 @@ export function registerTimeclockRoutes(app: FastifyInstance): void {
     "/api/timesheets/entries",
     staffRoute([], async (req, reply) => {
       const body = TimesheetEntryBody.parse(req.body);
-      const id = await addEntry(models, body);
+      const id = await addEntry(models, body, { staffId: req.staff.id, now: app.clock.now() });
       changed(req.staff.tenantId, body.staffId);
       return reply.status(201).send({ id });
     }),

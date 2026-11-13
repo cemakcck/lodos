@@ -6,9 +6,10 @@ const editSchema = new Schema(
     at: { type: Date, required: true },
     byStaffId: { type: Schema.Types.ObjectId, required: true },
     reason: { type: String, required: true },
+    /** The times before this edit; null for the entry's creation by a manager (a missed punch added by hand). */
     before: {
       type: new Schema({ in: { type: Date, required: true }, out: { type: Date, default: null } }, { _id: false }),
-      required: true,
+      default: null,
     },
   },
   { _id: false },

@@ -1,7 +1,6 @@
 import {
   addDays,
   allocateOvertime,
-  attendanceStatus,
   entryCost,
   entryMinutes,
   mondayOf,
@@ -10,7 +9,6 @@ import {
   serviceDayOf,
   TIME_CLOCK,
   weekDays,
-  type Attendance,
   type StaffRole,
 } from "@lodos/shared";
 import type { Types } from "mongoose";
@@ -93,8 +91,8 @@ export type PersonDay = { staffId: string; minutes: number; overtimeMinutes: num
 
 /**
  * Labour per person for the given service days, from raw clock entries. Overtime is allocated over the whole
- * Monday–Sunday weeks that touch `days`, then only the entries on `days` are counted. A shift counts when it has at
- * least one entry that day, and is late when the earliest entry started more than 5 min after the shift start.
+ * Monday–Sunday weeks that touch `days`, then only the entries on `days` are counted. A shift counts once started; it is late when its
+ * own first entry began more than 5 min after the start, or it ended with no entry (no-show).
  * Days without a shift but with entries count minutes and cost with `shifts: 0`.
  */
 export async function labourForDays(models: Models, days: string[], now: Date): Promise<Map<string, PersonDay[]>> {
@@ -129,12 +127,17 @@ export async function labourForDays(models: Models, days: string[], now: Date): 
     byPersonDay.set(k, [...(byPersonDay.get(k) ?? []), e]);
   }
   for (const s of shifts) {
-    const mine = byPersonDay.get(`${s.serviceDay}|${String(s.staffId)}`);
-    if (!mine?.length) continue;
+    if (s.start.getTime() > now.getTime()) continue; // not started yet: not counted
     const r = rowFor(s.serviceDay, String(s.staffId));
     r.shifts += 1;
-    const firstIn = Math.min(...mine.map((e) => e.in.getTime()));
-    if (firstIn > s.start.getTime() + TIME_CLOCK.lateGraceMin * 60_000) r.lateShifts += 1;
+    // This shift's own entry: the first one that overlaps the shift or starts after its start (a split shift's
+    // second half is judged on its own entry). Late when it begins after the grace; a finished shift with none is a no-show.
+    const mine = (byPersonDay.get(`${s.serviceDay}|${String(s.staffId)}`) ?? []).filter((e) => !e.out || e.out.getTime() > s.start.getTime());
+    if (mine.length === 0) {
+      if (s.end.getTime() <= now.getTime()) r.lateShifts += 1;
+    } else if (Math.min(...mine.map((e) => e.in.getTime())) > s.start.getTime() + TIME_CLOCK.lateGraceMin * 60_000) {
+      r.lateShifts += 1;
+    }
   }
   for (const [day, m] of per) result.set(day, [...m.values()]);
   return result;
@@ -159,7 +162,6 @@ export type TimesheetPerson = {
   role: StaffRole;
   entries: TimesheetEntry[];
   shifts: ShiftRow[];
-  status: Attendance | null;
   minutes: number;
   overtimeMinutes: number;
   cost: number;
@@ -200,7 +202,6 @@ export async function timesheets(models: Models, week: string, now: Date): Promi
       role: s.role,
       entries: rows,
       shifts: myShifts.map(shiftRow),
-      status: myShifts.length ? attendanceStatus(myShifts[0]!, mine.map((e) => ({ in: e.in, out: e.out ?? null })), now).status : null,
       minutes: rows.reduce((n, r) => n + (r.minutes ?? 0), 0),
       overtimeMinutes: rows.reduce((n, r) => n + r.overtimeMinutes, 0),
       cost: rows.reduce((n, r) => n + r.cost, 0),
@@ -217,13 +218,17 @@ const assertSpan = (inAt: Date, outAt: Date): void => {
 };
 
 /** POST /api/timesheets/entries: a closed entry for a missed punch, priced at the rate in force at `in`. */
-export async function addEntry(models: Models, b: { staffId: string; in: Date; out: Date; reason: string }): Promise<string> {
+export async function addEntry(models: Models, b: { staffId: string; in: Date; out: Date; reason: string }, by: { staffId: string; now: Date }): Promise<string> {
   if (!isOid(b.staffId)) throw notFound();
   const s = await models.Staff.findById(b.staffId, { role: 1, rates: 1 }).lean();
   if (!s) throw notFound();
   if (scheduleGroupOf(s.role) === null) throw new ApiError(400, "station", "Station accounts have no time clock");
   assertSpan(b.in, b.out);
-  const e = await models.ClockEntry.create({ staffId: s._id, serviceDay: serviceDayOf(b.in), in: b.in, out: b.out, rate: rateAt(s.rates, b.in) });
+  const e = await models.ClockEntry.create({ staffId: s._id, serviceDay: serviceDayOf(b.in), in: b.in,
+    out: b.out,
+    rate: rateAt(s.rates, b.in),
+    edits: [{ at: by.now, byStaffId: by.staffId, reason: b.reason, before: null }],
+  });
   return String(e._id);
 }
 

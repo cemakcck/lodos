@@ -20,7 +20,10 @@ export async function verifyStaffPin(
   models: Models,
   a: { tenantId: string; ip: string; staffId: string; pin: string; now: Date; clock?: boolean },
 ): Promise<StaffDoc> {
-  if (!(await hit(models, `ip:${a.ip}`, IP_ATTEMPTS.limit, IP_ATTEMPTS.windowMs, a.now))) {
+  // The time clock has its own per-IP bucket (a shared tablet punching at shift change must not lock staff login),
+  // and a correct punch clears it; wrong PINs still count toward it and toward the shared per-staff lock below.
+  const ipKey = a.clock ? `clockip:${a.ip}` : `ip:${a.ip}`;
+  if (!(await hit(models, ipKey, IP_ATTEMPTS.limit, IP_ATTEMPTS.windowMs, a.now))) {
     throw new ApiError(429, "rate_limited", "Too many attempts, try again later");
   }
   const failKey = `pin:${a.tenantId}:${a.staffId}`;
@@ -34,6 +37,7 @@ export async function verifyStaffPin(
   const hash = staff && a.clock && !canSignIn(staff.role) ? staff.clockPinHash : staff?.pinHash;
   if (!staff || !eligible || !(await verifyPin(hash, a.pin))) throw new ApiError(401, "unauthorized", "Wrong PIN");
   await clearHits(models, failKey);
+  if (a.clock) await clearHits(models, ipKey);
   return staff;
 }
 

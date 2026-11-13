@@ -1,7 +1,7 @@
 import type { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSession } from "../src/auth/sessions";
-import { runWithTenant } from "../src/db/tenancy";
+import { runWithTenant, unscoped } from "../src/db/tenancy";
 import { seedRestaurant } from "../src/seed/seed";
 import { labourForDays } from "../src/timeclock/service";
 import { makeTestApp, newTenant, type TestApp } from "./helpers";
@@ -101,7 +101,40 @@ describe("punching on the main tenant", () => {
   });
 });
 
+describe("clock punches and the IP buckets", () => {
+  it("many successful punches from one IP never 429, and leave the login IP bucket alone", async () => {
+    const mgr = await createSession(t.models, (await runWithTenant("main", () => t.models.Staff.findOne({ role: "manager" }).lean().orFail()))._id, "main", "person", NOW);
+    const cook = await runWithTenant("main", () => t.models.Staff.findOne({ role: "cook", name: { $ne: "Emre Yıldız" } }).lean().orFail());
+    const id = String(cook._id);
+    await t.inject({ method: "POST", url: `/api/staff/${id}/clock-pin`, cookies: { lodos_sid: mgr }, payload: { pin: "2468" } });
+    const ip = "10.99.0.1";
+    const before = await unscoped("test", () => t.models.RateEvent.countDocuments({ key: `ip:${ip}` }));
+    for (let i = 0; i < 40; i++) {
+      const res = await t.inject({ method: "POST", url: "/api/clock/punch", payload: { staffId: id, pin: "2468" }, remoteAddress: ip });
+      expect(res.statusCode, `punch ${i}`).toBe(200);
+    }
+    expect(await unscoped("test", () => t.models.RateEvent.countDocuments({ key: `ip:${ip}` }))).toBe(before);
+  });
+});
+
 describe("staff rate and clock PIN", () => {
+  it("hourlyRate is read against the app clock, not the wall clock", async () => {
+    const future = new Date("2030-01-01T10:00:00Z");
+    const app = await makeTestApp({ now: future });
+    try {
+      const tenantId = newTenant();
+      const seed = await seedRestaurant(app.models, tenantId, future, { liveService: false });
+      const sid = await createSession(app.models, seed.staff.manager, tenantId, "person", future);
+      const cook = await runWithTenant(tenantId, () => app.models.Staff.findOne({ name: "Emre Yıldız" }).lean().orFail());
+      const put = await app.inject({ method: "PUT", url: `/api/staff/${String(cook._id)}/rate`, cookies: { lodos_sid: sid }, payload: { kurusPerHour: 9_900 } });
+      expect(put.json().staff.hourlyRate).toBe(9_900);
+      const list = (await app.inject({ method: "GET", url: "/api/staff", cookies: { lodos_sid: sid } })).json() as { people: { name: string; hourlyRate: number }[] };
+      expect(list.people.find((p) => p.name === "Emre Yıldız")!.hourlyRate).toBe(9_900);
+    } finally {
+      await app.close();
+    }
+  });
+
   it("a login role cannot get a clock PIN; rows carry hourlyRate and hasClockPin", async () => {
     const f = await fresh();
     const waiter = await f.person("Mert");
@@ -129,7 +162,13 @@ describe("timesheet edits", () => {
     const created = await f.call("POST", "/api/timesheets/entries", { staffId: id, in: inAt.toISOString(), out: new Date(inAt.getTime() + 8 * HOUR).toISOString(), reason: "Forgot to punch" });
     expect(created.statusCode).toBe(201);
     const entryId = created.json().id as string;
-    expect((await entries(f.tenantId, cook._id))[0]!.rate).toBe(10_000);
+    const [made] = await entries(f.tenantId, cook._id);
+    expect(made!.rate).toBe(10_000);
+    expect(made!.edits).toHaveLength(1);
+    expect(made!.edits[0]).toMatchObject({ reason: "Forgot to punch", before: null });
+    expect(String(made!.edits[0]!.byStaffId)).toBe(String(f.seed.staff.manager));
+    const first = (await f.call("GET", "/api/timesheets?week=2026-11-02")).json() as { people: { staffId: string; entries: { edited: boolean }[] }[] };
+    expect(first.people.find((p) => p.staffId === id)!.entries[0]!.edited).toBe(true);
 
     const newIn = new Date("2026-11-09T09:00:00Z");
     const edit = await f.call("PUT", `/api/timesheets/entries/${entryId}`, { in: newIn.toISOString(), out: new Date(newIn.getTime() + 6 * HOUR).toISOString(), reason: "Wrong day" });
@@ -137,9 +176,9 @@ describe("timesheet edits", () => {
     const [row] = await entries(f.tenantId, cook._id);
     expect(row!.rate).toBe(20_000);
     expect(row!.serviceDay).toBe("2026-11-09");
-    expect(row!.edits).toHaveLength(1);
-    expect(row!.edits[0]).toMatchObject({ reason: "Wrong day", before: { in: inAt } });
-    expect(String(row!.edits[0]!.byStaffId)).toBe(String(f.seed.staff.manager));
+    expect(row!.edits).toHaveLength(2);
+    expect(row!.edits[1]).toMatchObject({ reason: "Wrong day", before: { in: inAt } });
+    expect(String(row!.edits[1]!.byStaffId)).toBe(String(f.seed.staff.manager));
 
     const sheet = (await f.call("GET", "/api/timesheets?week=2026-11-09")).json() as {
       people: { staffId: string; cost: number; entries: { edited: boolean; minutes: number }[] }[];
@@ -186,6 +225,43 @@ describe("timesheet edits", () => {
     // Asking for Friday alone still sees the overtime built up earlier in the week.
     const fri = await runWithTenant(f.tenantId, () => labourForDays(t.models, [days[4]!], AFTER));
     expect(fri.get(days[4]!)![0]).toMatchObject({ overtimeMinutes: 300 });
+  });
+});
+
+describe("labourForDays shifts and lateness", () => {
+  it("counts started shifts; late = own entry after the grace, or a finished shift with no entry; split halves are judged separately", async () => {
+    const f = await fresh();
+    const cook = await f.person("Emre Yıldız");
+    const day = "2026-11-02";
+    await runWithTenant(f.tenantId, () => t.models.Shift.deleteMany({}));
+    const at = (hhmm: string) => new Date(`2026-11-02T${hhmm}:00Z`);
+    const shift = (start: string, end: string) =>
+      runWithTenant(f.tenantId, () => t.models.Shift.create({ staffId: cook._id, serviceDay: day, start: at(start), end: at(end), area: "kitchen" }));
+    const entry = (inAt: string, outAt: string) =>
+      runWithTenant(f.tenantId, () => t.models.ClockEntry.create({ staffId: cook._id, serviceDay: day, in: at(inAt), out: at(outAt), rate: 6_000 }));
+    const labour = async (now: string) => (await runWithTenant(f.tenantId, () => labourForDays(t.models, [day], at(now)))).get(day)!.find((r) => r.staffId === String(cook._id));
+
+    // Split shift 08:00-12:00 and 16:00-20:00; first half on time (4 min), second half 10 min late.
+    await shift("08:00", "12:00");
+    await shift("16:00", "20:00");
+    await entry("08:04", "12:00");
+    await entry("16:10", "20:00");
+    expect(await labour("22:00")).toMatchObject({ shifts: 2, lateShifts: 1, minutes: 236 + 230 });
+    // Second half only late the other way round: first half 10 min late, second on time.
+    await runWithTenant(f.tenantId, () => t.models.ClockEntry.deleteMany({}));
+    await entry("08:10", "12:00");
+    await entry("16:00", "20:00");
+    expect(await labour("22:00")).toMatchObject({ shifts: 2, lateShifts: 1 });
+    // Mid-service: the second shift has not started and is not counted.
+    expect(await labour("13:00")).toMatchObject({ shifts: 1, lateShifts: 1 });
+    // No-show: a finished shift with no entry is late; a running one without an entry is not yet.
+    await runWithTenant(f.tenantId, () => t.models.ClockEntry.deleteMany({}));
+    expect(await labour("22:00")).toMatchObject({ shifts: 2, lateShifts: 2, minutes: 0 });
+    expect(await labour("10:00")).toMatchObject({ shifts: 1, lateShifts: 0 });
+    // Entries without any shift: minutes counted, no shifts.
+    await runWithTenant(f.tenantId, () => t.models.Shift.deleteMany({}));
+    await entry("09:00", "10:00");
+    expect(await labour("22:00")).toMatchObject({ shifts: 0, lateShifts: 0, minutes: 60 });
   });
 });
 
