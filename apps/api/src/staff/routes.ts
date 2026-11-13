@@ -1,4 +1,4 @@
-import { personRoom, StaffCreateBody, StaffPatchBody, StaffPinBody } from "@lodos/shared";
+import { personRoom, StaffCreateBody, StaffPatchBody, StaffPinBody, StaffRateBody } from "@lodos/shared";
 import type { FastifyInstance } from "fastify";
 import { staffRoute, type StaffRequest } from "../auth/guard";
 import { roleRooms } from "../realtime/io";
@@ -8,6 +8,8 @@ import {
   listStaff,
   reactivateStaff,
   resetPin,
+  setClockPin,
+  setRate,
   updateStaff,
   type StaffCtx,
   type StaffEffects,
@@ -59,6 +61,19 @@ export function registerStaffRoutes(app: FastifyInstance): void {
     "/api/staff/:id/pin",
     staffRoute([], async (req) => {
       await resetPin(models, req.params.id, StaffPinBody.parse(req.body).pin, ctxOf(req));
+      return { ok: true };
+    }),
+  );
+
+  app.put<IdParams>(
+    "/api/staff/:id/rate",
+    staffRoute([], async (req) => ({ staff: await setRate(models, req.params.id, StaffRateBody.parse(req.body), app.clock.now(), ctxOf(req)) })),
+  );
+
+  app.post<IdParams>(
+    "/api/staff/:id/clock-pin",
+    staffRoute([], async (req) => {
+      await setClockPin(models, req.params.id, StaffPinBody.parse(req.body).pin, ctxOf(req));
       return { ok: true };
     }),
   );

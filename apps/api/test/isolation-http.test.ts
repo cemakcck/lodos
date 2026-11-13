@@ -44,6 +44,7 @@ const snapshot = (tenantId: string) =>
     shiftTemplates: await t.models.ShiftTemplate.find({}).sort({ _id: 1 }).lean(),
     rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
     ratings: await t.models.Rating.find({}).sort({ _id: 1 }).lean(),
+    clockEntries: await t.models.ClockEntry.find({}).sort({ _id: 1 }).lean(),
   }));
 
 async function pdfText(body: Buffer): Promise<string> {
@@ -439,6 +440,29 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
       expect((await t.inject({ method: "POST", url: `/api/ratings/${bRatingId}/${action}`, cookies })).statusCode).toBe(404);
     }
     expect(await mgr(a)).toBeTruthy();
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 5: the clock lists only the sandbox's people, B's ids can't punch in A's, A's manager gets 404 on B's staff; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    const aPeople = (await t.inject({ method: "GET", url: "/api/clock/people", cookies: { lodos_sb: a.sb } })).json() as { id: string }[];
+    expect(aPeople.length).toBeGreaterThan(0);
+    const bCook = String(before.staff.find((s) => s.role === "cook")!._id);
+    const bWaiter = String(before.staff.find((s) => s.role === "waiter")!._id);
+    for (const p of aPeople) expect([bCook, bWaiter]).not.toContain(p.id);
+    // A's sandbox cookie with B's staff ids: unknown people fail like a wrong PIN, and nothing is written for B.
+    for (const id of [bCook, bWaiter]) {
+      const res = await t.inject({ method: "POST", url: "/api/clock/punch", cookies: { lodos_sb: a.sb }, payload: { staffId: id, pin: "1234" } });
+      expect(res.statusCode).toBe(401);
+    }
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    for (const [method, url, payload] of [
+      ["PUT", `/api/staff/${bCook}/rate`, { kurusPerHour: 5 }],
+      ["POST", `/api/staff/${bCook}/clock-pin`, { pin: "1234" }],
+      ["POST", "/api/timesheets/entries", { staffId: bCook, in: "2026-11-05T09:00:00Z", out: "2026-11-05T17:00:00Z", reason: "x" }],
+    ] as const) {
+      expect((await t.inject({ method, url, cookies, payload })).statusCode, `${method} ${url}`).toBe(404);
+    }
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 

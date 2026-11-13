@@ -23,6 +23,7 @@ import { registerMenuRoutes } from "./menu/routes";
 import { registerSalesRoutes } from "./sales/routes";
 import { registerShiftRoutes } from "./shifts/routes";
 import { registerStaffRoutes } from "./staff/routes";
+import { registerTimeclockRoutes } from "./timeclock/routes";
 import { SUMMARY_INTERVAL_MS, summaryJob } from "./sales/summary";
 import { registerWeb } from "./web";
 import { unscoped } from "./db/tenancy";
@@ -117,6 +118,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerSalesRoutes(app);
   registerStaffRoutes(app);
   registerShiftRoutes(app);
+  registerTimeclockRoutes(app);
   registerLayoutRoutes(app);
   registerMenuRoutes(app);
   registerGuestRoutes(app);

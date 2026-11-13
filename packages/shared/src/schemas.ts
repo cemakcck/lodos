@@ -305,3 +305,25 @@ export const GuestRatingBody = z
   )
   .refine((b) => new Set(b.dishes?.map((d) => d.itemId)).size === (b.dishes?.length ?? 0), "Each dish can be rated once");
 export type GuestRatingBody = z.infer<typeof GuestRatingBody>;
+
+/** POST /api/clock/punch: no session, the person's own (clock) PIN. */
+export const ClockPunchBody = z.object({ staffId: ObjectIdString, pin: PinSchema });
+export type ClockPunchBody = z.infer<typeof ClockPunchBody>;
+
+/** PUT /api/staff/:id/rate: kuruş per hour. */
+export const StaffRateBody = z.object({ kurusPerHour: z.number().int().min(0).max(100_000_00) });
+export type StaffRateBody = z.infer<typeof StaffRateBody>;
+
+const ClockReason = z.string().trim().min(1).max(200);
+
+/** PUT /api/timesheets/entries/:id: both instants are required, `out` after `in`. */
+export const TimesheetEntryPatchBody = z
+  .object({ in: z.coerce.date(), out: z.coerce.date(), reason: ClockReason })
+  .refine((b) => b.out > b.in, { message: "Out must be after in", path: ["out"] });
+export type TimesheetEntryPatchBody = z.infer<typeof TimesheetEntryPatchBody>;
+
+/** POST /api/timesheets/entries (a missed punch added by a manager). */
+export const TimesheetEntryBody = z
+  .object({ staffId: ObjectIdString, in: z.coerce.date(), out: z.coerce.date(), reason: ClockReason })
+  .refine((b) => b.out > b.in, { message: "Out must be after in", path: ["out"] });
+export type TimesheetEntryBody = z.infer<typeof TimesheetEntryBody>;
