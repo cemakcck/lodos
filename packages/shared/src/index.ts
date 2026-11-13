@@ -16,3 +16,4 @@ export * from "./hours";
 export * from "./staff";
 export * from "./shifts";
 export * from "./ratings";
+export * from "./labour";
