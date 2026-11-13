@@ -2,10 +2,12 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRound, UserCheck, UserX } from "lucide-react";
-import { canSignIn, tableRanges } from "@lodos/shared";
+import { canSignIn, isScheduleRole, isStationRole, tableRanges } from "@lodos/shared";
 import { api, ApiClientError } from "../../lib/api";
+import { useFormat } from "../../lib/format";
 import { errorMessage } from "../../lib/errors";
 import { initials } from "../auth";
+import { kurusToLira, liraToKurus } from "../manager/price";
 import type { ManagerTable } from "../manager/types";
 import { PIN_RE, PinFields } from "./PinFields";
 import { TableChips, type ChipRoom } from "./TableChips";
@@ -76,8 +78,12 @@ export function InactivePanel({ person, onClose, onDone }: { person: StaffRow; o
 /** Add or edit one person: name, role, PIN (only when they need one) and, for a waiter, their tables. */
 export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDeactivate, onResetPin }: Props) {
   const { t } = useTranslation();
+  const { lang } = useFormat();
   const qc = useQueryClient();
   const base = useId();
+  const rateRef = useRef<HTMLInputElement>(null);
+  const clockPinRef = useRef<HTMLInputElement>(null);
+  const clockConfirmRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const pinRef = useRef<HTMLInputElement>(null);
   const confirmRef = useRef<HTMLInputElement>(null);
@@ -86,8 +92,12 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
   const [role, setRole] = useState<string>(person?.role ?? "waiter");
   const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
+  const initialRate = person && person.hourlyRate > 0 ? kurusToLira(person.hourlyRate, lang) : "";
+  const [rate, setRate] = useState(initialRate);
+  const [clockPin, setClockPin] = useState("");
+  const [clockConfirm, setClockConfirm] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(originalIds));
-  const [errors, setErrors] = useState<{ name?: string; pin?: string; confirm?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; pin?: string; confirm?: string; rate?: string; clockPin?: string; clockConfirm?: string }>({});
   const [failure, setFailure] = useState<string | null>(null);
 
   const heading = person ? person.name : t("people.form.newTitle");
@@ -96,13 +106,26 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
   const needsPin = canSignIn(role) && !(person && canSignIn(person.role));
   const isWaiter = role === "waiter";
   const sameSet = selected.size === originalIds.length && originalIds.every((id) => selected.has(id));
-  const dirty = !person || name.trim() !== person.name || role !== person.role || pin !== "" || (isWaiter && !sameSet);
+  // Hourly rate: everyone but the shared station accounts. Clock PIN: only people who don't sign in (the rest clock with their PIN).
+  const hasRate = !isStationRole(role);
+  const hasClockPin = isScheduleRole(role);
+  const rateKurus = liraToKurus(rate, { emptyIsZero: true });
+  const rateChanged = hasRate && rateKurus !== null && rateKurus !== (person?.hourlyRate ?? 0);
+  const dirty = !person || name.trim() !== person.name || role !== person.role || pin !== "" || (isWaiter && !sameSet) || (hasRate && rate !== initialRate) || (hasClockPin && clockPin !== "");
 
   const save = useMutation({
-    mutationFn: (body: Record<string, unknown>) =>
-      person
-        ? api<Saved>(`/api/staff/${person.id}`, { method: "PATCH", body: JSON.stringify(body) })
-        : api<Saved>("/api/staff", { method: "POST", body: JSON.stringify(body) }),
+    mutationFn: async ({ body, rateKurus: kurus, clockPin: cp }: { body: Record<string, unknown>; rateKurus: number | null; clockPin: string }) => {
+      // A new person is created first; the rate and clock PIN then go to their own endpoints.
+      const saved =
+        !person || Object.keys(body).length > 0
+          ? await (person
+              ? api<Saved>(`/api/staff/${person.id}`, { method: "PATCH", body: JSON.stringify(body) })
+              : api<Saved>("/api/staff", { method: "POST", body: JSON.stringify(body) }))
+          : { staff: person };
+      if (kurus !== null) await api(`/api/staff/${saved.staff.id}/rate`, { method: "PUT", body: JSON.stringify({ kurusPerHour: kurus }) });
+      if (cp) await api(`/api/staff/${saved.staff.id}/clock-pin`, { method: "POST", body: JSON.stringify({ pin: cp }) });
+      return saved;
+    },
     onSuccess: (r) => {
       refreshStaff(qc);
       const un = r.unassignedTables ?? [];
@@ -127,17 +150,25 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
       if (!PIN_RE.test(pin)) errs.pin = t("people.form.pinInvalid");
       else if (confirm !== pin) errs.confirm = t("people.form.pinMismatch");
     }
+    if (hasRate && rateKurus === null) errs.rate = t("people.form.rateInvalid");
+    if (hasClockPin && clockPin) {
+      if (!PIN_RE.test(clockPin)) errs.clockPin = t("people.form.pinInvalid");
+      else if (clockConfirm !== clockPin) errs.clockConfirm = t("people.form.pinMismatch");
+    }
     setErrors(errs);
     if (errs.name) return nameRef.current?.focus();
     if (errs.pin) return pinRef.current?.focus();
     if (errs.confirm) return confirmRef.current?.focus();
+    if (errs.rate) return rateRef.current?.focus();
+    if (errs.clockPin) return clockPinRef.current?.focus();
+    if (errs.clockConfirm) return clockConfirmRef.current?.focus();
     const body: Record<string, unknown> = {};
     if (!person || n !== person.name) body.name = n;
     if (!person || role !== person.role) body.role = role;
     if (canSignIn(role) && pin) body.pin = pin;
     // `tableIds` is the whole section: send the full resulting list, never a delta.
     if (isWaiter && (person ? !sameSet : selected.size > 0)) body.tableIds = [...selected];
-    save.mutate(body);
+    save.mutate({ body, rateKurus: rateChanged ? rateKurus : null, clockPin: hasClockPin ? clockPin : "" });
   };
 
   const toggle = (id: string) =>
@@ -197,6 +228,46 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
             pinRef={pinRef}
             confirmRef={confirmRef}
           />
+        </div>
+      )}
+
+      {hasRate && (
+        <div className="pp-ps">
+          <div className="mg-field">
+            <label htmlFor={`${base}-rate`}>{t("people.form.rate")}</label>
+            <input
+              ref={rateRef}
+              id={`${base}-rate`}
+              className="mg-input font-mono"
+              inputMode="decimal"
+              autoComplete="off"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              aria-invalid={errors.rate ? true : undefined}
+              aria-describedby={errors.rate ? `${base}-rate-err` : `${base}-rate-hint`}
+            />
+            {errors.rate ? <p id={`${base}-rate-err`} className="mg-err">{errors.rate}</p> : <p id={`${base}-rate-hint`} className="mg-hint">{t("people.form.rateHint")}</p>}
+          </div>
+        </div>
+      )}
+
+      {hasClockPin && (
+        <div className="pp-ps">
+          <PinFields
+            pin={clockPin}
+            confirm={clockConfirm}
+            onPin={setClockPin}
+            onConfirm={setClockConfirm}
+            pinError={errors.clockPin}
+            confirmError={errors.clockConfirm}
+            label={t("people.form.clockPin")}
+            confirmLabel={t("people.form.clockPinConfirm")}
+            pinRef={clockPinRef}
+            confirmRef={clockConfirmRef}
+          />
+          <p className="mg-hint">
+            {t("people.form.clockPinHint", { role: roleLabel(role) })} {person?.hasClockPin ? t("people.form.clockPinSet") : t("people.form.clockPinUnset")}
+          </p>
         </div>
       )}
 

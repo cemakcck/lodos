@@ -17,6 +17,8 @@ import { Sales } from "./staff/sales/Sales";
 import { Staff } from "./staff/people/Staff";
 import { Schedule } from "./staff/schedule/Schedule";
 import { MyShifts } from "./staff/schedule/MyShifts";
+import { TimeClock } from "./staff/timeclock/TimeClock";
+import { Timesheets } from "./staff/timeclock/Timesheets";
 import { FloorPlan } from "./staff/floorplan/FloorPlan";
 import type { StaffRole } from "./staff/auth";
 
@@ -44,6 +46,8 @@ export const routes: RouteObject[] = [
         element: <StaffFrame />,
         children: [
           { path: "/staff/login", element: <Login /> },
+          // The time clock needs no session: the PIN is the credential.
+          { path: "/staff/clock", element: <TimeClock /> },
           { path: "/staff", element: <RequireStaff><StaffHome /></RequireStaff> },
           guarded(["kitchen"], [{ path: "/staff/kitchen", element: <Kds key="kitchen" station="kitchen" /> }]),
           guarded(["bar"], [{ path: "/staff/bar", element: <Kds key="bar" station="bar" /> }]),
@@ -64,6 +68,7 @@ export const routes: RouteObject[] = [
             { path: "/staff/sales", element: <Sales /> },
             { path: "/staff/people", element: <Staff /> },
             { path: "/staff/schedule", element: <Schedule /> },
+            { path: "/staff/timesheets", element: <Timesheets /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],

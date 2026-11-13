@@ -14,11 +14,12 @@ export function invalidationsFor(e: LiveEvent): QueryKey[] {
   if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
   // A saved floor plan moves, adds and removes tables: waiter floors refetch it.
   if (e.type === "tables.changed" || e.type === "layout.saved") return [["floor"], ["manager"]];
+  if (e.type === "clock.changed") return [["timesheets"]];
   return [];
 }
 
 const LIVE_KEYS: Record<LiveAudience["audience"], QueryKey[]> = {
-  staff: [["kds"], ["floor"], ["check"], ["split"], ["menu"], ["manager"]],
+  staff: [["kds"], ["floor"], ["check"], ["split"], ["menu"], ["manager"], ["timesheets"]],
   guest: [["guest"]],
 };
 

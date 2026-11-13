@@ -216,7 +216,8 @@
       "sales": "Satış",
       "people": "Personel",
       "schedule": "Vardiya planı",
-      "myShifts": "Vardiyalarım"
+      "myShifts": "Vardiyalarım",
+      "timesheets": "Mesai kayıtları"
     },
     "roles": {
       "waiter": "Garson",
@@ -259,7 +260,8 @@
       "demoTitle": "Ya da bir rolü hemen deneyin",
       "demoHint": "Demoda PIN gerekmez.",
       "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin.",
-      "ended": "Bir yönetici oturumunu kapattı"
+      "ended": "Bir yönetici oturumunu kapattı",
+      "clock": "Giriş / çıkış (mesai)"
     }
   },
   "demo": {
@@ -1101,7 +1103,15 @@
       "pinMismatch": "PIN'ler eşleşmiyor.",
       "scheduleOnly": "{{role}} için PIN yok ve giriş yapmaz. Yalnızca haftalık vardiya planında görünür.",
       "tablesHint": "Kesik çizgili masalar başka bir garsona ait. Dokunursanız {{name}} adlı kişiye geçer.",
-      "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır."
+      "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır.",
+      "rate": "Saatlik ücret (₺)",
+      "rateHint": "Kaydettiğiniz andan itibaren geçerlidir. Geçmiş kayıtlar kendi ücretini korur.",
+      "rateInvalid": "150 veya 150,50 gibi bir tutar girin.",
+      "clockPin": "Mesai PIN'i",
+      "clockPinHint": "Mesai ekranında kullanılır. {{role}} oturum açmaz, bu PIN yalnızca giriş ve çıkış içindir.",
+      "clockPinSet": "Mesai PIN'i tanımlı. Değiştirmek için yenisini girin.",
+      "clockPinUnset": "Henüz mesai PIN'i yok, giriş yapamaz.",
+      "clockPinConfirm": "Mesai PIN'ini doğrulayın"
     },
     "chip": {
       "mine": "{{table}}, {{name}} kişisinin masası",
@@ -1332,6 +1342,65 @@
       "body_other": "{{count}} kaydedilmemiş değişiklik kaybolacak.",
       "stay": "Kal",
       "go": "Çık"
+    }
+  },
+  "timeclock": {
+    "title": "Mesai saati",
+    "toSignIn": "Personel girişi",
+    "pickName": "Kim giriş/çıkış yapıyor?",
+    "pickHint": "Adınıza dokunun, sonra PIN'inizi girin.",
+    "loadError": "Liste yüklenemedi.",
+    "noPeople": "Programda henüz kimse yok.",
+    "clockedIn": "İçeride",
+    "clockedOut": "Giriş yapılmadı",
+    "punch": "Giriş / çıkış",
+    "punching": "Kaydediliyor…",
+    "resultIn": "Giriş yapıldı {{time}}",
+    "resultOut": "Çıkış yapıldı, bugün {{duration}}",
+    "forgotOut": "Çıkış yapmamışsınız. Son vardiyanızı düzeltmesi için yöneticinize söyleyin.",
+    "backSoon": "Birkaç saniye içinde listeye dönülecek.",
+    "duration": "{{h}} sa {{m}} dk",
+    "durationMin": "{{m}} dk",
+    "sheets": {
+      "title": "Mesai kayıtları",
+      "loadError": "Mesai kayıtları yüklenemedi.",
+      "empty": "Bu hafta vardiya veya mesai kaydı yok.",
+      "caption": "{{name}}: güne göre planlanan vardiya ve kayıtlı süre",
+      "totals": "{{hours}} çalışıldı · fazla mesai {{overtime}} · {{cost}}",
+      "col": {
+        "day": "Gün",
+        "planned": "Planlanan",
+        "clocked": "Kayıt",
+        "hours": "Süre",
+        "overtime": "Fazla mesai",
+        "cost": "Maliyet",
+        "actions": "İşlemler"
+      },
+      "open": "açık",
+      "noEntry": "Giriş yok",
+      "edited": "düzenlendi",
+      "forgot": "çıkış unutuldu mu?",
+      "add": "Kayıt ekle",
+      "addFor": "{{name}} için kayıt ekle",
+      "edit": "Düzenle",
+      "editFor": "{{name}} düzenle, {{day}}",
+      "addTitle": "Mesai kaydı ekle",
+      "editTitle": "{{name}} kaydını düzenle",
+      "person": "Kişi",
+      "pickPerson": "Kişi seçin",
+      "in": "Giriş",
+      "out": "Çıkış",
+      "timeHint": "İstanbul saati.",
+      "reason": "Neden (zorunlu)",
+      "save": "Kaydı kaydet",
+      "saved": "{{name}} kaydı güncellendi.",
+      "added": "{{name}} için kayıt eklendi.",
+      "errors": {
+        "person": "Bir kişi seçin.",
+        "time": "Tarih ve saat girin.",
+        "order": "Çıkış, girişten sonra olmalı.",
+        "reason": "Bir neden girin."
+      }
     }
   }
 }

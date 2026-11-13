@@ -216,7 +216,8 @@
       "sales": "Sales",
       "people": "Staff",
       "schedule": "Schedule",
-      "myShifts": "My shifts"
+      "myShifts": "My shifts",
+      "timesheets": "Timesheets"
     },
     "roles": {
       "waiter": "Waiter",
@@ -259,7 +260,8 @@
       "demoTitle": "Or try a role instantly",
       "demoHint": "No PIN needed in the demo.",
       "demoStart": "Pick a role below to open your private copy of the demo restaurant.",
-      "ended": "You were signed out by a manager"
+      "ended": "You were signed out by a manager",
+      "clock": "Clock in / out"
     }
   },
   "demo": {
@@ -1101,7 +1103,15 @@
       "pinMismatch": "PINs don't match.",
       "scheduleOnly": "{{role}} has no PIN and doesn't sign in. They appear on the weekly schedule only.",
       "tablesHint": "Dashed tables belong to another waiter. Tapping one moves it to {{name}}.",
-      "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept."
+      "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept.",
+      "rate": "Hourly rate (₺)",
+      "rateHint": "Applies from the moment you save. Past entries keep the rate they were clocked at.",
+      "rateInvalid": "Enter an amount like 150 or 150,50.",
+      "clockPin": "Clock PIN",
+      "clockPinHint": "Used on the time clock screen. {{role}} doesn't sign in, so this PIN only clocks in and out.",
+      "clockPinSet": "A clock PIN is set. Enter a new one to replace it.",
+      "clockPinUnset": "No clock PIN yet, so they can't clock in.",
+      "clockPinConfirm": "Confirm clock PIN"
     },
     "chip": {
       "mine": "{{table}}, {{name}}'s table",
@@ -1332,6 +1342,65 @@
       "body_other": "{{count}} unsaved changes will be lost.",
       "stay": "Stay",
       "go": "Leave"
+    }
+  },
+  "timeclock": {
+    "title": "Time clock",
+    "toSignIn": "Staff sign-in",
+    "pickName": "Who's clocking?",
+    "pickHint": "Tap your name, then enter your PIN.",
+    "loadError": "Couldn't load the list.",
+    "noPeople": "Nobody is on the schedule yet.",
+    "clockedIn": "Clocked in",
+    "clockedOut": "Not clocked in",
+    "punch": "Clock in / out",
+    "punching": "Saving…",
+    "resultIn": "Clocked in {{time}}",
+    "resultOut": "Clocked out, {{duration}} today",
+    "forgotOut": "You were never clocked out. Ask your manager to fix your last shift.",
+    "backSoon": "Back to the list in a few seconds.",
+    "duration": "{{h}} h {{m}} min",
+    "durationMin": "{{m}} min",
+    "sheets": {
+      "title": "Timesheets",
+      "loadError": "We couldn't load the timesheets.",
+      "empty": "No shifts or clock entries this week.",
+      "caption": "{{name}}: planned shifts and clocked time by day",
+      "totals": "{{hours}} clocked · overtime {{overtime}} · {{cost}}",
+      "col": {
+        "day": "Day",
+        "planned": "Planned",
+        "clocked": "Clocked",
+        "hours": "Hours",
+        "overtime": "Overtime",
+        "cost": "Cost",
+        "actions": "Actions"
+      },
+      "open": "open",
+      "noEntry": "No clock-in",
+      "edited": "edited",
+      "forgot": "forgot to clock out?",
+      "add": "Add entry",
+      "addFor": "Add entry for {{name}}",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}, {{day}}",
+      "addTitle": "Add a clock entry",
+      "editTitle": "Edit entry for {{name}}",
+      "person": "Person",
+      "pickPerson": "Choose a person",
+      "in": "Clock in",
+      "out": "Clock out",
+      "timeHint": "Istanbul time.",
+      "reason": "Reason (required)",
+      "save": "Save entry",
+      "saved": "Entry for {{name}} saved.",
+      "added": "Entry for {{name}} added.",
+      "errors": {
+        "person": "Choose a person.",
+        "time": "Enter a date and time.",
+        "order": "Clock out must be after clock in.",
+        "reason": "Enter a reason."
+      }
     }
   }
 }
