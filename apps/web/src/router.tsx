@@ -19,6 +19,7 @@ import { Schedule } from "./staff/schedule/Schedule";
 import { MyShifts } from "./staff/schedule/MyShifts";
 import { TimeClock } from "./staff/timeclock/TimeClock";
 import { Timesheets } from "./staff/timeclock/Timesheets";
+import { Expenses } from "./staff/expenses/Expenses";
 import { FloorPlan } from "./staff/floorplan/FloorPlan";
 import type { StaffRole } from "./staff/auth";
 
@@ -69,6 +70,7 @@ export const routes: RouteObject[] = [
             { path: "/staff/people", element: <Staff /> },
             { path: "/staff/schedule", element: <Schedule /> },
             { path: "/staff/timesheets", element: <Timesheets /> },
+            { path: "/staff/expenses", element: <Expenses /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],

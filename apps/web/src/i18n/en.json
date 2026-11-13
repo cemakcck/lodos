@@ -217,7 +217,8 @@
       "people": "Staff",
       "schedule": "Schedule",
       "myShifts": "My shifts",
-      "timesheets": "Timesheets"
+      "timesheets": "Timesheets",
+      "expenses": "Expenses"
     },
     "roles": {
       "waiter": "Waiter",
@@ -1401,6 +1402,94 @@
         "time": "Enter a date and time.",
         "order": "Clock out must be after clock in.",
         "reason": "Enter a reason."
+      }
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "loadError": "We couldn't load the expenses.",
+    "retry": "Try again",
+    "add": "Add expense",
+    "categories": "Categories",
+    "export": "Export CSV",
+    "month": {
+      "label": "Month",
+      "prev": "Previous month",
+      "next": "Next month",
+      "this": "This month"
+    },
+    "budget": {
+      "title": "Spending against budget",
+      "total": "{{spent}} spent",
+      "of": "{{spent}} of {{budget}}",
+      "over": "Over budget by {{amount}}",
+      "under": "Under by {{amount}}",
+      "none": "No budget",
+      "empty": "No categories yet.",
+      "kind": {
+        "food_drink": "Food and drink",
+        "other": "Other"
+      },
+      "summary": "{{spent}} spent of {{budget}} budgeted"
+    },
+    "list": {
+      "title": "Expenses",
+      "filter": "Category",
+      "all": "All categories",
+      "empty": "No expenses this month.",
+      "date": "Date",
+      "category": "Category",
+      "payee": "Payee",
+      "note": "Note",
+      "amount": "Amount",
+      "actions": "Actions",
+      "edit": "Edit expense {{category}}, {{date}}",
+      "count_one": "{{count}} expense",
+      "count_other": "{{count}} expenses"
+    },
+    "form": {
+      "addTitle": "Add expense",
+      "editTitle": "Edit expense",
+      "amount": "Amount (₺)",
+      "category": "Category",
+      "pick": "Choose a category",
+      "date": "Date",
+      "payee": "Payee",
+      "note": "Note",
+      "save": "Save expense",
+      "cancel": "Cancel",
+      "delete": "Delete expense",
+      "confirm": "Delete this expense?",
+      "yes": "Yes, delete",
+      "keep": "Keep it",
+      "errors": {
+        "amount": "Enter an amount above zero.",
+        "category": "Choose a category.",
+        "date": "Enter a date."
+      }
+    },
+    "cats": {
+      "title": "Categories",
+      "new": "New category",
+      "edit": "Edit {{name}}",
+      "editTitle": "Edit category",
+      "newTitle": "New category",
+      "nameEn": "Name (English)",
+      "nameTr": "Name (Turkish)",
+      "kind": "Kind",
+      "budget": "Monthly budget (₺)",
+      "budgetHint": "0 means no budget. It applies to every month.",
+      "archived": "Archived",
+      "archivedBadge": "archived",
+      "save": "Save category",
+      "cancel": "Cancel",
+      "close": "Close",
+      "back": "Back to the list",
+      "empty": "No categories yet.",
+      "kindLocked": "This category already has expenses, so its kind can't change. Archive it and make a new one instead.",
+      "errors": {
+        "name": "Enter a name in both languages.",
+        "budget": "Enter a budget in lira, or 0."
       }
     }
   }

@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, CalendarClock, CalendarDays, ChartLine, Timer, Flame, LayoutGrid, LogOut, PanelsTopLeft, QrCode, Users, Wine, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarClock, CalendarDays, ChartLine, Timer, Flame, LayoutGrid, LogOut, PanelsTopLeft, QrCode, Users, Wallet, Wine, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useFormat } from "../lib/format";
 import { useLive } from "../lib/useLive";
@@ -11,7 +11,7 @@ import { setLanguage } from "../i18n";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { canAccess, endSession, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
 
-export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "floorPlan" | "sales" | "people" | "schedule" | "timesheets" | "myShifts";
+export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "floorPlan" | "sales" | "people" | "schedule" | "timesheets" | "expenses" | "myShifts";
 
 interface RailItem {
   key: RailKey;
@@ -34,6 +34,7 @@ export const RAIL: readonly RailItem[] = [
   { key: "people", to: "/staff/people", icon: Users, roles: [], match: ["/staff/people"] },
   { key: "schedule", to: "/staff/schedule", icon: CalendarDays, roles: [], match: ["/staff/schedule"] },
   { key: "timesheets", to: "/staff/timesheets", icon: Timer, roles: [], match: ["/staff/timesheets"] },
+  { key: "expenses", to: "/staff/expenses", icon: Wallet, roles: [], match: ["/staff/expenses"] },
   // Station accounts (kitchen, bar) are never on the schedule, so the KDS rail stays clean; the route still lets them in.
   { key: "myShifts", to: "/staff/my-shifts", icon: CalendarClock, roles: ["waiter"], match: ["/staff/my-shifts"] },
 ];

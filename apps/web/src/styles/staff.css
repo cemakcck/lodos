@@ -1243,6 +1243,32 @@
   .sa-log .t { color: var(--color-staff-fg-3); font-size: 12px; }
   .sa-log .why { color: var(--color-staff-fg-2); }
   .sa-log .amt { text-align: right; }
+
+  /* Expenses */
+  .ex-budget li { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(80px, 2fr) minmax(0, 1.4fr) minmax(0, 1.4fr); gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--color-staff-line); font-size: 13px; }
+  .ex-budget li:first-child { border-top: 0; }
+  .ex-budget .nm { font-weight: 500; overflow-wrap: anywhere; }
+  .ex-budget .meter { position: relative; height: 8px; border-radius: 999px; background: var(--color-staff-sunk); }
+  .ex-budget .fill { display: block; height: 100%; border-radius: 999px; background: var(--color-staff-rail); }
+  .ex-budget .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--color-staff-fg-2); }
+  .ex-budget li.is-over .fill { background: var(--color-staff-red); }
+  .ex-budget .amt { text-align: right; }
+  .ex-budget .st { color: var(--color-staff-fg-2); }
+  .ex-budget li.is-over .st { color: var(--color-staff-fg); font-weight: 600; }
+  .ex-budget li.is-over .st::before { content: "▲ "; }
+  .ex-filter { flex-direction: row; align-items: center; gap: 8px; }
+  .ex-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ex-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--color-staff-fg-2); padding: 6px 8px; }
+  .ex-table td { padding: 6px 8px; border-top: 1px solid var(--color-staff-line); min-height: 44px; vertical-align: middle; }
+  .ex-table .r { text-align: right; }
+  .ex-cats li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--color-staff-line); }
+  .ex-cats li:first-child { border-top: 0; }
+  .ex-cats .nm { font-weight: 500; }
+  .ex-tag { margin-left: 8px; padding: 1px 6px; border-radius: 999px; background: var(--color-staff-sunk); color: var(--color-staff-fg-2); font-size: 11px; font-weight: 600; }
+  @media (max-width: 720px) {
+    .ex-budget li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .ex-budget .meter { grid-column: 1 / -1; order: 3; }
+  }
   .sa-log .pill { justify-self: start; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
   .sa-log .pill.comp { background: var(--color-staff-plum-100); color: var(--color-staff-rail); }
   .sa-log .pill.void { background: var(--color-staff-sunk); color: var(--color-staff-fg-2); border: 1px solid var(--color-staff-line-2); }

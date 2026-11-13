@@ -217,7 +217,8 @@
       "people": "Personel",
       "schedule": "Vardiya planı",
       "myShifts": "Vardiyalarım",
-      "timesheets": "Mesai kayıtları"
+      "timesheets": "Mesai kayıtları",
+      "expenses": "Giderler"
     },
     "roles": {
       "waiter": "Garson",
@@ -1401,6 +1402,94 @@
         "time": "Tarih ve saat girin.",
         "order": "Çıkış, girişten sonra olmalı.",
         "reason": "Bir neden girin."
+      }
+    }
+  },
+  "expenses": {
+    "title": "Giderler",
+    "loadError": "Giderler yüklenemedi.",
+    "retry": "Tekrar dene",
+    "add": "Gider ekle",
+    "categories": "Kategoriler",
+    "export": "CSV indir",
+    "month": {
+      "label": "Ay",
+      "prev": "Önceki ay",
+      "next": "Sonraki ay",
+      "this": "Bu ay"
+    },
+    "budget": {
+      "title": "Bütçeye karşı harcama",
+      "total": "{{spent}} harcandı",
+      "of": "{{spent}} / {{budget}}",
+      "over": "Bütçe aşıldı: {{amount}}",
+      "under": "{{amount}} altında",
+      "none": "Bütçe yok",
+      "empty": "Henüz kategori yok.",
+      "kind": {
+        "food_drink": "Yiyecek ve içecek",
+        "other": "Diğer"
+      },
+      "summary": "{{budget}} bütçenin {{spent}} kadarı harcandı"
+    },
+    "list": {
+      "title": "Giderler",
+      "filter": "Kategori",
+      "all": "Tüm kategoriler",
+      "empty": "Bu ay gider yok.",
+      "date": "Tarih",
+      "category": "Kategori",
+      "payee": "Alıcı",
+      "note": "Not",
+      "amount": "Tutar",
+      "actions": "İşlemler",
+      "edit": "Gideri düzenle: {{category}}, {{date}}",
+      "count_one": "{{count}} gider",
+      "count_other": "{{count}} gider"
+    },
+    "form": {
+      "addTitle": "Gider ekle",
+      "editTitle": "Gideri düzenle",
+      "amount": "Tutar (₺)",
+      "category": "Kategori",
+      "pick": "Kategori seçin",
+      "date": "Tarih",
+      "payee": "Alıcı",
+      "note": "Not",
+      "save": "Gideri kaydet",
+      "cancel": "Vazgeç",
+      "delete": "Gideri sil",
+      "confirm": "Bu gider silinsin mi?",
+      "yes": "Evet, sil",
+      "keep": "Vazgeç",
+      "errors": {
+        "amount": "Sıfırdan büyük bir tutar girin.",
+        "category": "Bir kategori seçin.",
+        "date": "Bir tarih girin."
+      }
+    },
+    "cats": {
+      "title": "Kategoriler",
+      "new": "Yeni kategori",
+      "edit": "{{name}} kategorisini düzenle",
+      "editTitle": "Kategoriyi düzenle",
+      "newTitle": "Yeni kategori",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "kind": "Tür",
+      "budget": "Aylık bütçe (₺)",
+      "budgetHint": "0 bütçe yok demektir. Her ay için geçerlidir.",
+      "archived": "Arşivlendi",
+      "archivedBadge": "arşivde",
+      "save": "Kategoriyi kaydet",
+      "cancel": "Vazgeç",
+      "close": "Kapat",
+      "back": "Listeye dön",
+      "empty": "Henüz kategori yok.",
+      "kindLocked": "Bu kategoride zaten gider var, bu yüzden türü değiştirilemez. Arşivleyip yenisini oluşturun.",
+      "errors": {
+        "name": "Her iki dilde de bir ad girin.",
+        "budget": "Lira cinsinden bir bütçe girin ya da 0."
       }
     }
   }
