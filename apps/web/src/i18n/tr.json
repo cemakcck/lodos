@@ -206,6 +206,7 @@
   "staff": {
     "retry": "Tekrar dene",
     "nav": {
+      "overview": "Genel bakış",
       "label": "Personel",
       "kitchen": "Mutfak",
       "bar": "Bar",
@@ -1732,6 +1733,67 @@
       "payee": "Alıcı",
       "amount": "Tutar",
       "empty": "Bu dönemde gider yok."
+    }
+  },
+  "overview": {
+    "title": "Genel bakış",
+    "loadError": "Genel bakış yüklenemedi.",
+    "delta": {
+      "pct": {
+        "up": "↑ %{{n}} geçen haftanın aynı saatine göre",
+        "down": "↓ %{{n}} geçen haftanın aynı saatine göre",
+        "flat": "Geçen haftanın aynı saatine göre değişim yok"
+      },
+      "abs": {
+        "up": "↑ {{n}} önceki 7 güne göre",
+        "down": "↓ {{n}} önceki 7 güne göre",
+        "flat": "Önceki 7 güne göre değişim yok"
+      }
+    },
+    "tiles": {
+      "sales": "Bugünkü satış",
+      "covers": "Kişi sayısı",
+      "rating": "Misafir puanı (7 gün)",
+      "profit": "Bu ayın kârı"
+    },
+    "working": {
+      "title": "Şu an kim çalışıyor",
+      "empty": "Bugün kimse planlı değil veya giriş yapmadı.",
+      "person": "Kişi",
+      "time": "Saat",
+      "status": "Durum",
+      "in": "giriş {{time}}",
+      "from": "{{time}} itibarıyla",
+      "due": "beklenen {{time}}"
+    },
+    "status": {
+      "on_shift": "vardiyada",
+      "late": "{{n}} dk geç",
+      "missing": "henüz gelmedi",
+      "later": "bugün sonra",
+      "finished": "bitti",
+      "unscheduled": "planlı değil",
+      "forgot_out": "çıkışı unuttu mu?"
+    },
+    "top": {
+      "title": "Bu haftanın en iyileri",
+      "pts": "{{n}} puan"
+    },
+    "expenses": {
+      "title": "Bu ayın giderleri",
+      "of": "{{budget}} bütçenin {{spent}} kadarı",
+      "none": "Henüz gider yok.",
+      "latest": "Son giderler",
+      "open": "Tüm giderler"
+    },
+    "dishes": {
+      "title": "Yemek puanları (7 gün)",
+      "none": "Henüz yeterli puan yok.",
+      "needsWork": "{{name}} (geliştirilmeli)"
+    },
+    "month": {
+      "title": "Bu ay bir bakışta",
+      "aria": "Bu ay bir bakışta, aylık işletme sayfasını aç"
     }
   }
 }

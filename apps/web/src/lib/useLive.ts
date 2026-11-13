@@ -8,20 +8,20 @@ export type { LiveAudience, LiveEvent };
 export function invalidationsFor(e: LiveEvent): QueryKey[] {
   const check: QueryKey[] = e.tableId ? [["check", e.tableId]] : [];
   if (e.type.startsWith("ticket.")) return [["kds"], ["floor"], ...check, ["guest", "orders"], ["split"]];
-  if (e.type === "check.updated") return [["floor"], ...check, ["guest", "orders"], ["guest", "table"], ["split"]];
+  if (e.type === "check.updated") return [["floor"], ...check, ["guest", "orders"], ["guest", "table"], ["split"], ["overview"]];
   if (e.type === "split.updated" || e.type === "adjustment.changed") return [["split"], ["floor"], ...check];
   if (e.type.startsWith("call.")) return [["floor"], ...check];
   if (e.type === "availability.changed" || e.type === "menu.changed") return [["guest", "menu"], ["menu"], ["kds"], ["manager"]];
   // A saved floor plan moves, adds and removes tables: waiter floors refetch it.
   if (e.type === "tables.changed" || e.type === "layout.saved") return [["floor"], ["manager"]];
-  if (e.type === "clock.changed") return [["timesheets"], ["performance"]];
-  if (e.type === "rating.created") return [["performance"]];
-  if (e.type === "expense.changed") return [["expenses"]];
+  if (e.type === "clock.changed") return [["timesheets"], ["performance"], ["overview"]];
+  if (e.type === "rating.created") return [["performance"], ["overview"]];
+  if (e.type === "expense.changed") return [["expenses"], ["overview"]];
   return [];
 }
 
 const LIVE_KEYS: Record<LiveAudience["audience"], QueryKey[]> = {
-  staff: [["kds"], ["floor"], ["check"], ["split"], ["menu"], ["manager"], ["timesheets"], ["expenses"], ["performance"]],
+  staff: [["kds"], ["floor"], ["check"], ["split"], ["menu"], ["manager"], ["timesheets"], ["expenses"], ["performance"], ["overview"]],
   guest: [["guest"]],
 };
 

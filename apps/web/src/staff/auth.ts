@@ -44,7 +44,7 @@ export const ROLE_HOME: Record<StaffRole, string> = {
   waiter: "/staff/floor",
   kitchen: "/staff/kitchen",
   bar: "/staff/bar",
-  manager: "/staff/menu",
+  manager: "/staff/overview",
   // Schedule-only people have no PIN and never hold a session; this only keeps the map total.
   cook: "/staff/login",
   bartender: "/staff/login",

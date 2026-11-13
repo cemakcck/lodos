@@ -206,6 +206,7 @@
   "staff": {
     "retry": "Try again",
     "nav": {
+      "overview": "Overview",
       "label": "Staff",
       "kitchen": "Kitchen",
       "bar": "Bar",
@@ -1732,6 +1733,67 @@
       "payee": "Payee",
       "amount": "Amount",
       "empty": "No expenses in this period."
+    }
+  },
+  "overview": {
+    "title": "Overview",
+    "loadError": "We couldn't load the overview.",
+    "delta": {
+      "pct": {
+        "up": "↑ {{n}}% vs same time last week",
+        "down": "↓ {{n}}% vs same time last week",
+        "flat": "No change vs same time last week"
+      },
+      "abs": {
+        "up": "↑ {{n}} vs previous 7 days",
+        "down": "↓ {{n}} vs previous 7 days",
+        "flat": "No change vs previous 7 days"
+      }
+    },
+    "tiles": {
+      "sales": "Sales today",
+      "covers": "Covers",
+      "rating": "Guest rating (7 days)",
+      "profit": "Profit this month"
+    },
+    "working": {
+      "title": "Who's working now",
+      "empty": "Nobody is scheduled or clocked in today.",
+      "person": "Person",
+      "time": "Time",
+      "status": "Status",
+      "in": "in {{time}}",
+      "from": "from {{time}}",
+      "due": "due {{time}}"
+    },
+    "status": {
+      "on_shift": "on shift",
+      "late": "{{n}} min late",
+      "missing": "not in yet",
+      "later": "later today",
+      "finished": "finished",
+      "unscheduled": "unscheduled",
+      "forgot_out": "forgot to clock out?"
+    },
+    "top": {
+      "title": "Top staff this week",
+      "pts": "{{n}} pts"
+    },
+    "expenses": {
+      "title": "Expenses this month",
+      "of": "{{spent}} of {{budget}} budget",
+      "none": "No expenses yet.",
+      "latest": "Latest expenses",
+      "open": "All expenses"
+    },
+    "dishes": {
+      "title": "Dish ratings (7 days)",
+      "none": "Not enough ratings yet.",
+      "needsWork": "{{name}} (needs work)"
+    },
+    "month": {
+      "title": "This month at a glance",
+      "aria": "This month at a glance, open the monthly business page"
     }
   }
 }

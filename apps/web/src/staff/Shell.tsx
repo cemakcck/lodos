@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Briefcase, CalendarClock, CalendarDays, ChartLine, Gauge, Timer, Trophy, Flame, LayoutGrid, LogOut, PanelsTopLeft, QrCode, Users, Wallet, Wine, type LucideIcon } from "lucide-react";
+import { BookOpen, Briefcase, CalendarClock, CalendarDays, ChartLine, Gauge, House, Timer, Trophy, Flame, LayoutGrid, LogOut, PanelsTopLeft, QrCode, Users, Wallet, Wine, type LucideIcon } from "lucide-react";
 import { api } from "../lib/api";
 import { useFormat } from "../lib/format";
 import { useLive } from "../lib/useLive";
@@ -11,7 +11,7 @@ import { setLanguage } from "../i18n";
 import { ConnectionBanner } from "./ConnectionBanner";
 import { canAccess, endSession, initials, markSignedOut, useMe, type StaffMember, type StaffRole } from "./auth";
 
-export type RailKey = "kitchen" | "bar" | "floor" | "menu" | "tables" | "floorPlan" | "sales" | "business" | "people" | "schedule" | "timesheets" | "expenses" | "performance" | "myShifts" | "myPerformance";
+export type RailKey = "overview" | "kitchen" | "bar" | "floor" | "menu" | "tables" | "floorPlan" | "sales" | "business" | "people" | "schedule" | "timesheets" | "expenses" | "performance" | "myShifts" | "myPerformance";
 
 interface RailItem {
   key: RailKey;
@@ -24,6 +24,7 @@ interface RailItem {
 }
 
 export const RAIL: readonly RailItem[] = [
+  { key: "overview", to: "/staff/overview", icon: House, roles: [], match: ["/staff/overview"] },
   { key: "kitchen", to: "/staff/kitchen", icon: Flame, roles: ["kitchen"], match: ["/staff/kitchen"] },
   { key: "bar", to: "/staff/bar", icon: Wine, roles: ["bar"], match: ["/staff/bar"] },
   { key: "floor", to: "/staff/floor", icon: LayoutGrid, roles: ["waiter"], match: ["/staff/floor", "/staff/order", "/staff/check"] },

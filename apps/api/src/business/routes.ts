@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { staffRoute } from "../auth/guard";
 import { CSV_SECTIONS, monthlyCsv, monthlyView } from "./monthly";
+import { overviewView } from "./overview";
 import { monthlyPdf } from "./pdf";
 
 const MonthQuery = z.object({ month: MonthSchema.optional() });
@@ -13,6 +14,11 @@ const CsvQuery = MonthQuery.extend({ section: z.enum(CSV_SECTIONS) });
 export function registerBusinessRoutes(app: FastifyInstance): void {
   const { models } = app;
   const monthOf = (q: { month?: string }) => q.month ?? serviceDayOf(app.clock.now()).slice(0, 7);
+
+  app.get(
+    "/api/business/overview",
+    staffRoute([], async () => overviewView(models, app.clock.now())),
+  );
 
   app.get(
     "/api/business/monthly",
