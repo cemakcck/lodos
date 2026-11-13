@@ -99,6 +99,8 @@ describe("performance API", () => {
     const me = res.json();
     expect(me).toMatchObject({ ratingCount: 5, rank: { position: 1, of: 1 } });
     expect(me.score).not.toBeNull();
+    expect(Object.keys(me).sort()).toEqual(["breakdown", "comments", "lateShifts", "minutes", "plannedMinutes", "ratingAvg", "ratingCount", "rank", "score"].sort());
+    for (const b of me.breakdown as { key: string }[]) expect("value" in b, b.key).toBe(b.key !== "workload");
     expect(me.comments.map((c: { comment: string }) => c.comment)).toEqual(["Lovely service"]);
     const names = await runWithTenant(f.tenantId, () => t.models.Staff.find({ _id: { $ne: f.seed.staff.waiter } }).lean());
     for (const s of names) {

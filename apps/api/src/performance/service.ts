@@ -150,6 +150,7 @@ async function historyOf(models: Models, staffId: string, role: string, now: Dat
     { serverStaffId: staffId, comment: { $nin: [null, ""] }, serviceDay: { $gte: weeks[0]!, $lte: today }, ...(withHidden ? {} : { commentHidden: false }) },
     { comment: 1, waiter: 1, submittedAt: 1, commentHidden: 1 },
   ).sort({ submittedAt: -1 }).limit(COMMENT_LIMIT).lean();
+  // Station staff have no comments: guest comments are about the waiter/visit (`serverStaffId`), never a cook or bartender.
   const comments = docs.map((d) => ({ id: String(d._id), comment: d.comment!, stars: d.waiter ?? null, at: d.submittedAt.toISOString(), hidden: d.commentHidden }));
   return { points, trend, comments };
 }
@@ -189,15 +190,14 @@ export async function myPerformance(models: Models, me: { id: string; role: stri
   const position = ranked.findIndex((r) => r.staffId === me.id) + 1;
   return {
     score: row?.score ?? null,
-    breakdown: row?.breakdown ?? [],
+    // `value` of workload/throughput would let points + value reveal the best colleague's per-hour rate.
+    breakdown: (row?.breakdown ?? []).map((b) => (b.key === "workload" || b.key === "throughput" ? { key: b.key, points: b.points, max: b.max } : b)),
     ratingAvg: row?.ratingAvg ?? null,
     ratingCount: row?.ratingCount ?? 0,
     minutes: row?.minutes ?? 0,
     plannedMinutes: row?.plannedMinutes ?? 0,
     lateShifts: row?.lateShifts ?? 0,
     rank: position > 0 ? { position, of: ranked.length } : null,
-    history: h.points,
-    trend: h.trend,
     comments: h.comments.map((c) => ({ comment: c.comment, stars: c.stars, at: c.at })),
   };
 }
