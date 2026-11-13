@@ -506,6 +506,33 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 
+  it("Phase 3 Task 10: A's performance routes read only A's people and ratings; B's staff ids are 404; B unchanged", async () => {
+    const mk = (v: Visitor, comment: string) =>
+      runWithTenant(v.tenantId, async () => {
+        const waiter = await t.models.Staff.findOne({ role: "waiter" }).lean().orFail();
+        await t.models.Rating.create({ serviceDay: "2026-11-10", paidAt: NOW, submittedAt: NOW, serverStaffId: waiter._id, waiter: 5, comment });
+        return String(waiter._id);
+      });
+    const aWaiter = await mk(a, "only-in-sandbox-a");
+    const bWaiter = await mk(b, "only-in-sandbox-b");
+    const before = await snapshot(b.tenantId);
+    const own = { lodos_sid: a.sid, lodos_sb: a.sb };
+    const ranking = await t.inject({ method: "GET", url: "/api/performance/ranking", cookies: own });
+    expect(ranking.statusCode).toBe(200);
+    const ids = (ranking.json().groups.floor as { staffId: string }[]).map((r) => r.staffId);
+    expect(ids).toContain(aWaiter);
+    expect(ids).not.toContain(bWaiter);
+    const person = await t.inject({ method: "GET", url: `/api/performance/${aWaiter}`, cookies: own });
+    expect(person.body).toContain("only-in-sandbox-a");
+    expect(person.body).not.toContain("only-in-sandbox-b");
+    const cross = { lodos_sid: a.sid, lodos_sb: b.sb };
+    expect((await t.inject({ method: "GET", url: `/api/performance/${bWaiter}`, cookies: cross })).statusCode).toBe(404);
+    const me = await t.inject({ method: "GET", url: "/api/me/performance", cookies: cross });
+    expect(me.statusCode).toBe(200);
+    expect(me.body).not.toContain("only-in-sandbox-b");
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {
     const marker = "only-in-sandbox-b";
     await runWithTenant(b.tenantId, () =>

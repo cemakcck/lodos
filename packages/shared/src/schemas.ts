@@ -353,3 +353,13 @@ export const ExpenseCategoryBody = z.object({
   archived: z.boolean().optional(),
 });
 export type ExpenseCategoryBody = z.infer<typeof ExpenseCategoryBody>;
+
+/** GET /api/performance/*: `key` is a Monday for `week` (default) and YYYY-MM for `month`; absent means the current one. */
+export const PerformanceQuery = z
+  .object({ period: z.enum(["week", "month"]).default("week"), key: z.string().optional() })
+  .superRefine((q, ctx) => {
+    if (q.key === undefined) return;
+    const ok = (q.period === "week" ? WeekSchema : MonthSchema).safeParse(q.key).success;
+    if (!ok) ctx.addIssue({ code: "custom", path: ["key"], message: q.period === "week" ? "Expected a Monday, YYYY-MM-DD" : "Expected YYYY-MM" });
+  });
+export type PerformanceQuery = z.infer<typeof PerformanceQuery>;

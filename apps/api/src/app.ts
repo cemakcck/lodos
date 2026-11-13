@@ -18,6 +18,7 @@ import { registerFloorRoutes } from "./floor/routes";
 import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
 import { registerLayoutRoutes } from "./layout/routes";
+import { registerPerformanceRoutes } from "./performance/routes";
 import { registerManagerRoutes } from "./manager/routes";
 import { registerRatingRoutes } from "./ratings/routes";
 import { registerMenuRoutes } from "./menu/routes";
@@ -125,6 +126,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerGuestRoutes(app);
   registerRatingRoutes(app);
   registerExpenseRoutes(app);
+  registerPerformanceRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
   const io = new Server(app.server, { cors: { origin: opts.webOrigin, credentials: true } });
