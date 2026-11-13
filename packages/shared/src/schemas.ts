@@ -327,3 +327,29 @@ export const TimesheetEntryBody = z
   .object({ staffId: ObjectIdString, in: z.coerce.date(), out: z.coerce.date(), reason: ClockReason })
   .refine((b) => b.out > b.in, { message: "Out must be after in", path: ["out"] });
 export type TimesheetEntryBody = z.infer<typeof TimesheetEntryBody>;
+
+/** "YYYY-MM" calendar month. */
+export const MonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM");
+
+/** GET /api/expenses and /api/expenses.csv: `month` defaults to the current service day's month. */
+export const ExpenseQuery = z.object({ month: MonthSchema.optional(), categoryId: ObjectIdString.optional() });
+export type ExpenseQuery = z.infer<typeof ExpenseQuery>;
+
+/** POST|PUT /api/expenses: `amount` is integer kuruş above zero; `date` is not in the future (checked against the app clock). */
+export const ExpenseBody = z.object({
+  categoryId: ObjectIdString,
+  amount: z.number().int().min(1).max(1_000_000_00),
+  date: ServiceDaySchema,
+  payee: z.string().trim().max(100).nullish(),
+  note: z.string().trim().max(500).nullish(),
+});
+export type ExpenseBody = z.infer<typeof ExpenseBody>;
+
+/** POST /api/expense-categories (PUT takes `archived` too). `monthlyBudget` is kuruş, 0 meaning no budget. */
+export const ExpenseCategoryBody = z.object({
+  name: Loc,
+  kind: z.enum(["food_drink", "other"]),
+  monthlyBudget: z.number().int().min(0).max(1_000_000_000_00),
+  archived: z.boolean().optional(),
+});
+export type ExpenseCategoryBody = z.infer<typeof ExpenseCategoryBody>;

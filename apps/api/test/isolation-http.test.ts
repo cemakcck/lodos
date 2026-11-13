@@ -45,6 +45,8 @@ const snapshot = (tenantId: string) =>
     rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
     ratings: await t.models.Rating.find({}).sort({ _id: 1 }).lean(),
     clockEntries: await t.models.ClockEntry.find({}).sort({ _id: 1 }).lean(),
+    expenses: await t.models.Expense.find({}).sort({ _id: 1 }).lean(),
+    expenseCategories: await t.models.ExpenseCategory.find({}).sort({ _id: 1 }).lean(),
   }));
 
 async function pdfText(body: Buffer): Promise<string> {
@@ -462,6 +464,44 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
       ["POST", "/api/timesheets/entries", { staffId: bCook, in: "2026-11-05T09:00:00Z", out: "2026-11-05T17:00:00Z", reason: "x" }],
     ] as const) {
       expect((await t.inject({ method, url, cookies, payload })).statusCode, `${method} ${url}`).toBe(404);
+    }
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 8: A's manager sees only A's expenses and categories; B's ids are 404 on every write; B unchanged", async () => {
+    const mk = async (v: Visitor, amount: number) => {
+      const cat = await runWithTenant(v.tenantId, () => t.models.ExpenseCategory.create({ name: { en: "Rent", tr: "Kira" }, kind: "other", monthlyBudget: 123, sort: 0 }));
+      const exp = await runWithTenant(v.tenantId, () =>
+        t.models.Expense.create({ categoryId: cat._id, amount, date: "2026-11-05", createdBy: cat._id }),
+      );
+      return { cat: String(cat._id), exp: String(exp._id) };
+    };
+    const aIds = await mk(a, 1_111);
+    const bIds = await mk(b, 2_222);
+    const before = await snapshot(b.tenantId);
+    const own = { lodos_sid: a.sid, lodos_sb: a.sb };
+    const view = (await t.inject({ method: "GET", url: "/api/expenses?month=2026-11", cookies: own })).json();
+    expect(view.expenses.map((e: { id: string }) => e.id)).toEqual([aIds.exp]);
+    expect(view.total).toBe(1_111);
+    const cats = (await t.inject({ method: "GET", url: "/api/expense-categories", cookies: own })).json().categories as { id: string }[];
+    expect(cats.map((c) => c.id)).toContain(aIds.cat);
+    expect(cats.map((c) => c.id)).not.toContain(bIds.cat);
+    const csv = (await t.inject({ method: "GET", url: "/api/expenses.csv?month=2026-11", cookies: own })).body;
+    expect(csv.split("\r\n").filter(Boolean)).toHaveLength(2);
+    expect(csv).toContain("11.11");
+    expect(csv).not.toContain("22.22");
+
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const body = { categoryId: bIds.cat, amount: 5, date: "2026-11-05" };
+    const catBody = { name: { en: "x", tr: "x" }, kind: "other", monthlyBudget: 1 };
+    for (const [method, url, payload] of [
+      ["POST", "/api/expenses", body],
+      ["PUT", `/api/expenses/${bIds.exp}`, body],
+      ["DELETE", `/api/expenses/${bIds.exp}`, undefined],
+      ["PUT", `/api/expense-categories/${bIds.cat}`, catBody],
+    ] as const) {
+      // With B's sandbox cookie A's session resolves A's own tenant, where B's ids don't exist.
+      expect((await t.inject({ method, url, cookies, ...(payload ? { payload } : {}) })).statusCode, `${method} ${url}`).toBe(404);
     }
     expect(await snapshot(b.tenantId)).toEqual(before);
   });

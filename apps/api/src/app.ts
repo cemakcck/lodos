@@ -13,6 +13,7 @@ import type { TrustProxy } from "./config";
 import { connectDb } from "./db/connect";
 import { bindModels, type Models } from "./db/models/index";
 import { registerErrorHandling } from "./errors";
+import { registerExpenseRoutes } from "./expenses/routes";
 import { registerFloorRoutes } from "./floor/routes";
 import { registerGuestRoutes } from "./guest/routes";
 import { registerKdsRoutes } from "./kds/routes";
@@ -123,6 +124,7 @@ export async function buildApp(opts: BuildAppOptions): Promise<{
   registerMenuRoutes(app);
   registerGuestRoutes(app);
   registerRatingRoutes(app);
+  registerExpenseRoutes(app);
   if (app.demoMode) registerDemoRoutes(app, { perIpHour: opts.sandboxesPerIpHour, maxSandboxes: opts.maxSandboxes });
 
   const io = new Server(app.server, { cors: { origin: opts.webOrigin, credentials: true } });

@@ -235,7 +235,7 @@ export async function salesView(models: Models, range: Range, now: Date): Promis
 // --- CSV export -------------------------------------------------------------------------------------------------
 
 export const CSV_HEADER = "service_day,closed_at,table,covers,server,gross,comps,voids,total,payment_methods";
-const BOM = "﻿";
+export const BOM = "﻿";
 
 /**
  * A quoted CSV text field, `"` doubled (spec Review Focus 4). Text a spreadsheet would run as a formula (starting with
@@ -243,7 +243,7 @@ const BOM = "﻿";
  */
 export const csvField = (s: string) => `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
 /** Kuruş as plain lira with a dot and two decimals, e.g. `1250.50`. */
-const lira = (kurus: number) => {
+export const lira = (kurus: number) => {
   const sign = kurus < 0 ? "-" : "";
   const abs = Math.abs(Math.round(kurus));
   return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
