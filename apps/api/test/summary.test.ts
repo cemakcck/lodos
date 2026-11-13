@@ -208,6 +208,27 @@ describe("daily summaries", () => {
     expect(again.get(DAY)!.comps).toEqual({ count: 0, amount: 0 });
   });
 
+  it("undoing an adjustment never drops a generated demo-history day (it has no raw checks to recompute from)", async () => {
+    const c = await fresh();
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    t.clock.set(at("2026-11-10T22:00:00Z"));
+    const checkId = await c.seat("T7", 2);
+    const orderId = await c.order("T7", [{ itemId: fries.id, qty: 2 }]);
+    const m1 = await session(c.s, "manager");
+    const comp = await m1("POST", `/api/checks/${checkId}/adjustments`, { lineRef: `${orderId}:0`, kind: "comp", qty: 1, reason: "celebration" });
+    expect(comp.statusCode, comp.body).toBe(201);
+    t.clock.set(at("2026-11-11T05:00:00Z"));
+    await c.inTenant(() => ensureSummaries(t.models, [DAY], "2026-11-11"));
+    // The stored day is demo history (as the seed writes it).
+    await c.inTenant(() => t.models.DailySummary.updateOne({ serviceDay: DAY }, { $set: { generated: true } }));
+
+    const m2 = await session(c.s, "manager");
+    const undo = await m2("DELETE", `/api/checks/${checkId}/adjustments/${comp.json().adjustment.id}`);
+    expect(undo.statusCode, undo.body).toBe(200);
+    const kept = await c.inTenant(() => t.models.DailySummary.find({ serviceDay: DAY }).lean());
+    expect(kept.map((d) => d.generated)).toEqual([true]);
+  });
+
   it("never stores today (or a later day); past days are stored", async () => {
     const c = await fresh();
     const out = await c.inTenant(() => ensureSummaries(t.models, ["2026-11-09", "2026-11-10"], "2026-11-10"));
