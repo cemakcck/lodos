@@ -5,6 +5,11 @@
   "engines": {
     "node": ">=22"
   },
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "8.0.4"
+    }
+  },
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -14,7 +19,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e",
     "test": "vitest run",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @lodos/api\" \"npm run dev -w @lodos/web\"",
+    "dev": "node scripts/dev.mjs",
     "db:up": "docker compose up -d --wait 2>/dev/null || docker-compose up -d --wait",
     "build": "npm run build --workspaces --if-present"
   },
