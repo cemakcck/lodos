@@ -193,7 +193,8 @@ export function AdjustDialog({ checkId, tableName, line, isManager, initialKind 
         <div className="ad-approval-wrap">
           <ApproverPad
             approvers={list}
-            status={approvers.status}
+            // A failed background refetch keeps the list already loaded; only a list we never got is an error.
+            status={approvers.data ? "success" : approvers.status}
             onRetry={() => void approvers.refetch()}
             managerId={managerId}
             onManager={(id) => {

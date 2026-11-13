@@ -99,6 +99,26 @@ describe("AdjustDialog", () => {
     expect(attempt).toBe(2);
   });
 
+  it("a failed background refetch keeps the managers already loaded on screen", async () => {
+    let attempt = 0;
+    setup({ routes: { "GET /api/approvers": () => (++attempt === 1 ? { status: 200, body: APPROVERS } : reply(500, "internal")) } });
+    expect(await screen.findByRole("radio", { name: "Selin Kaya" })).toBeTruthy();
+    cleanup();
+    // Same cache, fresh dialog: the cached list shows while the refetch fails in the background.
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    qc.setQueryData(["approvers"], APPROVERS);
+    render(
+      <QueryClientProvider client={qc}>
+        <AdjustDialog checkId="c1" tableName="T4" line={LINE} isManager={false} initialKind="comp" onDone={vi.fn()} onCancel={vi.fn()} />
+      </QueryClientProvider>,
+    );
+    await qc.refetchQueries({ queryKey: ["approvers"] });
+    await waitFor(() => expect(qc.getQueryState(["approvers"])?.status).toBe("error"));
+    expect(screen.getByRole("radio", { name: "Selin Kaya" })).toBeTruthy();
+    expect(screen.queryByText("Couldn't load the managers.")).toBeNull();
+    expect(attempt).toBe(2);
+  });
+
   it("an empty manager list says no manager is available", async () => {
     setup({ approvers: [] });
     expect(await screen.findByText("No manager is available to approve.")).toBeTruthy();
