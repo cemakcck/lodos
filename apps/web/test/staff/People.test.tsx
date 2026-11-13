@@ -143,6 +143,26 @@ describe("StaffForm", () => {
     expect(calls.some((c) => c.method === "PATCH")).toBe(false);
   });
 
+  it("a failed clock PIN after creating someone keeps them created: the retry only re-sends the PIN", async () => {
+    const user = userEvent.setup();
+    let pinCalls = 0;
+    const { calls } = setup({
+      "POST /api/staff": () => ({ status: 201, body: { staff: row({ id: "id-new", name: "Naz Ak", role: "cook" }) } }),
+      "POST /api/staff/id-new/clock-pin": () => (++pinCalls === 1 ? { status: 500, body: { error: { code: "internal", message: "boom" } } } : { status: 200, body: { ok: true } }),
+    });
+    await user.click(await screen.findByRole("button", { name: "Add staff" }));
+    const form = screen.getByRole("form", { name: "New staff member" });
+    await user.type(within(form).getByLabelText("Name"), "Naz Ak");
+    await user.click(within(form).getByRole("radio", { name: "Cook" }));
+    await user.type(within(form).getByLabelText("Clock PIN"), "2468");
+    await user.type(within(form).getByLabelText("Confirm clock PIN"), "2468");
+    await user.click(within(form).getByRole("button", { name: "Add staff" }));
+    expect((await within(form).findByRole("alert")).textContent).toContain("Naz Ak was added, but the hourly rate or clock PIN wasn't saved");
+    await user.click(within(form).getByRole("button", { name: "Add staff" }));
+    await waitFor(() => expect(pinCalls).toBe(2));
+    expect(calls.filter((c) => c.method === "POST" && c.path === "/api/staff")).toHaveLength(1);
+  });
+
   it("refuses a rate that isn't an amount", async () => {
     const user = userEvent.setup();
     const { calls } = setup();

@@ -113,17 +113,28 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
   const rateChanged = hasRate && rateKurus !== null && rateKurus !== (person?.hourlyRate ?? 0);
   const dirty = !person || name.trim() !== person.name || role !== person.role || pin !== "" || (isWaiter && !sameSet) || (hasRate && rate !== initialRate) || (hasClockPin && clockPin !== "");
 
+  const created = useRef<{ saved: Saved; rateDone: boolean; pinDone: boolean } | null>(null);
   const save = useMutation({
     mutationFn: async ({ body, rateKurus: kurus, clockPin: cp }: { body: Record<string, unknown>; rateKurus: number | null; clockPin: string }) => {
-      // A new person is created first; the rate and clock PIN then go to their own endpoints.
+      // A new person is created first; the rate and clock PIN then go to their own endpoints. If one of those
+      // fails the person exists, so a retry reuses `created` and only repeats what has not been saved yet.
       const saved =
-        !person || Object.keys(body).length > 0
+        created.current?.saved ??
+        (!person || Object.keys(body).length > 0
           ? await (person
               ? api<Saved>(`/api/staff/${person.id}`, { method: "PATCH", body: JSON.stringify(body) })
               : api<Saved>("/api/staff", { method: "POST", body: JSON.stringify(body) }))
-          : { staff: person };
-      if (kurus !== null) await api(`/api/staff/${saved.staff.id}/rate`, { method: "PUT", body: JSON.stringify({ kurusPerHour: kurus }) });
-      if (cp) await api(`/api/staff/${saved.staff.id}/clock-pin`, { method: "POST", body: JSON.stringify({ pin: cp }) });
+          : { staff: person });
+      if (!person) created.current ??= { saved, rateDone: false, pinDone: false };
+      const step = created.current;
+      if (kurus !== null && !step?.rateDone) {
+        await api(`/api/staff/${saved.staff.id}/rate`, { method: "PUT", body: JSON.stringify({ kurusPerHour: kurus }) });
+        if (step) step.rateDone = true;
+      }
+      if (cp && !step?.pinDone) {
+        await api(`/api/staff/${saved.staff.id}/clock-pin`, { method: "POST", body: JSON.stringify({ pin: cp }) });
+        if (step) step.pinDone = true;
+      }
       return saved;
     },
     onSuccess: (r) => {
@@ -133,7 +144,11 @@ export function StaffForm({ person, tables, rooms, owners, onClose, onDone, onDe
       onDone(un.length ? `${msg} ${t("people.status.unassigned", { count: un.length, ranges: tableRanges(un) })}` : msg);
     },
     onError: (e) => {
-      if (e instanceof ApiClientError && e.code === "name_taken") {
+      if (created.current) {
+        // The person was created but the rate or clock PIN wasn't saved: say so, and show them in the list.
+        refreshStaff(qc);
+        setFailure(`${t("people.form.createdPartial", { name: created.current.saved.staff.name })} ${errorMessage(t, e)}`);
+      } else if (e instanceof ApiClientError && e.code === "name_taken") {
         setErrors({ name: t("people.form.nameTaken") });
         nameRef.current?.focus();
       } else setFailure(errorMessage(t, e));

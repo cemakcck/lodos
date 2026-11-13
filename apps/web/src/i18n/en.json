@@ -1111,7 +1111,8 @@
       "clockPinHint": "Used on the time clock screen. {{role}} doesn't sign in, so this PIN only clocks in and out.",
       "clockPinSet": "A clock PIN is set. Enter a new one to replace it.",
       "clockPinUnset": "No clock PIN yet, so they can't clock in.",
-      "clockPinConfirm": "Confirm clock PIN"
+      "clockPinConfirm": "Confirm clock PIN",
+      "createdPartial": "{{name}} was added, but the hourly rate or clock PIN wasn't saved. Save again to retry."
     },
     "chip": {
       "mine": "{{table}}, {{name}}'s table",

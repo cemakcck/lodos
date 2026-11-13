@@ -1111,7 +1111,8 @@
       "clockPinHint": "Mesai ekranında kullanılır. {{role}} oturum açmaz, bu PIN yalnızca giriş ve çıkış içindir.",
       "clockPinSet": "Mesai PIN'i tanımlı. Değiştirmek için yenisini girin.",
       "clockPinUnset": "Henüz mesai PIN'i yok, giriş yapamaz.",
-      "clockPinConfirm": "Mesai PIN'ini doğrulayın"
+      "clockPinConfirm": "Mesai PIN'ini doğrulayın",
+      "createdPartial": "{{name}} eklendi, ancak saatlik ücret veya mesai PIN'i kaydedilemedi. Yeniden denemek için tekrar kaydedin."
     },
     "chip": {
       "mine": "{{table}}, {{name}} kişisinin masası",
