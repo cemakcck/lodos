@@ -1106,7 +1106,7 @@
       "nameTaken": "Aktif biri zaten bu adı kullanıyor.",
       "pinInvalid": "PIN 4 ila 6 rakam olmalı.",
       "pinMismatch": "PIN'ler eşleşmiyor.",
-      "scheduleOnly": "{{role}} için PIN yok ve giriş yapmaz. Yalnızca haftalık vardiya planında görünür.",
+      "scheduleOnly": "{{role}} için oturum açma PIN'i yok, oturum açamaz; mesai PIN'iyle giriş ve çıkış yapabilir.",
       "tablesHint": "Kesik çizgili masalar başka bir garsona ait. Dokunursanız {{name}} adlı kişiye geçer.",
       "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır.",
       "rate": "Saatlik ücret (₺)",

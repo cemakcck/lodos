@@ -1106,7 +1106,7 @@
       "nameTaken": "Someone active already has that name.",
       "pinInvalid": "PIN must be 4 to 6 digits.",
       "pinMismatch": "PINs don't match.",
-      "scheduleOnly": "{{role}} has no PIN and doesn't sign in. They appear on the weekly schedule only.",
+      "scheduleOnly": "{{role}} has no sign-in PIN and can't sign in; it can clock in with a clock PIN.",
       "tablesHint": "Dashed tables belong to another waiter. Tapping one moves it to {{name}}.",
       "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept.",
       "rate": "Hourly rate (₺)",
