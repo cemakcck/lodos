@@ -126,7 +126,7 @@ export function Person() {
               max={5}
               valueHead={t("performance.trend.avg")}
               extraHead={t("performance.trend.count")}
-              rows={v.trend.map((w) => ({ week: w.week, value: w.avg, text: w.avg === null ? "—" : w.avg.toFixed(1), extra: String(w.count) }))}
+              rows={v.trend.map((w) => ({ week: w.week, value: w.avg, text: w.avg === null ? "—" : w.avg.toFixed(1), extra: String(wholeCount(w.count)) }))}
             />
             <WeekBars
               title={t("performance.history.title")}

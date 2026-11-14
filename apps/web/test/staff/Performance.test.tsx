@@ -173,6 +173,15 @@ describe("Person page", () => {
     expect(await screen.findByText("4.2 (38)")).toBeTruthy();
   });
 
+  it("shows a cook's weekly trend counts as whole numbers", async () => {
+    const trend = weeks.map((week, i) => ({ week, avg: i === 0 ? null : 4.5, count: i === 0 ? 0 : 12.5 }));
+    mockFetch({ "GET /api/auth/me": staffOf("manager"), "GET /api/performance/k1?period=week": { ...PERSON_BASE, staffId: "k1", name: "Ali Usta", role: "cook", trend, comments: [] } });
+    renderApp("/staff/performance/k1?period=week");
+    const region = await screen.findByRole("region", { name: "Rating trend" });
+    expect(within(region).queryByText("12.5")).toBeNull();
+    expect(within(region).getAllByText("13").length).toBe(7);
+  });
+
   it("the breakdown table sums to the score shown", async () => {
     setup();
     renderApp("/staff/performance/w1?period=week");
