@@ -1288,6 +1288,8 @@
   .ov-month dl { display: flex; gap: 20px; flex-wrap: wrap; flex: 1; }
   .ov-month dt { font-size: 11px; color: var(--color-staff-fg-3); text-transform: uppercase; letter-spacing: 0.06em; }
   .ov-month dd { font-size: 14px; font-weight: 600; }
+  .ov-month dd .bz-chg { display: block; font-size: 12px; font-weight: 500; color: var(--color-staff-fg-2); }
+  .ov-month-h p { margin-top: 2px; font-size: 12px; }
   .sa-page .bz-two { margin-top: 12px; }
 
   /* Expenses */

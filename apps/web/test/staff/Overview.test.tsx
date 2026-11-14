@@ -18,7 +18,13 @@ const VIEW = {
   rating7d: { restaurant: 4.6, prev: 4.5 },
   month: {
     sales: 19_200_000, foodDrink: 6_120_000, labour: 5_380_000, other: 4_860_000, otherByCategory: [],
-    profit: 2_840_000, margin: 0.148, budgetTotal: 32_000_000, expensesTotal: 30_100_000,
+    profit: 2_840_000, margin: 0.148, budgetTotal: 32_000_000, expensesTotal: 10_980_000,
+  },
+  monthKey: "2026-11",
+  // October 1 … 14: sales 17.6M, food 30% of sales, labour 28%, margin 17%.
+  monthPrev: {
+    sales: 17_600_000, foodDrink: 5_280_000, labour: 4_928_000, other: 4_400_000, otherByCategory: [],
+    profit: 2_992_000, margin: 0.17,
   },
   working: [
     { staffId: "w1", name: "Deniz K.", role: "waiter", status: "on_shift", in: "2026-11-14T07:58:00.000Z", shift: { start: "2026-11-14T08:00:00.000Z", end: "2026-11-14T16:00:00.000Z" } },
@@ -93,6 +99,45 @@ describe("Manager overview", () => {
     const link = await screen.findByRole("link", { name: /This month at a glance/ });
     expect(link.getAttribute("href")).toBe("/staff/business");
     expect(link.textContent).toContain(formatTRY(VIEW.month.profit, "en"));
+  });
+
+  it("the month strip: so far, sales, profit and margin, food and labour as % of sales, expenses vs budget, each against last month", async () => {
+    setup();
+    const link = await screen.findByRole("link", { name: /This month at a glance/ });
+    const item = (label: string) => within(link).getByText(label).closest("div")!.textContent;
+    expect(link.textContent).toContain("So far, compared with the same days last month");
+    expect(item("Sales")).toContain(formatTRY(19_200_000, "en"));
+    expect(item("Sales")).toContain("↑ 9.1% vs October");
+    expect(item("Profit")).toContain(formatTRY(2_840_000, "en"));
+    expect(item("Profit")).toContain("Margin 14.8%");
+    expect(item("Profit")).toContain("↓ 2.2 pts vs October");
+    expect(item("Food & drink cost")).toContain("31.9% of sales");
+    expect(item("Food & drink cost")).toContain("↑ 1.9 pts vs October");
+    expect(item("Labour")).toContain("28% of sales");
+    expect(item("Labour")).toContain("No change vs October");
+    expect(item("Expenses vs budget")).toContain(`${formatTRY(10_980_000, "en")} of ${formatTRY(32_000_000, "en")}`);
+    expect(item("Expenses vs budget")).toContain("↑ 13.4% vs October");
+  });
+
+  it("Review Focus 5: on the 1st at 08:00 with no sales the strip shows — for ratios and no change where last month had none", async () => {
+    const zero = { sales: 0, foodDrink: 0, labour: 0, other: 0, otherByCategory: [], profit: 0, margin: null };
+    calls = mockFetch({
+      "GET /api/auth/me": staffOf("manager"),
+      "GET /api/business/overview": {
+        ...VIEW, today: { sales: 0, salesPrev: 0, covers: 0, coversPrev: 0 }, rating7d: { restaurant: null, prev: null },
+        monthKey: "2026-12", month: { ...zero, budgetTotal: 0, expensesTotal: 0 }, monthPrev: { ...zero, other: 500_000, profit: -500_000 },
+        working: [], topStaff: { floor: [], kitchen: [], bar: [] }, expenses: { total: 0, budget: 0, latest: [] }, dishes: { best: [], needsWork: [] },
+      },
+    }).calls;
+    renderApp("/staff/overview");
+    const link = await screen.findByRole("link", { name: /This month at a glance/ });
+    const item = (label: string) => within(link).getByText(label).closest("div")!.textContent!;
+    expect(item("Profit")).toContain("Margin —");
+    expect(item("Food & drink cost")).toContain("—");
+    expect(item("Labour")).toContain("—");
+    // Nothing to compare sales or ratios with; last month's rent on the 1st still reads as a change in expenses.
+    for (const label of ["Sales", "Profit", "Food & drink cost", "Labour"]) expect(item(label), label).not.toMatch(/[↑↓]|change/);
+    expect(item("Expenses vs budget")).toContain("↓ 100% vs November");
   });
 
   it("refetches on clock.changed, rating.created, expense.changed and check.updated", async () => {

@@ -1,4 +1,6 @@
-import { addDays, attendanceStatus, avgOf, emptyAgg, mergeRatingAgg, restaurantRating, serviceDayOf, type Attendance, type RatingAgg } from "@lodos/shared";
+import {
+  addDays, attendanceStatus, avgOf, comparisonDays, emptyAgg, mergeRatingAgg, previousMonth, restaurantRating, serviceDayOf, type Attendance, type RatingAgg,
+} from "@lodos/shared";
 import type { Models } from "../db/models";
 import { expensesForMonth } from "../expenses/service";
 import { opsForDays } from "../ops/daily";
@@ -28,7 +30,11 @@ export type LatestExpense = { id: string; amount: number; date: string; payee: s
 export type Overview = {
   today: { sales: number; salesPrev: number; covers: number; coversPrev: number };
   rating7d: { restaurant: number | null; prev: number | null };
+  /** The current month ("YYYY-MM"); `month` is it so far. */
+  monthKey: string;
   month: Pnl & { budgetTotal: number; expensesTotal: number };
+  /** The previous month to the same point (plan ruling "Month"): the monthly page's `pnl.prev`. */
+  monthPrev: Pnl;
   working: WorkingRow[];
   topStaff: Record<RankedGroup, Row[]>;
   expenses: { total: number; budget: number; latest: LatestExpense[] };
@@ -104,9 +110,10 @@ export async function overviewView(models: Models, now: Date): Promise<Overview>
   const month = today.slice(0, 7);
   const last7 = daysEnding(today, WINDOW_DAYS);
   const prev7 = daysEnding(addDays(today, -WINDOW_DAYS), WINDOW_DAYS);
-  const [sales, pnl, spend, ops, rankings, working, latest] = await Promise.all([
+  const [sales, pnl, pnlPrev, spend, ops, rankings, working, latest] = await Promise.all([
     salesView(models, "today", now),
     monthlyPnl(models, month, now),
+    monthlyPnl(models, previousMonth(month), now, comparisonDays(month, today)),
     expensesForMonth(models, month, today),
     opsForDays(models, [...prev7, ...last7], now),
     // Top staff over the rolling last 7 service days (today included), so a Monday isn't empty.
@@ -121,7 +128,9 @@ export async function overviewView(models: Models, now: Date): Promise<Overview>
   return {
     today: { sales: sales.current.revenue, salesPrev: sales.previous.revenue, covers: sales.current.covers, coversPrev: sales.previous.covers },
     rating7d: { restaurant: restaurantRating(cur), prev: restaurantRating(ratingsOf(prev7)) },
+    monthKey: month,
     month: { ...pnl, budgetTotal, expensesTotal },
+    monthPrev: pnlPrev,
     working,
     topStaff: Object.fromEntries(RANKED_GROUPS.map((g) => [g, rankings[g].filter((r) => r.score !== null).slice(0, TOP)])) as Record<RankedGroup, Row[]>,
     expenses: { total: expensesTotal, budget: budgetTotal, latest },

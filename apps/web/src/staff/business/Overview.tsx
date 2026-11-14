@@ -5,7 +5,8 @@ import { ArrowRight, Star } from "lucide-react";
 import { useFormat } from "../../lib/format";
 import { loc } from "../kds/lib";
 import { Shell } from "../Shell";
-import { pct } from "./sections/Change";
+import { Change, pct, ptsChange, useVs } from "./sections/Change";
+import { shiftMonth } from "./queries";
 import { useOverview, type Attendance, type OverviewView, type WorkingRow } from "./overviewQueries";
 
 const GROUPS = ["floor", "kitchen", "bar"] as const;
@@ -174,6 +175,53 @@ function Dishes({ view }: { view: OverviewView }) {
   );
 }
 
+/**
+ * "This month at a glance" (spec §7, §13.5): the month so far against the previous month to the same day. Ratios
+ * change in points, amounts in percent; nothing is drawn where there is nothing to compare with.
+ */
+function MonthStrip({ view }: { view: OverviewView }) {
+  const { t } = useTranslation();
+  const { money, lang } = useFormat();
+  const vs = useVs(shiftMonth(view.monthKey, -1));
+  const cur = view.month;
+  const prev = view.monthPrev;
+  const num = (n: number) => new Intl.NumberFormat(lang, { maximumFractionDigits: 1 }).format(n);
+  const ofSales = (part: number, sales: number) => (sales > 0 ? part / sales : null);
+  const share = (r: number | null) => (r === null ? "—" : t("business.ofSales", { n: num(r * 100) }));
+  const food = [ofSales(cur.foodDrink, cur.sales), ofSales(prev.foodDrink, prev.sales)] as const;
+  const labour = [ofSales(cur.labour, cur.sales), ofSales(prev.labour, prev.sales)] as const;
+  const item = (label: string, value: ReactNode, change: ReactNode) => (
+    <div>
+      <dt>{label}</dt>
+      <dd><span className="font-mono">{value}</span>{change && <> {change}</>}</dd>
+    </div>
+  );
+  return (
+    <Link to="/staff/business" className="sa-card ov-month">
+      <div className="ov-month-h">
+        <h2>{t("overview.month.title")}</h2>
+        <p className="mg-hint">{t("overview.month.soFar")}</p>
+      </div>
+      <dl>
+        {item(t("business.pnl.sales"), money(cur.sales), <Change pct={pct(cur.sales, prev.sales)} vs={vs} />)}
+        {item(
+          t("business.pnl.profit"),
+          <>{money(cur.profit)} · {cur.margin === null ? t("overview.month.noMargin") : t("business.margin", { n: num(cur.margin * 100) })}</>,
+          <Change pts={ptsChange(cur.margin, prev.margin)} vs={vs} />,
+        )}
+        {item(t("business.pnl.foodDrink"), share(food[0]), <Change pts={ptsChange(...food)} vs={vs} />)}
+        {item(t("business.pnl.labour"), share(labour[0]), <Change pts={ptsChange(...labour)} vs={vs} />)}
+        {item(
+          t("overview.month.expenses"),
+          cur.budgetTotal > 0 ? t("overview.month.ofBudget", { spent: money(cur.expensesTotal), budget: money(cur.budgetTotal) }) : money(cur.expensesTotal),
+          <Change pct={pct(cur.expensesTotal, prev.foodDrink + prev.other)} vs={vs} />,
+        )}
+      </dl>
+      <ArrowRight size={16} aria-hidden="true" />
+    </Link>
+  );
+}
+
 /** `/staff/overview` (manager): the "Today first" landing screen. Live through the Shell's staff socket. */
 export function Overview() {
   const { t } = useTranslation();
@@ -222,17 +270,7 @@ export function Overview() {
             <Dishes view={view} />
           </div>
 
-          <Link to="/staff/business" className="sa-card ov-month">
-            <h2>{t("overview.month.title")}</h2>
-            <dl>
-              <div><dt>{t("business.pnl.sales")}</dt><dd className="font-mono">{money(view.month.sales)}</dd></div>
-              <div><dt>{t("business.pnl.foodDrink")}</dt><dd className="font-mono">{money(view.month.foodDrink)}</dd></div>
-              <div><dt>{t("business.pnl.labour")}</dt><dd className="font-mono">{money(view.month.labour)}</dd></div>
-              <div><dt>{t("business.pnl.other")}</dt><dd className="font-mono">{money(view.month.other)}</dd></div>
-              <div><dt>{t("business.pnl.profit")}</dt><dd className="font-mono">{money(view.month.profit)}</dd></div>
-            </dl>
-            <ArrowRight size={16} aria-hidden="true" />
-          </Link>
+          <MonthStrip view={view} />
         </div>
       )}
     </Shell>

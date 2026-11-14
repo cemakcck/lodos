@@ -1793,7 +1793,11 @@
       "needsWork": "{{name}} (geliştirilmeli)"
     },
     "month": {
-      "title": "Bu ay bir bakışta"
+      "title": "Bu ay bir bakışta",
+      "soFar": "Şimdiye kadar, geçen ayın aynı günleriyle karşılaştırılır",
+      "expenses": "Giderler ve bütçe",
+      "ofBudget": "{{budget}} bütçenin {{spent}} kadarı",
+      "noMargin": "Marj —"
     }
   }
 }

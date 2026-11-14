@@ -59,6 +59,29 @@ describe("GET /api/business/overview", () => {
     expect(o.expenses.latest[0].category.en).toBe("Suppliers – food");
   });
 
+  it("monthPrev is the previous month to the same day, the same as the monthly page's pnl.prev", async () => {
+    const f = await withRota();
+    const o = (await f.get("/api/business/overview")).json();
+    const monthly = (await f.get("/api/business/monthly")).json();
+    expect(o.monthKey).toBe("2026-11");
+    expect(o.monthPrev).toEqual(monthly.pnl.prev);
+    expect(o.monthPrev).toMatchObject({ sales: 1_000_000, profit: -72_000 });
+  });
+
+  it("Review Focus 5: on the 1st at 08:00 with no sales yet, no error, margin null, monthPrev is the 1st of last month", async () => {
+    const now = new Date("2026-12-01T05:00:00Z"); // 08:00 Istanbul, service day 2026-12-01
+    t.clock.set(now);
+    const f = await businessFixture(t);
+    const res = await f.get("/api/business/overview");
+    expect(res.statusCode, res.body).toBe(200);
+    const o = res.json();
+    expect(o.monthKey).toBe("2026-12");
+    expect(o.month).toMatchObject({ sales: 0, margin: null });
+    const monthly = (await f.get("/api/business/monthly")).json();
+    expect(o.monthPrev).toEqual(monthly.pnl.prev);
+    expect(o.monthPrev).toMatchObject({ sales: 0, margin: null, other: 500_000 }); // November 1st: rent only
+  });
+
   it("working: on_shift, late (with minutes), later and missing for the rota, plus an unscheduled clock-in", async () => {
     const f = await withRota();
     const { waiter, waiter2, kitchen, bar, manager } = f.seed.staff;

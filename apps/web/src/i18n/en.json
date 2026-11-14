@@ -1793,7 +1793,11 @@
       "needsWork": "{{name}} (needs work)"
     },
     "month": {
-      "title": "This month at a glance"
+      "title": "This month at a glance",
+      "soFar": "So far, compared with the same days last month",
+      "expenses": "Expenses vs budget",
+      "ofBudget": "{{spent}} of {{budget}}",
+      "noMargin": "Margin —"
     }
   }
 }

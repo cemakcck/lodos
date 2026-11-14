@@ -35,7 +35,11 @@ export interface LatestExpense {
 export interface OverviewView {
   today: { sales: number; salesPrev: number; covers: number; coversPrev: number };
   rating7d: { restaurant: number | null; prev: number | null };
+  /** The current month, "YYYY-MM"; `month` is it so far. */
+  monthKey: string;
   month: Pnl & { budgetTotal: number; expensesTotal: number };
+  /** The previous month to the same point (the monthly page's `pnl.prev`). */
+  monthPrev: Pnl;
   working: WorkingRow[];
   topStaff: Record<Group, PerfRow[]>;
   expenses: { total: number; budget: number; latest: LatestExpense[] };
