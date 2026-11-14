@@ -1,4 +1,4 @@
-import { addDays, attendanceStatus, avgOf, emptyAgg, mergeRatingAgg, restaurantRating, serviceDayOf, mondayOf, weekDays, type Attendance, type RatingAgg } from "@lodos/shared";
+import { addDays, attendanceStatus, avgOf, emptyAgg, mergeRatingAgg, restaurantRating, serviceDayOf, type Attendance, type RatingAgg } from "@lodos/shared";
 import type { Models } from "../db/models";
 import { expensesForMonth } from "../expenses/service";
 import { opsForDays } from "../ops/daily";
@@ -8,7 +8,7 @@ import { monthlyPnl, type Pnl } from "./pnl";
 
 /**
  * The manager's "Today first" overview (spec §9): today against the same weekday last week, the guest rating, the
- * month's P&L (the very `monthlyPnl` the monthly page shows), who is working, this week's top staff, expenses and
+ * month's P&L (the very `monthlyPnl` the monthly page shows), who is working, the last 7 days' top staff, expenses and
  * dishes. Presentation-free. Run inside the tenant.
  */
 type Name = { en: string; tr: string };
@@ -103,13 +103,13 @@ export async function overviewView(models: Models, now: Date): Promise<Overview>
   const month = today.slice(0, 7);
   const last7 = daysEnding(today, WINDOW_DAYS);
   const prev7 = daysEnding(addDays(today, -WINDOW_DAYS), WINDOW_DAYS);
-  const week = weekDays(mondayOf(today)).filter((d) => d <= today);
   const [sales, pnl, spend, ops, rankings, working, latest] = await Promise.all([
     salesView(models, "today", now),
     monthlyPnl(models, month, now),
     expensesForMonth(models, month, today),
     opsForDays(models, [...prev7, ...last7], now),
-    rankingForDays(models, week, now),
+    // Top staff over the rolling last 7 service days (today included), so a Monday isn't empty.
+    rankingForDays(models, last7, now),
     workingNow(models, today, now),
     latestExpenses(models),
   ]);

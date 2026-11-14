@@ -416,7 +416,7 @@ describe("demo ops seed (phase 3)", () => {
     expect(await dump(A)).toEqual(await dump(B));
   });
 
-  it("keeps raw documents and aggregates on separate days, and the aggregates consistent with the day", async () => {
+  it("never counts a rating or a shift twice across raw documents and aggregates, and keeps the aggregates consistent with the day", async () => {
     const m = t.models;
     const [summaries, ratings, entries, shifts, staff] = await inTenant(A, () =>
       Promise.all([m.DailySummary.find({ generated: true }).lean(), m.Rating.find().lean(), m.ClockEntry.find().lean(), m.Shift.find().lean(), m.Staff.find().lean()]),
@@ -426,18 +426,22 @@ describe("demo ops seed (phase 3)", () => {
     const rawClockFrom = dayMinus(RAW_CLOCK_DAYS);
     expect(ratings.length).toBeGreaterThan(50);
     for (const r of ratings) {
-      expect(r.serviceDay >= rawRatingFrom && r.serviceDay < today, r.serviceDay).toBe(true);
+      // Raw ratings: the last 14 days, plus each seeded comment on its own (older) day.
+      expect(r.serviceDay < today, r.serviceDay).toBe(true);
+      if (r.serviceDay < rawRatingFrom) expect(r.comment, r.serviceDay).toBeTruthy();
       expect(r).toMatchObject({ generated: true, checkId: null });
       expect(r.paidAt.getTime()).toBeLessThan(r.submittedAt.getTime());
       expect(serviceDayOf(r.paidAt)).toBe(r.serviceDay);
     }
     for (const e of entries) expect(e.serviceDay >= rawClockFrom && e.serviceDay <= today, e.serviceDay).toBe(true);
-    for (const s of shifts) expect(s.serviceDay >= rawClockFrom, s.serviceDay).toBe(true);
+    // Every past shift is stored (planned hours), back to the start of the history.
+    expect(shifts.some((s) => s.serviceDay <= dayMinus(114))).toBe(true);
     const roleOf = new Map(staff.map((s) => [String(s._id), s.role]));
     const rateOf = new Map(staff.map((s) => [String(s._id), s.rates]));
     const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
     let aggLate = 0;
     let aggShifts = 0;
+    let aggOvertime = 0;
     for (const d of summaries) {
       const r = d.ratings!;
       const ratingCount = r.food.count + r.cleanliness.count + r.atmosphere.count + sum(r.waiter.map((w) => w.count)) + sum(r.dishes.map((x) => x.count));
@@ -450,7 +454,10 @@ describe("demo ops seed (phase 3)", () => {
         const n = (r.waiter.find((w) => w.staffId === s.staffId)?.count ?? 0) + dayRaw.filter((x) => x.waiter && String(x.serverStaffId) === s.staffId).length;
         expect(n).toBeLessThanOrEqual(s.checks);
       }
-      expect(Math.max(r.food.count, dayRaw.length)).toBeLessThanOrEqual(d.checks);
+      // Aggregate plus raw never double-counts: merged, the day has at most one rating per check.
+      for (const c of ["food", "cleanliness", "atmosphere"] as const) expect(r[c].count + dayRaw.filter((x) => x[c] !== null).length).toBeLessThanOrEqual(d.checks);
+      expect(dayRaw.length + Math.max(r.food.count, r.cleanliness.count, r.atmosphere.count)).toBeLessThanOrEqual(d.checks);
+      if (d.serviceDay < rawRatingFrom) expect(dayRaw.length).toBeLessThanOrEqual(1);
       for (const x of r.dishes) expect(x.count).toBeLessThanOrEqual(d.items.find((i) => i.itemId === x.itemId)?.qty ?? 0);
       for (const x of r.dishes) expect(x.sum).toBe(sum(x.dist.map((n, i) => n * (i + 1))));
       // byServer splits the day exactly.
@@ -478,11 +485,28 @@ describe("demo ops seed (phase 3)", () => {
           expect(p.labourCost).toBe(Math.round((p.minutes * rate) / 60) + Math.round((p.overtimeMinutes * rate) / 120));
           aggShifts += p.shifts;
           aggLate += p.lateShifts;
+          aggOvertime += p.overtimeMinutes;
+          expect(shifts.filter((s) => String(s.staffId) === p.staffId && s.serviceDay === d.serviceDay)).toHaveLength(p.shifts);
         }
       }
     }
     expect(aggLate / aggShifts).toBeGreaterThan(0.03);
     expect(aggLate / aggShifts).toBeLessThan(0.14);
+    // The one generated overtime week lies inside the raw clock window.
+    expect(aggOvertime).toBe(0);
+    // The ops reader counts each old shift once (from the aggregate), never again as a no-show from its Shift document.
+    const oldDays = Array.from({ length: 120 - RAW_CLOCK_DAYS }, (_, i) => dayMinus(RAW_CLOCK_DAYS + 1 + i));
+    const ops = await inTenant(A, () => opsForDays(t.models, oldDays, NOW));
+    const opsShifts = sum([...ops.values()].flatMap((d) => d.people.map((p) => p.shifts)));
+    const opsLate = sum([...ops.values()].flatMap((d) => d.people.map((p) => p.lateShifts)));
+    expect(opsShifts).toBe(aggShifts);
+    expect(opsLate).toBe(aggLate);
+    expect(opsShifts).toBe(shifts.filter((s) => s.serviceDay < rawClockFrom).length);
+    // A comment day's merged ratings are its aggregate plus its one raw comment.
+    const old = ratings.find((x) => x.serviceDay < rawRatingFrom)!;
+    const day = (await inTenant(A, () => opsForDays(t.models, [old.serviceDay], NOW))).get(old.serviceDay)!;
+    const stored = summaries.find((x) => x.serviceDay === old.serviceDay)!.ratings!;
+    expect(day.ratings.food.count).toBe(stored.food.count + (old.food !== null ? 1 : 0));
   });
 
   it("seeds rates, clock PINs, and raw clock entries with lateness, one fixed forgotten clock-out and overtime", async () => {
@@ -517,7 +541,7 @@ describe("demo ops seed (phase 3)", () => {
     // Late against the shift it belongs to: about 8 %, by 6–25 min.
     let late = 0;
     let judged = 0;
-    for (const s of shifts.filter((x) => x.serviceDay < today)) {
+    for (const s of shifts.filter((x) => x.serviceDay >= dayMinus(RAW_CLOCK_DAYS) && x.serviceDay < today)) {
       const e = past.find((x) => String(x.staffId) === String(s.staffId) && x.serviceDay === s.serviceDay);
       expect(e, `${s.serviceDay} entry`).toBeDefined();
       judged += 1;
@@ -546,6 +570,10 @@ describe("demo ops seed (phase 3)", () => {
     expect(comments.length).toBeGreaterThanOrEqual(13);
     expect(comments.length).toBeLessThanOrEqual(17);
     expect(comments.filter((r) => r.commentHidden)).toHaveLength(1);
+    // Spread over the four months: at least 3 in every full past month.
+    for (const month of ["2026-08", "2026-09", "2026-10"]) {
+      expect(comments.filter((r) => r.serviceDay.startsWith(month)).length, month).toBeGreaterThanOrEqual(3);
+    }
     expect(comments.some((r) => /[çğışöüİ]/.test(r.comment!))).toBe(true);
     expect(comments.some((r) => /\b(the|was|and)\b/.test(r.comment!))).toBe(true);
     // Waiter averages over all 120 days, aggregates and raw together.
@@ -572,6 +600,54 @@ describe("demo ops seed (phase 3)", () => {
     expect(cat.food.sum / cat.food.count).toBeCloseTo(4.5, 1);
     expect(cat.cleanliness.sum / cat.cleanliness.count).toBeCloseTo(4.6, 1);
     expect(cat.atmosphere.sum / cat.atmosphere.count).toBeCloseTo(4.7, 1);
+  });
+
+  it("late in a month, last month's page still has comments (25 Nov, 21:00)", async () => {
+    const now = new Date("2026-11-25T18:00:00Z");
+    const id = newTenant();
+    await seedRestaurant(t.models, id, now, { liveService: true });
+    t.clock.set(now);
+    try {
+      const v = (await managerGet(id, "/api/business/monthly?month=2026-10")).json();
+      expect(v.ratings.comments.length).toBeGreaterThan(0);
+    } finally {
+      t.clock.set(NOW);
+    }
+  });
+
+  it("just after the service day starts (06:05), no seeded time is in the future and the overview still answers", async () => {
+    const now = new Date("2026-11-10T03:05:00Z");
+    const id = newTenant();
+    await seedRestaurant(t.models, id, now, { liveService: true });
+    const entries = await inTenant(id, () => t.models.ClockEntry.find().lean());
+    for (const e of entries) {
+      expect(e.in.getTime()).toBeLessThanOrEqual(now.getTime());
+      if (e.out) expect(e.out.getTime()).toBeLessThanOrEqual(now.getTime());
+    }
+    t.clock.set(now);
+    try {
+      const res = await managerGet(id, "/api/business/overview");
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.json().working.length).toBeGreaterThan(0);
+    } finally {
+      t.clock.set(NOW);
+    }
+  });
+
+  it("on a Monday the overview's top staff (the last 7 service days) has someone ranked in every group", async () => {
+    const now = new Date("2026-11-09T18:00:00Z"); // Monday, 21:00 Istanbul
+    const id = newTenant();
+    await seedRestaurant(t.models, id, now, { liveService: true });
+    t.clock.set(now);
+    try {
+      const top = (await managerGet(id, "/api/business/overview")).json().topStaff as Record<string, { score: number | null }[]>;
+      for (const g of ["floor", "kitchen", "bar"]) {
+        expect(top[g]!.length, g).toBeGreaterThan(0);
+        expect(top[g]!.every((r) => r.score !== null)).toBe(true);
+      }
+    } finally {
+      t.clock.set(NOW);
+    }
   });
 
   it("seeds four months of expenses: budgets, rent on the 1st, utilities around the 10th, Repairs over budget this month, none in the future", async () => {

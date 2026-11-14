@@ -14,11 +14,13 @@ import { SEED_SHIFTS } from "./content";
 /**
  * The phase 3 demo seed (spec §9, §13.1–13.2): hourly rates and clock PINs, about four months of clock entries and
  * guest ratings on top of P2's generated sales history, four months of expenses, and today's staff states anchored
- * to `now`. Seeded history is raw for the last days and aggregated before that, never both on one day:
- * - ratings: raw `Rating` documents for the last 14 days, `DailySummary.ratings` before;
- * - hours: raw `Shift` and `ClockEntry` documents for the last 35 days, `DailySummary.people` labour before.
- * The generated days have no raw tickets, so their station ticket credit is always on `people`; dish ratings are
- * credited there outside the raw rating window (inside it, the ops reader credits the raw ratings itself).
+ * to `now`. Seeded history is raw for the last days and aggregated before that, and nothing is counted twice:
+ * - ratings: raw `Rating` documents for the last 14 days, `DailySummary.ratings` before. Each seeded comment is a raw
+ *   rating on its own day (spec §13.1), left out of that day's aggregate, so the ops reader's merge stays exact;
+ * - hours: raw `ClockEntry` documents for the last 35 days, `DailySummary.people` labour before. Every past `Shift`
+ *   is stored (planned hours); the labour reader ignores the shifts of days whose labour is aggregated.
+ * The generated days have no raw tickets, so their station ticket credit is always on `people`. Dish ratings are
+ * credited there when the ops reader can't: aggregated ratings, and raw ones on days without raw clock entries.
  * Every figure is built once, per entry and per rating, then either stored raw or summed, so both read the same.
  */
 
@@ -56,11 +58,12 @@ export const DEMO_BUDGETS: Record<string, number> = {
 };
 
 /**
- * Past weeks repeat the seeded schedule's regular week (P2's week 1); these weeks before the current one repeat its
- * 47 h week (week 0) instead, so Ece Demir earns some overtime. Each lies wholly inside the raw clock window (2) or
- * wholly before it (6, 10) for any `now`, so a week's overtime never straddles raw entries and aggregates.
+ * Past weeks repeat the seeded schedule's regular week (P2's week 1). The week 3 weeks before the current one repeats
+ * its 47 h week (week 0) instead, so Ece Demir earns overtime there besides P2's current 47 h week (spec §9: one or
+ * two overtime weeks). It lies wholly inside the raw clock window for any `now`, so its overtime never straddles raw
+ * entries and aggregates.
  */
-const OVERTIME_WEEKS_AGO = [2, 6, 10];
+const OVERTIME_WEEK_AGO = 3;
 const LATE_SHARE = 0.08;
 const FORGOT_DAYS_AGO = 10;
 
@@ -135,6 +138,7 @@ type RatingRecord = {
   food: Star | null;
   cleanliness: Star | null;
   atmosphere: Star | null;
+  comment?: (typeof COMMENTS)[number];
 };
 
 export async function seedOps(
@@ -193,7 +197,7 @@ export async function seedOps(
     );
   const pastShifts: ShiftDoc[] = [];
   for (let k = 1; addDays(monday, -7 * k + 6) >= first; k++) {
-    pastShifts.push(...weekPattern(addDays(monday, -7 * k), OVERTIME_WEEKS_AGO.includes(k) ? 0 : 1).filter((s) => s.serviceDay >= first));
+    pastShifts.push(...weekPattern(addDays(monday, -7 * k), k === OVERTIME_WEEK_AGO ? 0 : 1).filter((s) => s.serviceDay >= first));
   }
   const nameOf = (s: ShiftDoc) => byId.get(String(s.staffId))?.name ?? "";
   const byStart = (x: ShiftDoc, y: ShiftDoc) => x.start.getTime() - y.start.getTime() || nameOf(x).localeCompare(nameOf(y));
@@ -266,6 +270,13 @@ export async function seedOps(
     return out;
   };
 
+  // About one comment every 8 days over the whole history (at least 3 in every full month), on an open day.
+  const commentOn = new Map(
+    COMMENTS.map((c, i) => {
+      const day = addDays(first, Math.floor(((i + 0.5) * HISTORY_DAYS) / COMMENTS.length));
+      return [dow(day) === 1 ? addDays(day, 1) : day, c] as const;
+    }),
+  );
   const rawRatings: RatingRecord[] = [];
   const emptyPerson = (staffId: string): PersonOps => ({
     staffId, minutes: 0, overtimeMinutes: 0, labourCost: 0, shifts: 0, lateShifts: 0, stationTickets: 0, stationOnTime: 0, dishRatingSum: 0, dishRatingCount: 0,
@@ -297,12 +308,18 @@ export async function seedOps(
       }
     }
     const records = ratingsFor(d);
+    const comment = commentOn.get(day);
+    if (comment && records.length > 0) records[randInt(0, records.length - 1)]!.comment = comment;
     let ratings: RatingAgg | undefined;
     if (day >= rawRatingFrom) {
       rawRatings.push(...records);
     } else {
-      ratings = aggregate(records);
+      // An older day: its comment's rating is raw and the rest aggregated. The ops reader credits the raw rating's
+      // dishes itself only on days with raw clock entries.
+      rawRatings.push(...records.filter((r) => r.comment));
+      ratings = aggregate(records.filter((r) => !r.comment));
       for (const r of records) {
+        if (r.comment && day >= rawClockFrom) continue;
         for (const x of r.dishes) {
           const ids = onDuty(day, x.station, r.paidAt.getTime());
           for (const id of ids) {
@@ -323,11 +340,8 @@ export async function seedOps(
 
   await generateHistory(models, { tenantId: a.tenantId, now, items, tables: a.tables, staff, ops: { servers, extend } });
 
-  // Raw ratings: comments spread over the window, about one a day.
-  rawRatings.sort((x, y) => x.paidAt.getTime() - y.paidAt.getTime());
-  const commentAt = new Map(COMMENTS.map((c, i) => [Math.floor(((i + 0.5) * rawRatings.length) / COMMENTS.length), c]));
-  const ratingDocs = rawRatings.map((r, i) => {
-    const c = commentAt.get(i);
+  const ratingDocs = rawRatings.map((r) => {
+    const c = r.comment;
     const low = (s: Star | null) => (c?.low && s !== null ? (Math.min(s, 3) as Star) : s);
     return {
       checkId: null, tableId: null, serviceDay: r.serviceDay, paidAt: r.paidAt,
@@ -358,9 +372,11 @@ export async function seedOps(
   const todayShifts: ShiftDoc[] = (Object.keys(TODAY) as (keyof typeof TODAY)[]).map((role) => ({
     staffId: person(TODAY[role]).id, serviceDay: today, start: new Date(plan[role].start), end: new Date(plan[role].end), area: plan[role].area, note: null,
   }));
+  // No seeded time is ever after `now`: just after 06:00 an entry starts or ends at `now` (some states can't exist yet).
   const todayIn = (name: string, inMs: number, outMs: number | null) => {
     const staffId = person(name).id;
-    return { staffId, serviceDay: today, in: new Date(inMs), out: outMs === null ? null : new Date(outMs), rate: rateOf(String(staffId), new Date(inMs)), edits: [], generated: true };
+    const inAt = new Date(Math.min(inMs, t));
+    return { staffId, serviceDay: today, in: inAt, out: outMs === null ? null : new Date(Math.min(outMs, t)), rate: rateOf(String(staffId), inAt), edits: [], generated: true };
   };
   const todayEntries = [
     todayIn(TODAY.waiter, plan.waiter.start, null),
@@ -375,7 +391,7 @@ export async function seedOps(
   }
 
   const shiftDocs = [
-    ...pastShifts.filter((s) => s.serviceDay >= rawClockFrom),
+    ...pastShifts,
     ...a.schedule.filter((s) => s.serviceDay !== today || !anchored.has(String(s.staffId))),
     ...todayShifts,
   ];

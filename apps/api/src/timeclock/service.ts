@@ -93,7 +93,8 @@ export type PersonDay = { staffId: string; minutes: number; overtimeMinutes: num
  * Labour per person for the given service days, from raw clock entries. Overtime is allocated over the whole
  * Monday–Sunday weeks that touch `days`, then only the entries on `days` are counted. A shift counts once started; it is late when its
  * own first entry began more than 5 min after the start, or it ended with no entry (no-show).
- * Days without a shift but with entries count minutes and cost with `shifts: 0`.
+ * Days without a shift but with entries count minutes and cost with `shifts: 0`. Shifts on a generated day whose
+ * labour is aggregated in `DailySummary.people` are left to that aggregate.
  */
 export async function labourForDays(models: Models, days: string[], now: Date): Promise<Map<string, PersonDay[]>> {
   const result = new Map<string, PersonDay[]>(days.map((d) => [d, []]));
@@ -101,10 +102,14 @@ export async function labourForDays(models: Models, days: string[], now: Date): 
   const sorted = [...days].sort();
   const from = mondayOf(sorted[0]!);
   const to = addDays(mondayOf(sorted[sorted.length - 1]!), 6);
-  const [entries, shifts] = await Promise.all([
+  const [entries, allShifts, aggregated] = await Promise.all([
     models.ClockEntry.find({ serviceDay: { $gte: from, $lte: to } }).lean(),
     models.Shift.find({ serviceDay: { $in: days } }).lean(),
+    // Generated days whose labour is aggregated (`people` shifts, demo history): their shifts count there, not again here.
+    models.DailySummary.find({ serviceDay: { $in: days }, generated: true, "people.shifts": { $gt: 0 } }, { serviceDay: 1 }).lean(),
   ]);
+  const aggregatedDays = new Set(aggregated.map((d) => d.serviceDay));
+  const shifts = allShifts.filter((s) => !aggregatedDays.has(s.serviceDay));
   const price = priced(entries, now);
   const wanted = new Set(days);
   const per = new Map<string, Map<string, PersonDay>>(); // day → staff → row

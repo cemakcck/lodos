@@ -1777,7 +1777,7 @@
       "forgot_out": "forgot to clock out?"
     },
     "top": {
-      "title": "Top staff this week",
+      "title": "Top staff · last 7 days",
       "pts": "{{n}} pts"
     },
     "expenses": {

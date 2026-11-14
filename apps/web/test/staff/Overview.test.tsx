@@ -79,6 +79,15 @@ describe("Manager overview", () => {
     expect(screen.getByText("Manti (needs work)")).toBeTruthy();
   });
 
+  it("titles the ranking card with the rolling 7 days, in English and in Turkish", async () => {
+    setup();
+    expect(await screen.findByText("Top staff · last 7 days")).toBeTruthy();
+    cleanup();
+    await setLanguage("tr");
+    setup();
+    expect(await screen.findByText("En iyiler · son 7 gün")).toBeTruthy();
+  });
+
   it("links the month strip to the business page", async () => {
     setup();
     const link = await screen.findByRole("link", { name: /This month at a glance/ });
