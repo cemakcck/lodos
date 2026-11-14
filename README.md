@@ -99,6 +99,8 @@ Open <http://localhost:5180> and pick a role. Without a `.env`, `npm run dev` st
 | Kitchen | Kitchen display | `3333` |
 | Bar | Bar display | `4444` |
 
+On the time clock (`/staff/clock`) the waiters and the manager punch with the PINs above. The schedule-only staff (cooks, bartenders, the host and the dishwasher) can't sign in and punch with the clock PIN `1111`.
+
 **Data that survives a restart** (optional, needs Docker with Compose): `cp .env.example .env && npm run db:up`, then `npm run dev`. This runs MongoDB 8 in Docker on port 27018.
 
 **Order from your phone:** the demo banner's "Scan to order from your phone" QR code needs your phone to reach your laptop. Start the web app with `npm run dev -w @lodos/web -- --host`, open it at your computer's network address (for example `http://192.168.1.20:5180`) and set `WEB_ORIGIN` to that address.
@@ -107,7 +109,7 @@ Open <http://localhost:5180> and pick a role. Without a `.env`, `npm run dev` st
 
 ```bash
 npm run lint && npm run typecheck
-npm test                          # 1010 unit and integration tests in one parallel Vitest run over all workspaces
+npm test                          # 1028 unit and integration tests in one parallel Vitest run over all workspaces
 npx playwright install chromium   # once, for the end-to-end tests
 npm run test:e2e                  # 30 Playwright tests against a production build
 ```
