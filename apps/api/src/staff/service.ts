@@ -2,9 +2,11 @@ import {
   canSignIn,
   isScheduleRole,
   isStationRole,
+  rateAt,
   tableRanges,
   type StaffCreateBody,
   type StaffPatchBody,
+  type StaffRateBody,
   type StaffRole,
 } from "@lodos/shared";
 import type { Types } from "mongoose";
@@ -26,12 +28,15 @@ export type StaffRow = {
   tables: { id: string; name: string; roomId: string }[];
   tableRanges: string;
   demoProtected: boolean;
+  /** Current hourly rate in kuruş (0 when none is set). Managers only: these rows never reach anyone else. */
+  hourlyRate: number;
+  hasClockPin: boolean;
   canDeactivate: boolean;
   whyNot: WhyNot;
 };
 
 /** Who is asking, for the per-row `canDeactivate`/`whyNot`. */
-export type StaffCtx = { requesterId: string; demoMode: boolean; tenantId: string };
+export type StaffCtx = { requesterId: string; demoMode: boolean; tenantId: string; now: Date };
 
 /** What a write changed besides the person, for the route to announce (tables, sessions, socket rooms). */
 export type StaffEffects = {
@@ -45,7 +50,11 @@ export type StaffEffects = {
   roleMoved: { from: StaffRole; to: StaffRole } | null;
 };
 
-type Lean = Pick<StaffDoc, "_id" | "name" | "role" | "active" | "demoProtected"> & { lastSignInAt?: Date | null };
+type Lean = Pick<StaffDoc, "_id" | "name" | "role" | "active" | "demoProtected"> & {
+  lastSignInAt?: Date | null;
+  rates?: { from: Date; kurusPerHour: number }[];
+  clockPinHash?: string | null;
+};
 type TableLean = { _id: Types.ObjectId; name: string; roomId: Types.ObjectId; sectionStaffId?: Types.ObjectId | null };
 
 const noEffects = (): StaffEffects => ({ changedTableIds: [], unassignedTables: [], sessionsEnded: false, roleMoved: null });
@@ -92,6 +101,8 @@ function rowOf(s: Lean, tables: TableLean[], ctx: StaffCtx, managers: number): S
     tables: own.map((t) => ({ id: String(t._id), name: t.name, roomId: String(t.roomId) })),
     tableRanges: tableRanges(own.map((t) => t.name)),
     demoProtected: s.demoProtected,
+    hourlyRate: rateAt(s.rates ?? [], ctx.now),
+    hasClockPin: Boolean(s.clockPinHash),
     canDeactivate: s.active && whyNot === null,
     whyNot,
   };
@@ -237,6 +248,22 @@ export async function resetPin(models: Models, id: string, pin: string, ctx: Sta
   const s = await findStaff(models, id);
   if (!canSignIn(s.role)) throw invalid("Schedule-only staff have no PIN");
   await models.Staff.updateOne({ _id: s._id }, { $set: { pinHash: await hashPin(pin) } });
+  await clearHits(models, `pin:${ctx.tenantId}:${String(s._id)}`);
+}
+
+/** PUT /api/staff/:id/rate: the new rate applies from now; earlier entries keep the rate they were priced at. */
+export async function setRate(models: Models, id: string, body: StaffRateBody, ctx: StaffCtx): Promise<StaffRow> {
+  const s = await findStaff(models, id);
+  if (isStationRole(s.role)) throw invalid("Station accounts have no hourly rate");
+  await models.Staff.updateOne({ _id: s._id }, { $push: { rates: { from: ctx.now, kurusPerHour: body.kurusPerHour } } });
+  return rowFor(models, s._id, ctx);
+}
+
+/** POST /api/staff/:id/clock-pin: schedule-only roles only (login roles clock with their sign-in PIN). Lifts a wrong-PIN lock. */
+export async function setClockPin(models: Models, id: string, pin: string, ctx: StaffCtx): Promise<void> {
+  const s = await findStaff(models, id);
+  if (!isScheduleRole(s.role)) throw invalid("Only schedule-only staff have a clock PIN");
+  await models.Staff.updateOne({ _id: s._id }, { $set: { clockPinHash: await hashPin(pin) } });
   await clearHits(models, `pin:${ctx.tenantId}:${String(s._id)}`);
 }
 

@@ -125,7 +125,7 @@ function GuestSession({ token, afterFirstOrder, onOrderPlaced }: GuestAppProps &
           {invalid ? (
             <InvalidTable />
           ) : ended ? (
-            <VisitEnded />
+            <VisitEnded checkId={own?.checkId} />
           ) : (
             <>
               <Outlet />

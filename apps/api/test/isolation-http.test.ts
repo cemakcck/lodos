@@ -43,6 +43,10 @@ const snapshot = (tenantId: string) =>
     shifts: await t.models.Shift.find({}).sort({ _id: 1 }).lean(),
     shiftTemplates: await t.models.ShiftTemplate.find({}).sort({ _id: 1 }).lean(),
     rooms: await t.models.Room.find({}).sort({ _id: 1 }).lean(),
+    ratings: await t.models.Rating.find({}).sort({ _id: 1 }).lean(),
+    clockEntries: await t.models.ClockEntry.find({}).sort({ _id: 1 }).lean(),
+    expenses: await t.models.Expense.find({}).sort({ _id: 1 }).lean(),
+    expenseCategories: await t.models.ExpenseCategory.find({}).sort({ _id: 1 }).lean(),
   }));
 
 async function pdfText(body: Buffer): Promise<string> {
@@ -310,7 +314,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
     const call = (method: "GET" | "POST" | "PATCH" | "DELETE", url: string, payload?: object) =>
       t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
-    for (const sh of before.shifts) {
+    // This week's and next week's shifts plus a few of the demo's past ones (all of them would be ~700 requests).
+    const probed = [...before.shifts.filter((s) => s.serviceDay < "2026-11-09").slice(0, 5), ...before.shifts.filter((s) => s.serviceDay >= "2026-11-09")];
+    for (const sh of probed) {
       const id = String(sh._id);
       expect((await call("PATCH", `/api/shifts/${id}`, { note: "Hacked" })).statusCode).toBe(404);
       expect((await call("DELETE", `/api/shifts/${id}`)).statusCode).toBe(404);
@@ -409,6 +415,157 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     }
     expect((await call("POST", "/api/rooms", { name: "A only" })).statusCode).toBe(201);
     expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 2: A's token and manager cannot rate, read or moderate B's checks and ratings; B unchanged", async () => {
+    const paid = async (v: Visitor) => {
+      const check = await runWithTenant(v.tenantId, () => t.models.Check.findOne({ status: "paid" }).lean().orFail());
+      const table = await runWithTenant(v.tenantId, () => t.models.Table.findOne({ _id: check.tableId }).lean().orFail());
+      return { checkId: String(check._id), token: table.token };
+    };
+    const bPaid = await paid(b);
+    const rated = await t.inject({ method: "POST", url: "/api/guest/ratings", headers: { "x-table-token": bPaid.token }, payload: { checkId: bPaid.checkId, food: 4, comment: "ok" } });
+    expect(rated.statusCode, rated.body).toBe(201);
+    const bRatingId = rated.json().id as string;
+    const before = await snapshot(b.tenantId);
+    expect(before.ratings.filter((r) => !r.generated)).toHaveLength(1); // besides the demo's seeded ratings
+
+    const aPaid = await paid(a);
+    const headers = { "x-table-token": aPaid.token };
+    const card = await t.inject({ method: "GET", url: `/api/guest/rating?checkId=${bPaid.checkId}`, headers });
+    expect(card.json().state).toBe("closed");
+    const post = await t.inject({ method: "POST", url: "/api/guest/ratings", headers, payload: { checkId: bPaid.checkId, food: 1 } });
+    expect(post.statusCode).toBe(409);
+    expect(post.json().error.code).toBe("rating_closed");
+
+    // A's manager session alone: B's rating id is not found.
+    for (const action of ["hide", "unhide"]) {
+      expect((await t.inject({ method: "POST", url: `/api/ratings/${bRatingId}/${action}`, cookies: { lodos_sid: a.sid } })).statusCode).toBe(404);
+    }
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 5: the clock lists only the sandbox's people, B's ids can't punch in A's, A's manager gets 404 on B's staff; B unchanged", async () => {
+    const before = await snapshot(b.tenantId);
+    const aPeople = (await t.inject({ method: "GET", url: "/api/clock/people", cookies: { lodos_sb: a.sb } })).json() as { id: string }[];
+    expect(aPeople.length).toBeGreaterThan(0);
+    const bCook = String(before.staff.find((s) => s.role === "cook")!._id);
+    const bWaiter = String(before.staff.find((s) => s.role === "waiter")!._id);
+    for (const p of aPeople) expect([bCook, bWaiter]).not.toContain(p.id);
+    // A's sandbox cookie with B's staff ids: unknown people fail like a wrong PIN, and nothing is written for B.
+    for (const id of [bCook, bWaiter]) {
+      const res = await t.inject({ method: "POST", url: "/api/clock/punch", cookies: { lodos_sb: a.sb }, payload: { staffId: id, pin: "1234" } });
+      expect(res.statusCode).toBe(401);
+    }
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    for (const [method, url, payload] of [
+      ["PUT", `/api/staff/${bCook}/rate`, { kurusPerHour: 5 }],
+      ["POST", `/api/staff/${bCook}/clock-pin`, { pin: "1234" }],
+      ["POST", "/api/timesheets/entries", { staffId: bCook, in: "2026-11-05T09:00:00Z", out: "2026-11-05T17:00:00Z", reason: "x" }],
+    ] as const) {
+      expect((await t.inject({ method, url, cookies, payload })).statusCode, `${method} ${url}`).toBe(404);
+    }
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 8: A's manager sees only A's expenses and categories; B's ids are 404 on every write; B unchanged", async () => {
+    const mk = async (v: Visitor, amount: number) => {
+      const cat = await runWithTenant(v.tenantId, () => t.models.ExpenseCategory.create({ name: { en: "Rent", tr: "Kira" }, kind: "other", monthlyBudget: 123, sort: 0 }));
+      const exp = await runWithTenant(v.tenantId, () =>
+        t.models.Expense.create({ categoryId: cat._id, amount, date: "2026-11-05", createdBy: cat._id }),
+      );
+      return { cat: String(cat._id), exp: String(exp._id) };
+    };
+    const aIds = await mk(a, 1_111);
+    const bIds = await mk(b, 2_222);
+    const before = await snapshot(b.tenantId);
+    const own = { lodos_sid: a.sid, lodos_sb: a.sb };
+    const view = (await t.inject({ method: "GET", url: "/api/expenses?month=2026-11", cookies: own })).json();
+    // Next to the demo's seeded expenses of the month.
+    const ids = view.expenses.map((e: { id: string }) => e.id);
+    expect(ids).toContain(aIds.exp);
+    expect(ids).not.toContain(bIds.exp);
+    const aMonth = await runWithTenant(a.tenantId, () => t.models.Expense.find({ date: { $gte: "2026-11-01", $lte: "2026-11-31" } }).lean());
+    expect(ids.sort()).toEqual(aMonth.map((e) => String(e._id)).sort());
+    expect(view.total).toBe(aMonth.reduce((n, e) => n + e.amount, 0));
+    const cats = (await t.inject({ method: "GET", url: "/api/expense-categories", cookies: own })).json().categories as { id: string }[];
+    expect(cats.map((c) => c.id)).toContain(aIds.cat);
+    expect(cats.map((c) => c.id)).not.toContain(bIds.cat);
+    const csv = (await t.inject({ method: "GET", url: "/api/expenses.csv?month=2026-11", cookies: own })).body;
+    expect(csv.split("\r\n").filter(Boolean)).toHaveLength(aMonth.length + 1);
+    expect(csv).toContain("11.11");
+    expect(csv).not.toContain("22.22");
+
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const body = { categoryId: bIds.cat, amount: 5, date: "2026-11-05" };
+    const catBody = { name: { en: "x", tr: "x" }, kind: "other", monthlyBudget: 1 };
+    for (const [method, url, payload] of [
+      ["POST", "/api/expenses", body],
+      ["PUT", `/api/expenses/${bIds.exp}`, body],
+      ["DELETE", `/api/expenses/${bIds.exp}`, undefined],
+      ["PUT", `/api/expense-categories/${bIds.cat}`, catBody],
+    ] as const) {
+      // With B's sandbox cookie A's session resolves A's own tenant, where B's ids don't exist.
+      expect((await t.inject({ method, url, cookies, ...(payload ? { payload } : {}) })).statusCode, `${method} ${url}`).toBe(404);
+    }
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 10: A's performance routes read only A's people and ratings; B's staff ids are 404; B unchanged", async () => {
+    const mk = (v: Visitor, comment: string) =>
+      runWithTenant(v.tenantId, async () => {
+        const waiter = await t.models.Staff.findOne({ role: "waiter" }).lean().orFail();
+        await t.models.Rating.create({ serviceDay: "2026-11-10", paidAt: NOW, submittedAt: NOW, serverStaffId: waiter._id, waiter: 5, comment });
+        return String(waiter._id);
+      });
+    const aWaiter = await mk(a, "only-in-sandbox-a");
+    const bWaiter = await mk(b, "only-in-sandbox-b");
+    const before = await snapshot(b.tenantId);
+    const own = { lodos_sid: a.sid, lodos_sb: a.sb };
+    const ranking = await t.inject({ method: "GET", url: "/api/performance/ranking", cookies: own });
+    expect(ranking.statusCode).toBe(200);
+    const ids = (ranking.json().groups.floor as { staffId: string }[]).map((r) => r.staffId);
+    expect(ids).toContain(aWaiter);
+    expect(ids).not.toContain(bWaiter);
+    const person = await t.inject({ method: "GET", url: `/api/performance/${aWaiter}`, cookies: own });
+    expect(person.body).toContain("only-in-sandbox-a");
+    expect(person.body).not.toContain("only-in-sandbox-b");
+    const cross = { lodos_sid: a.sid, lodos_sb: b.sb };
+    expect((await t.inject({ method: "GET", url: `/api/performance/${bWaiter}`, cookies: cross })).statusCode).toBe(404);
+    const me = await t.inject({ method: "GET", url: "/api/me/performance", cookies: cross });
+    expect(me.statusCode).toBe(200);
+    expect(me.body).not.toContain("only-in-sandbox-b");
+    expect(await snapshot(b.tenantId)).toEqual(before);
+  });
+
+  it("Phase 3 Task 12: A's monthly business data, PDF and CSV read only A's sales, expenses and comments; B unchanged", async () => {
+    const mk = (v: Visitor, amount: number, comment: string) =>
+      runWithTenant(v.tenantId, async () => {
+        const cat = await t.models.ExpenseCategory.create({ name: { en: `Cat ${comment}`, tr: `Kat ${comment}` }, kind: "other", monthlyBudget: 0, sort: 99 });
+        await t.models.Expense.create({ categoryId: cat._id, amount, date: "2026-11-04", payee: comment, createdBy: cat._id });
+        await t.models.Rating.create({ serviceDay: "2026-11-10", paidAt: NOW, submittedAt: NOW, comment });
+      });
+    // Bigger than any of the demo's seeded expenses.
+    await mk(a, 77_777_777, "monthly-only-in-a");
+    await mk(b, 99_999_999, "monthly-only-in-b");
+    const before = await snapshot(b.tenantId);
+    const bSummaries = await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}));
+    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    const view = await t.inject({ method: "GET", url: "/api/business/monthly?month=2026-11", cookies });
+    expect(view.statusCode, view.body).toBe(200);
+    expect(view.body).toContain("monthly-only-in-a");
+    expect(view.body).not.toContain("monthly-only-in-b");
+    expect(view.json().expenses.biggest[0].amount).toBe(77_777_777);
+    const pdf = await t.inject({ method: "GET", url: "/api/business/monthly.pdf?month=2026-11", cookies });
+    expect(pdf.statusCode).toBe(200);
+    const text = await pdfText(pdf.rawPayload);
+    expect(text).toContain("monthly-only-in-a");
+    expect(text).not.toContain("monthly-only-in-b");
+    const csv = await t.inject({ method: "GET", url: "/api/business/monthly.csv?month=2026-11&section=expenses", cookies });
+    expect(csv.body).toContain("Cat monthly-only-in-a");
+    expect(csv.body).not.toContain("Cat monthly-only-in-b");
+    expect(await snapshot(b.tenantId)).toEqual(before);
+    expect(await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}))).toBe(bSummaries);
   });
 
   it("Phase 2 Task 14: A's manager sees only A's sales and CSV rows; B unchanged", async () => {

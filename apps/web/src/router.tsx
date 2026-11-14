@@ -17,6 +17,14 @@ import { Sales } from "./staff/sales/Sales";
 import { Staff } from "./staff/people/Staff";
 import { Schedule } from "./staff/schedule/Schedule";
 import { MyShifts } from "./staff/schedule/MyShifts";
+import { TimeClock } from "./staff/timeclock/TimeClock";
+import { Timesheets } from "./staff/timeclock/Timesheets";
+import { Overview } from "./staff/business/Overview";
+import { Monthly } from "./staff/business/Monthly";
+import { Expenses } from "./staff/expenses/Expenses";
+import { Ranking } from "./staff/performance/Ranking";
+import { Person } from "./staff/performance/Person";
+import { MyPerformance } from "./staff/performance/MyPerformance";
 import { FloorPlan } from "./staff/floorplan/FloorPlan";
 import type { StaffRole } from "./staff/auth";
 
@@ -44,6 +52,8 @@ export const routes: RouteObject[] = [
         element: <StaffFrame />,
         children: [
           { path: "/staff/login", element: <Login /> },
+          // The time clock needs no session: the PIN is the credential.
+          { path: "/staff/clock", element: <TimeClock /> },
           { path: "/staff", element: <RequireStaff><StaffHome /></RequireStaff> },
           guarded(["kitchen"], [{ path: "/staff/kitchen", element: <Kds key="kitchen" station="kitchen" /> }]),
           guarded(["bar"], [{ path: "/staff/bar", element: <Kds key="bar" station="bar" /> }]),
@@ -56,14 +66,21 @@ export const routes: RouteObject[] = [
           ]),
           // Every login role; the manager passes every guard.
           guarded(["waiter", "kitchen", "bar"], [{ path: "/staff/my-shifts", element: <MyShifts /> }]),
+          guarded(["waiter", "kitchen", "bar"], [{ path: "/staff/my-performance", element: <MyPerformance /> }]),
           guarded(["manager"], [
             { path: "/staff/menu", element: <MenuEditor /> },
             { path: "/staff/tables", element: <Tables /> },
             { path: "/staff/tables/qr", element: <QrSheet /> },
             { path: "/staff/floor-plan", element: <FloorPlan /> },
             { path: "/staff/sales", element: <Sales /> },
+            { path: "/staff/overview", element: <Overview /> },
+            { path: "/staff/business", element: <Monthly /> },
             { path: "/staff/people", element: <Staff /> },
             { path: "/staff/schedule", element: <Schedule /> },
+            { path: "/staff/timesheets", element: <Timesheets /> },
+            { path: "/staff/expenses", element: <Expenses /> },
+            { path: "/staff/performance", element: <Ranking /> },
+            { path: "/staff/performance/:staffId", element: <Person /> },
             { path: "/staff/tonight", element: <Navigate to="/staff/sales" replace /> },
           ]),
         ],

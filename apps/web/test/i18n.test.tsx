@@ -61,9 +61,9 @@ describe("invalidationsFor", () => {
       ["kds"], ["floor"], ["check", "t1"], ["guest", "orders"], ["split"],
     ]);
   });
-  it("maps check.updated", () => {
+  it("maps check.updated (the overview follows it too)", () => {
     expect(invalidationsFor({ type: "check.updated", ids: [], tableId: "t1", at })).toEqual([
-      ["floor"], ["check", "t1"], ["guest", "orders"], ["guest", "table"], ["split"],
+      ["floor"], ["check", "t1"], ["guest", "orders"], ["guest", "table"], ["split"], ["overview"],
     ]);
   });
   it("maps split and adjustment events to the split, the floor and the table's check", () => {

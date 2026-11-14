@@ -1,0 +1,86 @@
+<h2>Manager's Monday overview — which layout feels right?</h2>
+<p class="subtitle">The first screen a manager sees. Each block opens its own detailed page. Numbers are made up. Click one to select it.</p>
+
+<style>
+  .mo{font-family:Inter,system-ui,sans-serif;font-size:13px;color:#1f2937;background:#f7f7f8;padding:14px;border-radius:8px}
+  .mo .row{display:grid;gap:10px;margin-bottom:10px}
+  .mo .tile{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px}
+  .mo .k{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280}
+  .mo .big{font-size:22px;font-weight:600;margin-top:2px}
+  .mo .up{color:#15803d;font-size:12px}.mo .down{color:#b91c1c;font-size:12px}
+  .mo .bar{height:6px;background:#e5e7eb;border-radius:3px;margin-top:6px}
+  .mo .bar i{display:block;height:6px;background:#7c2d5a;border-radius:3px}
+  .mo table{width:100%;border-collapse:collapse;font-size:12px}
+  .mo td{padding:3px 0;border-bottom:1px solid #f1f1f3}
+  .mo .pill{display:inline-block;padding:1px 6px;border-radius:9px;font-size:11px}
+  .mo .ok{background:#dcfce7;color:#166534}.mo .late{background:#fee2e2;color:#991b1b}.mo .off{background:#f3f4f6;color:#4b5563}
+  .mo .stars{color:#b45309}
+  .mo .spark{display:flex;align-items:flex-end;gap:3px;height:40px;margin-top:6px}
+  .mo .spark i{flex:1;background:#c9a3b8;border-radius:2px}
+  .mo .spark i.t{background:#7c2d5a}
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="mo">
+      <div class="row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tile"><div class="k">Sales today</div><div class="big">₺48,620</div><div class="up">↑ 9% vs last Mon</div></div>
+        <div class="tile"><div class="k">Covers</div><div class="big">112</div><div class="up">↑ 4%</div></div>
+        <div class="tile"><div class="k">Guest rating (7 d)</div><div class="big"><span class="stars">★</span> 4.6</div><div class="up">↑ 0.1</div></div>
+        <div class="tile"><div class="k">Profit this month</div><div class="big">₺212k</div><div class="down">margin 14% · ↓ 2 pts</div></div>
+      </div>
+      <div class="row" style="grid-template-columns:1.2fr 1fr">
+        <div class="tile"><div class="k">Who's working now</div>
+          <table>
+            <tr><td>Deniz K. · waiter</td><td>in 10:58</td><td><span class="pill ok">on shift</span></td></tr>
+            <tr><td>Selin A. · waiter</td><td>due 11:00</td><td><span class="pill late">18 min late</span></td></tr>
+            <tr><td>Murat Ö. · kitchen</td><td>in 09:52</td><td><span class="pill ok">on shift</span></td></tr>
+            <tr><td>Ece T. · bar</td><td>from 17:00</td><td><span class="pill off">later today</span></td></tr>
+          </table></div>
+        <div class="tile"><div class="k">Top staff this week</div>
+          <table>
+            <tr><td>1. Deniz K.</td><td><span class="stars">★</span> 4.9</td><td>86 pts</td></tr>
+            <tr><td>2. Can Y.</td><td><span class="stars">★</span> 4.7</td><td>79 pts</td></tr>
+            <tr><td>3. Selin A.</td><td><span class="stars">★</span> 4.5</td><td>71 pts</td></tr>
+          </table></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr 1fr">
+        <div class="tile"><div class="k">Expenses this month</div><div class="big" style="font-size:18px">₺301k of ₺320k budget</div><div class="bar"><i style="width:94%"></i></div><div style="margin-top:6px;color:#6b7280">Latest: Fish supplier ₺18,400 · Electricity ₺9,120</div></div>
+        <div class="tile"><div class="k">Dish ratings</div><table>
+          <tr><td>Levrek marine</td><td><span class="stars">★</span> 4.9</td></tr>
+          <tr><td>Kuzu incik</td><td><span class="stars">★</span> 4.8</td></tr>
+          <tr><td style="color:#b91c1c">Mantı (needs work)</td><td><span class="stars">★</span> 3.4</td></tr></table></div>
+      </div>
+    </div></div>
+    <div class="card-body"><h3>A · Today first</h3><p>Numbers across the top, then live staff, the ranking, expenses and dishes. Everything visible at once, like a control room.</p></div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="mo">
+      <div class="row" style="grid-template-columns:2fr 1fr">
+        <div class="tile"><div class="k">This month so far</div>
+          <div style="display:flex;gap:22px;margin-top:4px">
+            <div><div class="k">Sales</div><div class="big">₺1.48M</div></div>
+            <div><div class="k">Costs</div><div class="big">₺1.27M</div></div>
+            <div><div class="k">Profit</div><div class="big" style="color:#15803d">₺212k</div></div>
+          </div>
+          <div class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:50%"></i><i style="height:70%"></i><i style="height:95%"></i><i style="height:100%"></i><i style="height:65%"></i><i class="t" style="height:45%"></i></div>
+          <div style="color:#6b7280;font-size:11px">Daily sales · today so far ₺48,620 (↑ 9% vs last Mon)</div>
+        </div>
+        <div class="tile"><div class="k">Needs your attention</div>
+          <div style="margin-top:4px;line-height:1.7">
+            🔴 Selin A. is 18 min late<br>
+            🟠 Expenses at 94% of budget<br>
+            🟠 Mantı rated 3.4 this week<br>
+            🟢 Rating up to 4.6
+          </div></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="tile"><div class="k">On shift now</div><div class="big">6 <span style="font-size:13px;color:#6b7280">of 7 planned</span></div><div style="color:#6b7280">Labour today ₺7,900</div></div>
+        <div class="tile"><div class="k">Staff of the week</div><div class="big" style="font-size:18px">Deniz K.</div><div><span class="stars">★</span> 4.9 · 86 pts</div></div>
+        <div class="tile"><div class="k">Best dish</div><div class="big" style="font-size:18px">Levrek marine</div><div><span class="stars">★</span> 4.9 · 64 sold</div></div>
+      </div>
+    </div></div>
+    <div class="card-body"><h3>B · Money and alerts first</h3><p>The month's profit up top, a short "needs your attention" list, then one headline per area. Calmer; details are a click away.</p></div>
+  </div>
+</div>

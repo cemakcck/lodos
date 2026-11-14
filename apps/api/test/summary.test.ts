@@ -17,7 +17,7 @@ afterAll(() => t.close());
 type Seeded = Awaited<ReturnType<typeof seedTenant>>;
 type Req = (method: "GET" | "POST" | "PUT" | "DELETE", path: string, payload?: object) => ReturnType<TestApp["inject"]>;
 
-async function session(s: Seeded, who: "waiter" | "manager"): Promise<Req> {
+async function session(s: Seeded, who: "waiter" | "waiter2" | "manager"): Promise<Req> {
   // Sessions are checked against the moving clock: create them at its current time.
   const sid = await createSession(t.models, s.seed.staff[who], s.tenantId, "person", t.clock.now());
   return (method, path, payload) => t.inject({ method, url: path, cookies: { lodos_sid: sid }, ...(payload ? { payload } : {}) });
@@ -122,8 +122,8 @@ describe("daily summaries", () => {
       { hour: 22, revenue: shares[1]!.amount, covers: 3, checks: 1, comps: 0 },
     ]);
     expect(live.ticketTimes).toEqual({
-      kitchen: [{ hour: 18, count: 1, totalMs: 12 * 60_000 }],
-      bar: [{ hour: 18, count: 1, totalMs: 4 * 60_000 }],
+      kitchen: [{ hour: 18, count: 1, totalMs: 12 * 60_000, onTime: 1 }],
+      bar: [{ hour: 18, count: 1, totalMs: 4 * 60_000, onTime: 1 }],
     });
     const items = Object.fromEntries(live.items.map((i) => [i.itemId, { qty: i.qty, revenue: i.revenue }]));
     expect(items).toEqual({
@@ -145,6 +145,73 @@ describe("daily summaries", () => {
     const again = await c.inTenant(() => ensureSummaries(t.models, [DAY], "2026-11-11"));
     expect(again.get(DAY)).toEqual(live);
     expect(await c.inTenant(() => t.models.DailySummary.countDocuments({}))).toBe(1);
+  });
+
+  it("byServer: per waiter checks, covers and the payments on their checks; the sums equal the day's", async () => {
+    const c = await fresh();
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    const burrata = await itemNamed(t, c.s.tenantId, "Burrata");
+    t.clock.set(at("2026-11-10T15:00:00Z"));
+    const w2 = await session(c.s, "waiter2");
+    // Deniz: T7 (2 covers, card) and T9 (3 covers, split in two, both shares paid). Mert: T8 (4 covers, cash).
+    const a = await c.seat("T7", 2);
+    await c.order("T7", [{ itemId: fries.id, qty: 2 }]);
+    const cc = await c.seat("T9", 3);
+    await c.order("T9", [{ itemId: burrata.id }, { itemId: fries.id }]);
+    const seatB = await w2("POST", `/api/tables/${c.s.seed.tables.T8!.id}/seat`, { covers: 4 });
+    expect(seatB.statusCode, seatB.body).toBe(201);
+    const b = seatB.json().checkId as string;
+    expect((await w2("POST", `/api/tables/${c.s.seed.tables.T8!.id}/orders`, orderBody([{ itemId: burrata.id, qty: 3 }]))).statusCode).toBe(201);
+    t.clock.set(at("2026-11-10T16:00:00Z"));
+    const aPaid = await c.close(a, "card");
+    const bRes = await w2("POST", `/api/checks/${b}/close`, { method: "cash" });
+    expect(bRes.statusCode, bRes.body).toBe(200);
+    const bPaid = bRes.json().check.payment.amount as number;
+    expect((await c.w("PUT", `/api/checks/${cc}/split`, { mode: "even", count: 2 })).statusCode).toBe(200);
+    const shares = (await c.w("GET", `/api/checks/${cc}/split`)).json().shares as { amount: number }[];
+    for (const [label, share] of [["A", shares[0]!], ["B", shares[1]!]] as const) {
+      expect((await c.w("POST", `/api/checks/${cc}/shares/${label}/pay`, { method: "card", amount: share.amount })).statusCode).toBe(200);
+    }
+
+    const live = await c.inTenant(() => summarizeDay(t.models, DAY));
+    const deniz = c.s.seed.staff.waiter;
+    const mert = c.s.seed.staff.waiter2;
+    expect(live.byServer).toEqual(
+      [
+        { staffId: deniz, checks: 2, covers: 5, sales: aPaid + shares[0]!.amount + shares[1]!.amount },
+        { staffId: mert, checks: 1, covers: 4, sales: bPaid },
+      ].sort((x, y) => x.staffId.localeCompare(y.staffId)),
+    );
+    const sum = (k: "checks" | "covers" | "sales") => live.byServer.reduce((n, r) => n + r[k], 0);
+    expect([sum("checks"), sum("covers"), sum("sales")]).toEqual([live.checks, live.covers, live.revenue]);
+
+    t.clock.set(at("2026-11-11T09:00:00Z"));
+    const ensured = await c.inTenant(() => ensureSummaries(t.models, [DAY], "2026-11-11"));
+    expect(ensured.get(DAY)).toEqual(live);
+    const again = await c.inTenant(() => ensureSummaries(t.models, [DAY], "2026-11-11"));
+    expect(again.get(DAY)!.byServer).toEqual(live.byServer);
+  });
+
+  it("onTime counts tickets ready within the tenant's late threshold, one at exactly lateMin included", async () => {
+    const c = await fresh();
+    await c.inTenant(() => t.models.Setting.updateOne({}, { $set: { lateMin: 12 } }));
+    const fries = await itemNamed(t, c.s.tenantId, "Truffle fries");
+    const ready = async (table: string, sentIso: string, readyIso: string) => {
+      t.clock.set(at(sentIso));
+      await c.seat(table, 2);
+      const orderId = await c.order(table, [{ itemId: fries.id }]);
+      const ticket = await c.inTenant(() => t.models.Ticket.findOne({ orderId }).lean().orFail());
+      t.clock.set(at(readyIso));
+      expect((await c.m("POST", `/api/tickets/${String(ticket._id)}/bump`)).statusCode).toBe(200);
+    };
+    await ready("T7", "2026-11-10T15:00:00Z", "2026-11-10T15:12:00Z"); // exactly 12 min: on time
+    await ready("T8", "2026-11-10T15:10:00Z", "2026-11-10T15:22:01Z"); // 12 min 1 s: late
+    await ready("T9", "2026-11-10T16:00:00Z", "2026-11-10T16:05:00Z"); // 5 min: on time
+    const live = await c.inTenant(() => summarizeDay(t.models, DAY));
+    expect(live.ticketTimes.kitchen).toEqual([
+      { hour: 18, count: 2, totalMs: 12 * 60_000 + 12 * 60_000 + 1_000, onTime: 1 },
+      { hour: 19, count: 1, totalMs: 5 * 60_000, onTime: 1 },
+    ]);
   });
 
   it("payment time decides the service day: opened 05:30 and paid 06:10 counts on the new day; paid 05:59 on the previous", async () => {

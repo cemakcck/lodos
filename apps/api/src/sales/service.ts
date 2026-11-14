@@ -142,7 +142,8 @@ async function sameTimeLastWeek(models: Models, now: Date, today: string): Promi
 
 const inServiceOrder = <T extends { hour: number }>(m: Map<number, T>) => SERVICE_HOURS.filter((h) => m.has(h)).map((h) => m.get(h)!);
 
-function byHourOf(days: SummaryData[]): SalesView["byHour"] {
+/** Average revenue per open night (a day with checks) for each hour with sales, in service-hour order. */
+export function byHourOf(days: SummaryData[]): SalesView["byHour"] {
   const nights = Math.max(1, days.filter((d) => d.checks > 0).length);
   const sums = new Map<number, { hour: number; revenue: number }>();
   for (const d of days) {
@@ -235,7 +236,7 @@ export async function salesView(models: Models, range: Range, now: Date): Promis
 // --- CSV export -------------------------------------------------------------------------------------------------
 
 export const CSV_HEADER = "service_day,closed_at,table,covers,server,gross,comps,voids,total,payment_methods";
-const BOM = "﻿";
+export const BOM = "﻿";
 
 /**
  * A quoted CSV text field, `"` doubled (spec Review Focus 4). Text a spreadsheet would run as a formula (starting with
@@ -243,7 +244,7 @@ const BOM = "﻿";
  */
 export const csvField = (s: string) => `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
 /** Kuruş as plain lira with a dot and two decimals, e.g. `1250.50`. */
-const lira = (kurus: number) => {
+export const lira = (kurus: number) => {
   const sign = kurus < 0 ? "-" : "";
   const abs = Math.abs(Math.round(kurus));
   return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;

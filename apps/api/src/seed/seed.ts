@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 import { hashPin } from "../auth/pin";
 import type { Models } from "../db/models";
 import { runWithTenant } from "../db/tenancy";
+import { startingCategories } from "../expenses/service";
 import { generateHistory, mulberry32 } from "../sales/history";
 import {
   CATEGORIES,
@@ -18,6 +19,7 @@ import {
   type SeedItem,
   type Station,
 } from "./content";
+import { DEMO_CLOCK_PIN, demoRates, seedOps } from "./ops-seed";
 
 export type SeedResult = {
   /** Keyed by table name. `token` is the raw guest QR token. */
@@ -92,8 +94,10 @@ const LOW_STOCK = { slug: "dry-aged-ribeye", remaining: 2 };
 /**
  * Seeds one tenant with the Lodos restaurant: menu, floor, staff (sign-in accounts and, unless `scheduleTeam: false`,
  * the schedule-only team and two weeks of shifts), shift templates and settings, plus (with `liveService`) a
- * mid-service snapshot where tickets, orders and checks agree and 60 days of generated sales history. Everything is
- * relative to `now`. `history: false` skips the generated history (for tests that never read sales or the comp log).
+ * mid-service snapshot where tickets, orders and checks agree and 120 days of generated sales history. With the
+ * schedule team, that history comes with the phase 3 demo (`seedOps`): rates, clock PINs, hours, ratings, expenses
+ * and today's staff states. Every tenant gets the starting expense categories. Everything is relative to `now`.
+ * `history: false` skips the generated history and the demo (for tests that never read sales or the comp log).
  */
 export async function seedRestaurant(
   models: Models,
@@ -103,9 +107,12 @@ export async function seedRestaurant(
 ): Promise<SeedResult> {
   const ago = (min: number) => new Date(now.getTime() - min * 60_000);
   const pinHashes = await Promise.all(STAFF.map((s) => demoPinHash(s.pin)));
+  const withTeam = opts.scheduleTeam !== false;
+  const demoOps = opts.liveService && opts.history !== false && withTeam;
+  const clockPinHash = demoOps ? await demoPinHash(DEMO_CLOCK_PIN) : undefined;
+  const ratesOf = (name: string) => (demoOps ? { rates: demoRates(name, now) } : {});
 
   const staffIds = Object.fromEntries(STAFF.map((s) => [s.key, oid()])) as Record<(typeof STAFF)[number]["key"], Types.ObjectId>;
-  const withTeam = opts.scheduleTeam !== false;
   const teamIds = Object.fromEntries(SCHEDULE_TEAM.map((s) => [s.name, oid()])) as Record<string, Types.ObjectId>;
   const roomIds = Object.fromEntries(ROOMS.map((r) => [r.key, oid()]));
   const catIds = Object.fromEntries(CATEGORIES.map((c) => [c.key, oid()]));
@@ -148,12 +155,14 @@ export async function seedRestaurant(
       m.Tenant.create({ name: "Lodos", createdAt: now }),
       m.Setting.create({ warnMin: 8, lateMin: 15 }),
       m.Staff.insertMany([
-        ...STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i], demoProtected: s.demoProtected })),
-        ...(withTeam ? SCHEDULE_TEAM.map((s) => ({ _id: teamIds[s.name], name: s.name, role: s.role })) : []),
+        ...STAFF.map((s, i) => ({ _id: staffIds[s.key], name: s.name, role: s.role, pinHash: pinHashes[i], demoProtected: s.demoProtected, ...ratesOf(s.name) })),
+        ...(withTeam ? SCHEDULE_TEAM.map((s) => ({ _id: teamIds[s.name], name: s.name, role: s.role, ...ratesOf(s.name), ...(clockPinHash ? { clockPinHash } : {}) })) : []),
       ]),
       m.ShiftTemplate.insertMany(SHIFT_TEMPLATES.map((x, i) => ({ ...x, sort: i }))),
-      // A real install (no schedule team) starts with an empty schedule.
-      withTeam ? m.Shift.insertMany(demoShifts()) : Promise.resolve(),
+      // A real install (no schedule team) starts with an empty schedule; the demo inserts its shifts with the history.
+      withTeam && !demoOps ? m.Shift.insertMany(demoShifts()) : Promise.resolve(),
+      // The demo's categories carry budgets and come with its expenses.
+      demoOps ? Promise.resolve() : m.ExpenseCategory.insertMany(startingCategories()),
       // Every seeded table fits the default 800 × 480 canvas (the widest reaches x 716, the lowest y 386).
       m.Room.insertMany(ROOMS.map((r) => ({ _id: roomIds[r.key], name: r.name, sort: r.sort, width: ROOM_DEFAULT_WIDTH, height: ROOM_DEFAULT_HEIGHT, version: 0 }))),
       m.Category.insertMany(CATEGORIES.map((c, i) => ({ _id: catIds[c.key], name: c.name, sort: i, defaultVatRate: vatRateOf(c.key) }))),
@@ -177,13 +186,25 @@ export async function seedRestaurant(
     if (opts.liveService) await Promise.all([seedLiveService(), seedPaidTonight()]);
   });
   if (opts.liveService && opts.history !== false) {
-    await generateHistory(models, {
+    const history = {
       tenantId,
       now,
       items: ITEMS.map((i) => ({ id: itemIds[i.slug] as Types.ObjectId, slug: i.slug, name: i.name, price: kurus(i.price), station: stationOf[i.category] as Station })),
       tables: TABLES.map((x) => x.name),
-      staff: STAFF.map((x) => ({ id: staffIds[x.key], name: x.name })),
-    });
+    };
+    if (demoOps) {
+      await seedOps(models, {
+        ...history,
+        staff: [
+          ...STAFF.map((x) => ({ id: staffIds[x.key], name: x.name, role: x.role })),
+          ...SCHEDULE_TEAM.map((x) => ({ id: teamIds[x.name] as Types.ObjectId, name: x.name, role: x.role })),
+        ],
+        schedule: demoShifts(),
+        rand: mulberry32(now.getTime()),
+      });
+    } else {
+      await generateHistory(models, { ...history, staff: STAFF.map((x) => ({ id: staffIds[x.key], name: x.name })) });
+    }
   }
 
   /** SEED_SHIFTS for the week of `now` and the next one. */

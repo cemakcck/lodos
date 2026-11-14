@@ -30,7 +30,11 @@ export type ErrorCode =
   | "layout_invalid"
   | "version_conflict"
   | "room_not_empty"
-  | "open_check_rename";
+  | "open_check_rename"
+  | "rating_closed"
+  | "already_rated"
+  | "invalid_dish"
+  | "forgot_clock_out";
 
 export type ErrorBody = { error: { code: ErrorCode | "internal"; message: string; details?: unknown } };
 

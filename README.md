@@ -1,6 +1,6 @@
 # Lodos
 
-**A real-time restaurant system: QR ordering, kitchen and bar displays, a waiter's floor plan, split bills, sales and staff scheduling, in English and Turkish.**
+**A real-time restaurant system: QR ordering, kitchen and bar displays, a waiter's floor plan, split bills, sales, staff scheduling, guest ratings, a time clock and a monthly business dashboard, in English and Turkish.**
 
 [![CI](https://github.com/cemakcck/lodos/actions/workflows/ci.yml/badge.svg)](https://github.com/cemakcck/lodos/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -20,6 +20,10 @@ Lodos is a portfolio project by [Cem Akçiçek](https://cemakcicek.com). The res
   <img src="docs/screenshots/sales.png" alt="The Sales dashboard: revenue, covers, average per cover, comps and voids, revenue by hour, ticket times, top dishes" width="270">
   <img src="docs/screenshots/schedule.png" alt="The weekly schedule grid with shifts per person, weekly totals and a warning for 47 hours" width="270">
 </p>
+<p>
+  <img src="docs/screenshots/overview.png" alt="The manager's overview: tiles for sales, covers, guest rating and profit, then who is working now, top staff, expenses against budget and dish ratings" width="400">
+  <img src="docs/screenshots/monthly.png" alt="The monthly business dashboard for October: sales, food and drink cost, labour, other costs and profit, other costs by category and sales by day" width="400">
+</p>
 
 ## What it does
 
@@ -30,8 +34,13 @@ Lodos is a portfolio project by [Cem Akçiçek](https://cemakcicek.com). The res
 | **Waiter** | The floor plan with live table states (free, seated, food ready, calling, bill) and an attention queue. Seat a table, order from the tablet (food goes to the kitchen, drinks to the bar), close the check. |
 | **Closing the check** | Pay in full, split evenly (2 to 20 shares) or by item, one payment per share (card or cash, simulated). **Comps and voids** need a reason and a manager's PIN typed on the waiter's tablet. An **80 mm receipt** with VAT (KDV) lines, per share or for the whole check. |
 | **Manager** | Menu editor (items, options, allergens, photos, prices) and one-tap 86 with an optional "N left" count. **Sales** for today, 7 or 30 days (revenue, covers, ticket times by hour, top dishes, comps and voids) with **CSV export**. **Staff** management with PINs and table assignments. A weekly **shift** schedule with templates, working-hours warnings and **PDF** export. A drag-and-drop **floor plan editor** whose changes waiters see live. |
+| **Ratings** | After a paid visit the guest's phone asks "How was your visit?": the waiter, each dish, and food, cleanliness and atmosphere, one to five stars plus an optional comment. One rating per check, within 24 hours of closing. |
+| **Time clock and wages** | Staff punch in and out on a wall-screen time clock with their own PIN (`/staff/clock`, no sign-in needed). Late and missing people show up live, hours past 45 a week are paid at 1.5x, and every entry is priced at the hourly rate in force when it was clocked. Managers edit the timesheets and see the cost. |
+| **Performance** | A 0 to 100 score and a ranking per group (waiters, kitchen, bar) from guest ratings, workload, on-time tickets and reliability, with a breakdown per person. Everyone sees their own score and rank position on **My performance**, and never anyone else's. |
+| **Expenses and budgets** | Expenses by category with a monthly budget each, and a spent-versus-budget view that flags overspending. |
+| **Overview and monthly dashboard** | The manager's landing page: today's sales and covers, the guest rating, who is working now, top staff, expenses against budget and the month's profit. The **monthly dashboard** adds profit and loss (sales minus food and drink, labour and other costs), sales patterns, menu quadrants (stars, hidden gems, fix, rethink), ratings, a staff table and expenses, with a **PDF** and **CSV** export. |
 
-Every visitor to the demo gets **their own private copy** of the restaurant, seeded with a busy Friday service (late tickets, a table calling, a couple of 86'd dishes) and 60 days of sales history. Nobody else sees your changes, and the copy is deleted 30 minutes after your last window closes.
+Every visitor to the demo gets **their own private copy** of the restaurant, seeded with a busy Friday service (late tickets, a table calling, a couple of 86'd dishes) and four months of history: sales, shifts and hours, guest ratings and expenses. Nobody else sees your changes, and the copy is deleted 30 minutes after your last window closes.
 
 ## Tech stack
 
@@ -90,6 +99,8 @@ Open <http://localhost:5180> and pick a role. Without a `.env`, `npm run dev` st
 | Kitchen | Kitchen display | `3333` |
 | Bar | Bar display | `4444` |
 
+On the time clock (`/staff/clock`) the waiters and the manager punch with the PINs above. The schedule-only staff (cooks, bartenders, the host and the dishwasher) can't sign in and punch with the clock PIN `1111`.
+
 **Data that survives a restart** (optional, needs Docker with Compose): `cp .env.example .env && npm run db:up`, then `npm run dev`. This runs MongoDB 8 in Docker on port 27018.
 
 **Order from your phone:** the demo banner's "Scan to order from your phone" QR code needs your phone to reach your laptop. Start the web app with `npm run dev -w @lodos/web -- --host`, open it at your computer's network address (for example `http://192.168.1.20:5180`) and set `WEB_ORIGIN` to that address.
@@ -98,14 +109,14 @@ Open <http://localhost:5180> and pick a role. Without a `.env`, `npm run dev` st
 
 ```bash
 npm run lint && npm run typecheck
-npm test                          # 814 unit and integration tests in one parallel Vitest run over all workspaces
+npm test                          # 1028 unit and integration tests in one parallel Vitest run over all workspaces
 npx playwright install chromium   # once, for the end-to-end tests
-npm run test:e2e                  # 21 Playwright tests against a production build
+npm run test:e2e                  # 30 Playwright tests against a production build
 ```
 
 - **Unit:** money, the service day, splits, order routing, timers, table states, the cart, and a check that the English and Turkish message files have the same keys. Screen tests render each screen with a fake socket.
 - **Integration** (against a real in-memory MongoDB replica set, not mocks): the last-portion race, idempotency, the close-versus-order race, role checks on every endpoint, sandbox isolation over HTTP and sockets.
-- **End-to-end:** the magic moment across four browser windows, an 86 reaching an open guest menu, a split bill paid by two guests, a comp approved with a manager's PIN, the shift PDF, a floor plan change seen live on a second device, the kitchen catching up after going offline, and the accessibility scans. Each test runs in its own sandbox.
+- **End-to-end:** the magic moment across four browser windows, an 86 reaching an open guest menu, a split bill paid by two guests, a comp approved with a manager's PIN, the shift PDF, a floor plan change seen live on a second device, the kitchen catching up after going offline, a guest's rating reaching the manager's overview and monthly dashboard with a clock-in showing on shift, and the accessibility scans (English and Turkish for the new screens). Each test runs in its own sandbox.
 
 Tests pass at any hour: the integration tests inject "now", and the demo seed is relative to when each sandbox is created. CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs lint and typecheck, unit and integration tests, end-to-end tests and the build as parallel jobs on every push and pull request.
 
@@ -115,7 +126,7 @@ Tests pass at any hour: the integration tests inject "now", and the demo seed is
 apps/
   api/           Fastify API, one folder per area (orders, checks, kds, floor, layout, sales, shifts, staff, demo, …)
     src/db/      Mongoose models and the tenancy plugin
-    src/seed/    The fictional restaurant: menu, tables, staff, a live service and 60 days of history
+    src/seed/    The fictional restaurant: menu, tables, staff, a live service and four months of history
     test/        Integration tests against an in-memory replica set
   web/           React app
     src/guest/   The QR menu

@@ -285,3 +285,81 @@ export type ShiftTemplateBody = z.infer<typeof ShiftTemplateBody>;
 /** PATCH /api/shift-templates/:id. */
 export const ShiftTemplatePatchBody = ShiftTemplateBody.partial();
 export type ShiftTemplatePatchBody = z.infer<typeof ShiftTemplatePatchBody>;
+
+const Stars = z.number().int().min(1).max(5);
+
+/** A guest's rating of a paid check (phase 3): at least one star value, integers 1–5, comment up to 500. */
+export const GuestRatingBody = z
+  .object({
+    checkId: z.string().min(1).max(64),
+    waiter: Stars.optional(),
+    dishes: z.array(z.object({ itemId: z.string().min(1).max(64), stars: Stars })).max(60).optional(),
+    food: Stars.optional(),
+    cleanliness: Stars.optional(),
+    atmosphere: Stars.optional(),
+    comment: z.string().trim().max(500).optional(),
+  })
+  .refine(
+    (b) => b.waiter !== undefined || b.food !== undefined || b.cleanliness !== undefined || b.atmosphere !== undefined || (b.dishes?.length ?? 0) > 0,
+    "Give at least one rating",
+  )
+  .refine((b) => new Set(b.dishes?.map((d) => d.itemId)).size === (b.dishes?.length ?? 0), "Each dish can be rated once");
+export type GuestRatingBody = z.infer<typeof GuestRatingBody>;
+
+/** POST /api/clock/punch: no session, the person's own (clock) PIN. */
+export const ClockPunchBody = z.object({ staffId: ObjectIdString, pin: PinSchema });
+export type ClockPunchBody = z.infer<typeof ClockPunchBody>;
+
+/** PUT /api/staff/:id/rate: kuruş per hour. */
+export const StaffRateBody = z.object({ kurusPerHour: z.number().int().min(0).max(100_000_00) });
+export type StaffRateBody = z.infer<typeof StaffRateBody>;
+
+const ClockReason = z.string().trim().min(1).max(200);
+
+/** PUT /api/timesheets/entries/:id: both instants are required, `out` after `in`. */
+export const TimesheetEntryPatchBody = z
+  .object({ in: z.coerce.date(), out: z.coerce.date(), reason: ClockReason })
+  .refine((b) => b.out > b.in, { message: "Out must be after in", path: ["out"] });
+export type TimesheetEntryPatchBody = z.infer<typeof TimesheetEntryPatchBody>;
+
+/** POST /api/timesheets/entries (a missed punch added by a manager). */
+export const TimesheetEntryBody = z
+  .object({ staffId: ObjectIdString, in: z.coerce.date(), out: z.coerce.date(), reason: ClockReason })
+  .refine((b) => b.out > b.in, { message: "Out must be after in", path: ["out"] });
+export type TimesheetEntryBody = z.infer<typeof TimesheetEntryBody>;
+
+/** "YYYY-MM" calendar month. */
+export const MonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM");
+
+/** GET /api/expenses and /api/expenses.csv: `month` defaults to the current service day's month. */
+export const ExpenseQuery = z.object({ month: MonthSchema.optional(), categoryId: ObjectIdString.optional() });
+export type ExpenseQuery = z.infer<typeof ExpenseQuery>;
+
+/** POST|PUT /api/expenses: `amount` is integer kuruş above zero; `date` is not in the future (checked against the app clock). */
+export const ExpenseBody = z.object({
+  categoryId: ObjectIdString,
+  amount: z.number().int().min(1).max(1_000_000_00),
+  date: ServiceDaySchema,
+  payee: z.string().trim().max(100).nullish(),
+  note: z.string().trim().max(500).nullish(),
+});
+export type ExpenseBody = z.infer<typeof ExpenseBody>;
+
+/** POST /api/expense-categories (PUT takes `archived` too). `monthlyBudget` is kuruş, 0 meaning no budget. */
+export const ExpenseCategoryBody = z.object({
+  name: Loc,
+  kind: z.enum(["food_drink", "other"]),
+  monthlyBudget: z.number().int().min(0).max(1_000_000_000_00),
+  archived: z.boolean().optional(),
+});
+export type ExpenseCategoryBody = z.infer<typeof ExpenseCategoryBody>;
+
+/** GET /api/performance/*: `key` is a Monday for `week` (default) and YYYY-MM for `month`; absent means the current one. */
+export const PerformanceQuery = z
+  .object({ period: z.enum(["week", "month"]).default("week"), key: z.string().optional() })
+  .superRefine((q, ctx) => {
+    if (q.key === undefined) return;
+    const ok = (q.period === "week" ? WeekSchema : MonthSchema).safeParse(q.key).success;
+    if (!ok) ctx.addIssue({ code: "custom", path: ["key"], message: q.period === "week" ? "Expected a Monday, YYYY-MM-DD" : "Expected YYYY-MM" });
+  });
+export type PerformanceQuery = z.infer<typeof PerformanceQuery>;

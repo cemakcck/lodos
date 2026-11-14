@@ -186,11 +186,27 @@
       "creditsFile": "Full credits file",
       "by": "by {{author}}",
       "source": "Source"
+    },
+    "rate": {
+      "title": "How was your visit?",
+      "waiter": "Your waiter",
+      "waiterNamed": "Your waiter, {{name}}",
+      "dishes": "Dishes",
+      "food": "Food",
+      "cleanliness": "Cleanliness",
+      "atmosphere": "Atmosphere",
+      "star": "{{count}} of 5 stars",
+      "comment": "Anything to add? (optional)",
+      "counter": "{{count}} / 500",
+      "send": "Send rating",
+      "sending": "Sending…",
+      "thanks": "Thanks for your rating!"
     }
   },
   "staff": {
     "retry": "Try again",
     "nav": {
+      "overview": "Overview",
       "label": "Staff",
       "kitchen": "Kitchen",
       "bar": "Bar",
@@ -199,9 +215,14 @@
       "tables": "Tables",
       "floorPlan": "Floor plan",
       "sales": "Sales",
+      "business": "Business",
       "people": "Staff",
       "schedule": "Schedule",
-      "myShifts": "My shifts"
+      "myShifts": "My shifts",
+      "timesheets": "Timesheets",
+      "expenses": "Expenses",
+      "performance": "Performance",
+      "myPerformance": "My performance"
     },
     "roles": {
       "waiter": "Waiter",
@@ -244,7 +265,8 @@
       "demoTitle": "Or try a role instantly",
       "demoHint": "No PIN needed in the demo.",
       "demoStart": "Pick a role below to open your private copy of the demo restaurant.",
-      "ended": "You were signed out by a manager"
+      "ended": "You were signed out by a manager",
+      "clock": "Clock in / out"
     }
   },
   "demo": {
@@ -1084,9 +1106,18 @@
       "nameTaken": "Someone active already has that name.",
       "pinInvalid": "PIN must be 4 to 6 digits.",
       "pinMismatch": "PINs don't match.",
-      "scheduleOnly": "{{role}} has no PIN and doesn't sign in. They appear on the weekly schedule only.",
+      "scheduleOnly": "{{role}} has no sign-in PIN and can't sign in; it can clock in with a clock PIN.",
       "tablesHint": "Dashed tables belong to another waiter. Tapping one moves it to {{name}}.",
-      "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept."
+      "inactiveHint": "This person is inactive and can't sign in. Their past checks and approvals are kept.",
+      "rate": "Hourly rate (₺)",
+      "rateHint": "Applies from the moment you save. Past entries keep the rate they were clocked at.",
+      "rateInvalid": "Enter an amount like 150 or 150,50.",
+      "clockPin": "Clock PIN",
+      "clockPinHint": "Used on the time clock screen. {{role}} doesn't sign in, so this PIN only clocks in and out.",
+      "clockPinSet": "A clock PIN is set. Enter a new one to replace it.",
+      "clockPinUnset": "No clock PIN yet, so they can't clock in.",
+      "clockPinConfirm": "Confirm clock PIN",
+      "createdPartial": "{{name}} was added, but the hourly rate or clock PIN wasn't saved. Save again to retry."
     },
     "chip": {
       "mine": "{{table}}, {{name}}'s table",
@@ -1317,6 +1348,457 @@
       "body_other": "{{count}} unsaved changes will be lost.",
       "stay": "Stay",
       "go": "Leave"
+    }
+  },
+  "timeclock": {
+    "title": "Time clock",
+    "toSignIn": "Staff sign-in",
+    "pickName": "Who's clocking?",
+    "pickHint": "Tap your name, then enter your PIN.",
+    "demoHint": "Demo: clock PIN for kitchen and bar staff is 1111",
+    "loadError": "Couldn't load the list.",
+    "noPeople": "Nobody is on the schedule yet.",
+    "clockedIn": "Clocked in",
+    "clockedOut": "Not clocked in",
+    "punch": "Clock in / out",
+    "punching": "Saving…",
+    "resultIn": "Clocked in {{time}}",
+    "resultOut": "Clocked out, {{duration}} today",
+    "forgotOut": "You were never clocked out. Ask your manager to fix your last shift.",
+    "backSoon": "Back to the list in a few seconds.",
+    "duration": "{{h}} h {{m}} min",
+    "durationMin": "{{m}} min",
+    "sheets": {
+      "title": "Timesheets",
+      "loadError": "We couldn't load the timesheets.",
+      "empty": "No shifts or clock entries this week.",
+      "caption": "{{name}}: planned shifts and clocked time by day",
+      "totals": "{{hours}} clocked · overtime {{overtime}} · {{cost}}",
+      "col": {
+        "day": "Day",
+        "planned": "Planned",
+        "clocked": "Clocked",
+        "hours": "Hours",
+        "overtime": "Overtime",
+        "cost": "Cost",
+        "actions": "Actions"
+      },
+      "open": "open",
+      "noEntry": "No clock-in",
+      "edited": "edited",
+      "forgot": "forgot to clock out?",
+      "add": "Add entry",
+      "addFor": "Add entry for {{name}}",
+      "edit": "Edit",
+      "editFor": "Edit {{name}}, {{day}}",
+      "addTitle": "Add a clock entry",
+      "editTitle": "Edit entry for {{name}}",
+      "person": "Person",
+      "pickPerson": "Choose a person",
+      "in": "Clock in",
+      "out": "Clock out",
+      "timeHint": "Istanbul time.",
+      "unchanged": "Change a time to save the entry.",
+      "reason": "Reason (required)",
+      "save": "Save entry",
+      "saved": "Entry for {{name}} saved.",
+      "added": "Entry for {{name}} added.",
+      "errors": {
+        "person": "Choose a person.",
+        "time": "Enter a date and time.",
+        "order": "Clock out must be after clock in.",
+        "reason": "Enter a reason."
+      }
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "loadError": "We couldn't load the expenses.",
+    "retry": "Try again",
+    "add": "Add expense",
+    "categories": "Categories",
+    "export": "Export CSV",
+    "month": {
+      "label": "Month",
+      "prev": "Previous month",
+      "next": "Next month",
+      "this": "This month"
+    },
+    "budget": {
+      "title": "Spending against budget",
+      "total": "{{spent}} spent",
+      "of": "{{spent}} of {{budget}}",
+      "over": "Over budget by {{amount}}",
+      "under": "Under by {{amount}}",
+      "none": "No budget",
+      "empty": "No categories yet.",
+      "kind": {
+        "food_drink": "Food and drink",
+        "other": "Other"
+      },
+      "summary": "{{spent}} spent of {{budget}} budgeted"
+    },
+    "list": {
+      "title": "Expenses",
+      "filter": "Category",
+      "all": "All categories",
+      "empty": "No expenses this month.",
+      "date": "Date",
+      "category": "Category",
+      "payee": "Payee",
+      "note": "Note",
+      "amount": "Amount",
+      "actions": "Actions",
+      "edit": "Edit expense {{category}}, {{date}}",
+      "count_one": "{{count}} expense",
+      "count_other": "{{count}} expenses"
+    },
+    "form": {
+      "addTitle": "Add expense",
+      "editTitle": "Edit expense",
+      "amount": "Amount (₺)",
+      "category": "Category",
+      "pick": "Choose a category",
+      "date": "Date",
+      "payee": "Payee",
+      "note": "Note",
+      "save": "Save expense",
+      "cancel": "Cancel",
+      "delete": "Delete expense",
+      "confirm": "Delete this expense?",
+      "yes": "Yes, delete",
+      "keep": "Keep it",
+      "errors": {
+        "amount": "Enter an amount above zero.",
+        "category": "Choose a category.",
+        "date": "Enter a date."
+      }
+    },
+    "cats": {
+      "title": "Categories",
+      "new": "New category",
+      "edit": "Edit {{name}}",
+      "editTitle": "Edit category",
+      "newTitle": "New category",
+      "nameEn": "Name (English)",
+      "nameTr": "Name (Turkish)",
+      "kind": "Kind",
+      "budget": "Monthly budget (₺)",
+      "budgetHint": "0 means no budget. It applies to every month.",
+      "archived": "Archived",
+      "archivedBadge": "archived",
+      "save": "Save category",
+      "cancel": "Cancel",
+      "close": "Close",
+      "back": "Back to the list",
+      "empty": "No categories yet.",
+      "kindLocked": "This category already has expenses, so its kind can't change. Archive it and make a new one instead.",
+      "errors": {
+        "name": "Enter a name in both languages.",
+        "budget": "Enter a budget in lira, or 0."
+      }
+    }
+  },
+  "performance": {
+    "title": "Performance",
+    "myTitle": "My performance",
+    "loadError": "We couldn't load the performance figures.",
+    "summary": "Summary",
+    "back": "Back to the ranking",
+    "empty": "Nobody in this group yet.",
+    "rankingOf": "{{group}} ranking",
+    "notEnough": "Not enough data yet",
+    "week": "Week",
+    "hours": "Hours",
+    "lateness": "Lateness",
+    "hoursOf": "{{actual}} of {{planned}} planned",
+    "late_one": "{{count}} late shift",
+    "late_other": "{{count}} late shifts",
+    "stars": "{{n}} of 5",
+    "group": {
+      "label": "Group",
+      "floor": "Floor",
+      "kitchen": "Kitchen",
+      "bar": "Bar"
+    },
+    "period": {
+      "label": "Period",
+      "week": "Week",
+      "month": "Month",
+      "range_week": "Week",
+      "range_month": "Month",
+      "prev_week": "Previous week",
+      "next_week": "Next week",
+      "prev_month": "Previous month",
+      "next_month": "Next month",
+      "this_week": "This week",
+      "this_month": "This month"
+    },
+    "col": {
+      "rank": "Rank",
+      "name": "Name",
+      "score": "Score",
+      "rating": "Rating",
+      "hours": "Hours",
+      "late": "Late shifts"
+    },
+    "parts": {
+      "rating": "Guest rating",
+      "dishRating": "Dish rating",
+      "workload": "Workload",
+      "reliability": "Reliability",
+      "throughput": "Throughput",
+      "onTime": "On time"
+    },
+    "breakdown": {
+      "title": "Score breakdown",
+      "bar": "Score {{score}} out of 100",
+      "component": "Component",
+      "points": "Points",
+      "max": "Out of",
+      "total": "Total"
+    },
+    "rank": {
+      "waiter_one": "{{position}} of {{count}} waiter",
+      "waiter_other": "{{position}} of {{count}} waiters",
+      "cook_one": "{{position}} of {{count}} cook",
+      "cook_other": "{{position}} of {{count}} cooks",
+      "bartender_one": "{{position}} of {{count}} bartender",
+      "bartender_other": "{{position}} of {{count}} bartenders"
+    },
+    "trend": {
+      "title": "Rating trend",
+      "avg": "Average rating",
+      "count": "Ratings"
+    },
+    "history": {
+      "title": "Points history"
+    },
+    "comments": {
+      "title": "Guest comments",
+      "none": "No comments in the last eight weeks.",
+      "hide": "Hide",
+      "unhide": "Unhide",
+      "hidden": "Hidden",
+      "error": "We couldn't change that comment. Try again."
+    }
+  },
+  "business": {
+    "title": "Business",
+    "loadError": "We couldn't load the monthly figures.",
+    "retry": "Try again",
+    "pdf": "Export PDF",
+    "csv": "Export CSV",
+    "csvOf": "Export CSV: {{section}}",
+    "soFar": "So far: {{days}} days of {{month}}, compared with the same days last month.",
+    "full": "Compared with {{month}}.",
+    "vs": {
+      "1": "vs January",
+      "2": "vs February",
+      "3": "vs March",
+      "4": "vs April",
+      "5": "vs May",
+      "6": "vs June",
+      "7": "vs July",
+      "8": "vs August",
+      "9": "vs September",
+      "10": "vs October",
+      "11": "vs November",
+      "12": "vs December"
+    },
+    "change": {
+      "pct": {
+        "up": "↑ {{n}}% {{vs}}",
+        "down": "↓ {{n}}% {{vs}}",
+        "flat": "No change {{vs}}"
+      },
+      "pts": {
+        "up": "↑ {{n}} pts {{vs}}",
+        "down": "↓ {{n}} pts {{vs}}",
+        "flat": "No change {{vs}}"
+      }
+    },
+    "none": "—",
+    "notEnough": "Not enough data yet",
+    "hours": "{{n}} h",
+    "ofSales": "{{n}}% of sales",
+    "perHour": "{{amount}} per hour",
+    "margin": "Margin {{n}}%",
+    "pnl": {
+      "title": "Profit and loss",
+      "sales": "Sales",
+      "foodDrink": "Food & drink cost",
+      "labour": "Labour",
+      "other": "Other costs",
+      "profit": "Profit",
+      "otherBy": "Other costs by category",
+      "noSales": "No sales in this period."
+    },
+    "sales": {
+      "title": "Sales patterns",
+      "byDay": "Sales by day",
+      "byWeekday": "Sales by weekday",
+      "day": "Day",
+      "revenue": "Revenue",
+      "bar": "{{day}}: {{amount}}",
+      "weekday": "Weekday",
+      "nights": "Open nights",
+      "avg": "Per open night",
+      "empty": "No sales in this period.",
+      "avgCheck": "Average check",
+      "avgCover": "Average per cover",
+      "covers": "Covers",
+      "perLabour": "Sales per labour hour",
+      "turns": "Table turns per night",
+      "days": {
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat",
+        "7": "Sun"
+      }
+    },
+    "menu": {
+      "title": "Menu: popularity × rating",
+      "groups": "Menu groups",
+      "hint": {
+        "stars": "sell a lot, rated high",
+        "hidden_gems": "rated high, sell little",
+        "fix": "sell a lot, rated low",
+        "rethink": "sell little, rated low"
+      },
+      "none": "None",
+      "dish": "Dish",
+      "group": "Group",
+      "sold": "Sold",
+      "rating": "Rating",
+      "revenue": "Revenue",
+      "empty": "No dishes sold in this period.",
+      "unrated": "Not rated"
+    },
+    "staff": {
+      "title": "Staff",
+      "name": "Name",
+      "role": "Role",
+      "hours": "Hours (planned)",
+      "late": "Late",
+      "rating": "Rating",
+      "points": "Points",
+      "labour": "Labour cost",
+      "empty": "No staff figures for this period.",
+      "labourByRole": "Labour cost by role",
+      "overtime": "Overtime hours",
+      "groups": {
+        "floor": "Floor",
+        "kitchen": "Kitchen",
+        "bar": "Bar",
+        "managers": "Managers"
+      }
+    },
+    "ratings": {
+      "title": "Guests and ratings",
+      "restaurant": "Restaurant",
+      "food": "Food",
+      "cleanliness": "Cleanliness",
+      "atmosphere": "Atmosphere",
+      "spread": "Rating spread",
+      "spreadOf": "Rating spread: {{what}}",
+      "forRestaurant": "Restaurant categories",
+      "forWaiter": "Waiters",
+      "forDish": "Dishes",
+      "stars": "{{n}}★",
+      "count": "{{count}} ratings",
+      "trend": "Restaurant rating by week",
+      "week": "Week of",
+      "ratings": "Ratings",
+      "comments": "Latest comments",
+      "noComments": "No comments in this period.",
+      "hide": "Hide",
+      "hideComment": "Hide this comment",
+      "error": "We couldn't hide that comment. Try again.",
+      "noData": "No ratings in this period."
+    },
+    "expenses": {
+      "title": "Expenses",
+      "category": "Category",
+      "spent": "Spent",
+      "budget": "Budget",
+      "status": "Status",
+      "noBudget": "No budget",
+      "over": "Over by {{amount}}",
+      "under": "Under by {{amount}}",
+      "total": "Total",
+      "biggest": "Biggest single costs",
+      "date": "Date",
+      "payee": "Payee",
+      "amount": "Amount",
+      "empty": "No expenses in this period."
+    }
+  },
+  "overview": {
+    "title": "Overview",
+    "loadError": "We couldn't load the overview.",
+    "delta": {
+      "pct": {
+        "up": "↑ {{n}}% vs same time last week",
+        "down": "↓ {{n}}% vs same time last week",
+        "flat": "No change vs same time last week"
+      },
+      "abs": {
+        "up": "↑ {{n}} vs previous 7 days",
+        "down": "↓ {{n}} vs previous 7 days",
+        "flat": "No change vs previous 7 days"
+      }
+    },
+    "tiles": {
+      "sales": "Sales today",
+      "covers": "Covers",
+      "rating": "Guest rating (7 days)",
+      "profit": "Profit this month"
+    },
+    "working": {
+      "title": "Who's working now",
+      "empty": "Nobody is scheduled or clocked in today.",
+      "person": "Person",
+      "time": "Time",
+      "status": "Status",
+      "in": "in {{time}}",
+      "from": "from {{time}}",
+      "due": "due {{time}}"
+    },
+    "status": {
+      "on_shift": "on shift",
+      "late": "{{n}} min late",
+      "missing": "not in yet",
+      "later": "later today",
+      "finished": "finished",
+      "unscheduled": "unscheduled",
+      "forgot_out": "forgot to clock out?"
+    },
+    "top": {
+      "title": "Top staff · last 7 days",
+      "pts": "{{n}} pts"
+    },
+    "expenses": {
+      "title": "Expenses this month",
+      "of": "{{spent}} of {{budget}} budget",
+      "none": "No expenses yet.",
+      "latest": "Latest expenses",
+      "open": "All expenses"
+    },
+    "dishes": {
+      "title": "Dish ratings (7 days)",
+      "none": "Not enough ratings yet.",
+      "needsWork": "{{name}} (needs work)"
+    },
+    "month": {
+      "title": "This month at a glance",
+      "soFar": "So far, compared with the same days last month",
+      "expenses": "Expenses vs budget",
+      "ofBudget": "{{spent}} of {{budget}}",
+      "noMargin": "Margin —"
     }
   }
 }

@@ -14,6 +14,9 @@ export interface StaffRow {
   demoProtected: boolean;
   canDeactivate: boolean;
   whyNot: WhyNot;
+  /** Kuruş per hour in force now (0 = none set). */
+  hourlyRate: number;
+  hasClockPin: boolean;
 }
 
 export interface StaffList {

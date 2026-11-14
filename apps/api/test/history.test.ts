@@ -46,18 +46,19 @@ beforeAll(async () => {
 afterAll(() => t.close());
 
 describe("generateHistory", () => {
-  it("stores 60 generated summaries for the 60 service days before today", async () => {
+  it("stores 120 generated summaries for the 120 service days before today", async () => {
     const docs = await summaries(a);
-    expect(docs).toHaveLength(60);
+    expect(docs).toHaveLength(120);
     expect(docs.every((d) => d.generated)).toBe(true);
     const today = serviceDayOf(NOW);
-    expect(docs[59]?.serviceDay).toBe(serviceDayOf(new Date(serviceDayStartOf(today).getTime() - 1)));
+    expect(docs[119]?.serviceDay).toBe(serviceDayOf(new Date(serviceDayStartOf(today).getTime() - 1)));
     expect(docs.some((d) => d.serviceDay >= today)).toBe(false);
   });
 
   it("is deterministic for the same now and differs for another", async () => {
-    // Item ids are random per tenant; everything else must match.
-    const plain = async (id: string) => JSON.parse(JSON.stringify(await summaries(id)).replace(/"itemId":"[0-9a-f]+"/g, '"itemId":"x"'));
+    // Item and staff ids are random per tenant; everything else must match.
+    const plain = async (id: string) =>
+      JSON.parse(JSON.stringify(await summaries(id)).replace(/"(itemId|staffId)":"[0-9a-f]+"/g, '"$1":"x"'));
     expect(await plain(a)).toEqual(await plain(b));
     expect(await adjustments(a)).toEqual(await adjustments(b));
     expect(await plain(a)).not.toEqual(await plain(c));
@@ -73,6 +74,15 @@ describe("generateHistory", () => {
       expect(sum(d.byHour.map((h) => h.checks))).toBe(d.checks);
       expect(sum(d.byHour.map((h) => h.comps))).toBe(d.comps.amount + d.voids.amount);
       expect(Number.isInteger(d.revenue)).toBe(true);
+      // byServer splits the day exactly among the waiters; on-time tickets never outnumber the tickets.
+      expect(sum(d.byServer.map((s) => s.checks))).toBe(d.checks);
+      expect(sum(d.byServer.map((s) => s.covers))).toBe(d.covers);
+      expect(sum(d.byServer.map((s) => s.sales))).toBe(d.revenue);
+      if (d.checks > 0) expect(d.byServer.length).toBeGreaterThan(0);
+      for (const h of [...d.ticketTimes.kitchen, ...d.ticketTimes.bar]) {
+        expect(h.onTime).toBeLessThanOrEqual(h.count);
+        expect(h.onTime).toBeGreaterThan(0);
+      }
     }
   });
 

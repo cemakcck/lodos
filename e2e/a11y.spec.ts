@@ -5,7 +5,7 @@
  */
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect, type Page } from "@playwright/test";
-import { demoAs, dishButton, floorTable, labelThen, orderAsGuest, simulatorOff } from "./helpers";
+import { demoAs, dishButton, floorTable, joinSandbox, labelThen, orderAsGuest, simulatorOff } from "./helpers";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
 
@@ -134,6 +134,7 @@ test.describe("staff", () => {
 
   test("menu editor", async ({ page }) => {
     await demoAs(page, "manager");
+    await page.goto("/staff/menu");
     await expect(page.getByRole("heading", { level: 1, name: "Menu" })).toBeVisible();
     await expect(page.getByRole("switch").first()).toBeVisible();
     await expectAccessible(page, "menu editor");
@@ -164,3 +165,74 @@ test.describe("staff", () => {
     await expectAccessible(page, "floor plan");
   });
 });
+
+/*
+ * Phase 3: the management screens and the rating card, each in English and Turkish. The language is chosen the way a
+ * visitor does it (the stored preference), before the page loads.
+ */
+for (const lang of ["en", "tr"] as const) {
+  test.describe(`management, ${lang}`, () => {
+    test.use({ viewport: { width: 1280, height: 800 } });
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript((l) => localStorage.setItem("lodos.lang", l), lang);
+    });
+
+    const managerScreens: [string, [string, string][]][] = [
+      ["overview and monthly", [["/staff/overview", "overview"], ["/staff/business", "monthly"]]],
+      ["performance, expenses and timesheets", [["/staff/performance", "performance"], ["/staff/expenses", "expenses"], ["/staff/timesheets", "timesheets"]]],
+    ];
+    for (const [name, screens] of managerScreens) {
+      test(name, async ({ page }) => {
+        await demoAs(page, "manager");
+        for (const [path, screen] of screens) {
+          await page.goto(path);
+          await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+          await expect(page.getByText(/^(Loading…|Yükleniyor…)$/)).toHaveCount(0);
+          await expectAccessible(page, `${screen} (${lang})`);
+        }
+      });
+    }
+
+    test("My performance and the time clock", async ({ page }) => {
+      await demoAs(page, "waiter");
+      await page.goto("/staff/my-performance");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.getByText(/^(Loading…|Yükleniyor…)$/)).toHaveCount(0);
+      await expectAccessible(page, `my performance (${lang})`);
+
+      await page.goto("/staff/clock");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Mert/ })).toBeVisible();
+      await expectAccessible(page, `time clock, names (${lang})`);
+      await page.getByRole("button", { name: /Mert/ }).click();
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expectAccessible(page, `time clock, PIN pad (${lang})`);
+    });
+
+    {
+      test("the rating card", async ({ browser }) => {
+        // The ordering and closing run in English (the helpers' names are English); the guest then picks the language.
+        const guestCtx = await browser.newContext();
+        const guest = await guestCtx.newPage();
+        await demoAs(guest, "guest");
+        const waiterCtx = await joinSandbox(browser, guestCtx);
+        const waiter = await waiterCtx.newPage();
+        await demoAs(waiter, "waiter");
+        
+        await orderAsGuest(guest, [{ name: "Levrek crudo" }]);
+        await floorTable(waiter, "T7").click();
+        await waiter.getByRole("region", { name: "Table T7" }).getByRole("button", { name: "Close check" }).click();
+        await waiter.getByRole("button", { name: /^Take payment/ }).click();
+        const dialog = waiter.getByRole("dialog", { name: "Close check · T7" });
+        await dialog.getByRole("radio", { name: "Card" }).click();
+        await dialog.getByRole("button", { name: /^Close check, .* by card$/ }).click();
+        await expect(dialog).toBeHidden();
+
+        await guest.getByRole("group", { name: /^(Language|Dil)$/ }).getByRole("button", { name: new RegExp(`^${lang.toUpperCase()} ?,`) }).click();
+        await expect(guest.getByRole("heading", { level: 2, name: lang === "en" ? "How was your visit?" : "Ziyaretiniz nasıldı?" })).toBeVisible({ timeout: 5_000 });
+        await expectAccessible(guest, `rating card (${lang})`);
+        await Promise.all([guestCtx.close(), waiterCtx.close()]);
+      });
+    }
+  });
+}

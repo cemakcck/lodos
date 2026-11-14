@@ -1,4 +1,4 @@
-import { personRoom, StaffCreateBody, StaffPatchBody, StaffPinBody } from "@lodos/shared";
+import { personRoom, StaffCreateBody, StaffPatchBody, StaffPinBody, StaffRateBody } from "@lodos/shared";
 import type { FastifyInstance } from "fastify";
 import { staffRoute, type StaffRequest } from "../auth/guard";
 import { roleRooms } from "../realtime/io";
@@ -8,6 +8,8 @@ import {
   listStaff,
   reactivateStaff,
   resetPin,
+  setClockPin,
+  setRate,
   updateStaff,
   type StaffCtx,
   type StaffEffects,
@@ -18,7 +20,7 @@ type IdParams = { Params: { id: string } };
 /** Staff management (spec §5). Manager only (`staffRoute([])`), inside the manager's tenant. */
 export function registerStaffRoutes(app: FastifyInstance): void {
   const { models } = app;
-  const ctxOf = (req: StaffRequest): StaffCtx => ({ requesterId: req.staff.id, demoMode: app.demoMode, tenantId: req.staff.tenantId });
+  const ctxOf = (req: StaffRequest): StaffCtx => ({ requesterId: req.staff.id, demoMode: app.demoMode, tenantId: req.staff.tenantId, now: app.clock.now() });
 
   /** Announces a committed write: table sections, ended sessions (event first, then the disconnect), moved rooms. */
   const announce = (tenantId: string, staffId: string, fx: StaffEffects): void => {
@@ -59,6 +61,19 @@ export function registerStaffRoutes(app: FastifyInstance): void {
     "/api/staff/:id/pin",
     staffRoute([], async (req) => {
       await resetPin(models, req.params.id, StaffPinBody.parse(req.body).pin, ctxOf(req));
+      return { ok: true };
+    }),
+  );
+
+  app.put<IdParams>(
+    "/api/staff/:id/rate",
+    staffRoute([], async (req) => ({ staff: await setRate(models, req.params.id, StaffRateBody.parse(req.body), ctxOf(req)) })),
+  );
+
+  app.post<IdParams>(
+    "/api/staff/:id/clock-pin",
+    staffRoute([], async (req) => {
+      await setClockPin(models, req.params.id, StaffPinBody.parse(req.body).pin, ctxOf(req));
       return { ok: true };
     }),
   );

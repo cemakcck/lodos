@@ -47,7 +47,7 @@ describe("demo sign-in and sandbox creation", () => {
       waiter: ["/staff/floor", "Deniz", "waiter"],
       kitchen: ["/staff/kitchen", "Kitchen", "kitchen"],
       bar: ["/staff/bar", "Bar", "bar"],
-      manager: ["/staff/menu", "Selin", "manager"],
+      manager: ["/staff/overview", "Selin", "manager"],
     } as const;
     for (const [role, [redirect, name]] of Object.entries(expected)) {
       const res = await signIn(t, role, { lodos_sb: sb });
@@ -123,6 +123,15 @@ describe("demo sign-in and sandbox creation", () => {
     expect(off.json()).toEqual({ simulatorOn: false });
     expect((await t.inject({ method: "GET", url: "/api/demo/info", cookies })).json().simulatorOn).toBe(false);
     expect((await t.inject({ method: "GET", url: "/api/demo/info" })).statusCode).toBe(401);
+  });
+
+  it("keeps a fresh sandbox under 6,000 documents", async () => {
+    const res = await signIn(t, "manager");
+    const val = decodeURIComponent(cookie(res, "lodos_sb")!);
+    const tenantId = val.slice(0, val.lastIndexOf(".")).replace(/^s:/, "");
+    const n = await countAll(t, tenantId);
+    expect(n).toBeGreaterThan(1_000); // four months of demo history
+    expect(n).toBeLessThan(6_000);
   });
 
   it("rejects an unknown role", async () => {

@@ -186,11 +186,27 @@
       "creditsFile": "Kaynak dosyasının tamamı",
       "by": "{{author}}",
       "source": "Kaynak"
+    },
+    "rate": {
+      "title": "Ziyaretiniz nasıldı?",
+      "waiter": "Garsonunuz",
+      "waiterNamed": "Garsonunuz, {{name}}",
+      "dishes": "Tabaklar",
+      "food": "Yemek",
+      "cleanliness": "Temizlik",
+      "atmosphere": "Atmosfer",
+      "star": "5 yıldızdan {{count}}",
+      "comment": "Eklemek istediğiniz bir şey var mı? (isteğe bağlı)",
+      "counter": "{{count}} / 500",
+      "send": "Değerlendirmeyi gönder",
+      "sending": "Gönderiliyor…",
+      "thanks": "Değerlendirmeniz için teşekkürler!"
     }
   },
   "staff": {
     "retry": "Tekrar dene",
     "nav": {
+      "overview": "Genel bakış",
       "label": "Personel",
       "kitchen": "Mutfak",
       "bar": "Bar",
@@ -199,9 +215,14 @@
       "tables": "Masalar",
       "floorPlan": "Kat planı",
       "sales": "Satış",
+      "business": "İşletme",
       "people": "Personel",
       "schedule": "Vardiya planı",
-      "myShifts": "Vardiyalarım"
+      "myShifts": "Vardiyalarım",
+      "timesheets": "Mesai kayıtları",
+      "expenses": "Giderler",
+      "performance": "Performans",
+      "myPerformance": "Performansım"
     },
     "roles": {
       "waiter": "Garson",
@@ -244,7 +265,8 @@
       "demoTitle": "Ya da bir rolü hemen deneyin",
       "demoHint": "Demoda PIN gerekmez.",
       "demoStart": "Demo restoranın size özel kopyasını açmak için aşağıdan bir rol seçin.",
-      "ended": "Bir yönetici oturumunu kapattı"
+      "ended": "Bir yönetici oturumunu kapattı",
+      "clock": "Giriş / çıkış (mesai)"
     }
   },
   "demo": {
@@ -1084,9 +1106,18 @@
       "nameTaken": "Aktif biri zaten bu adı kullanıyor.",
       "pinInvalid": "PIN 4 ila 6 rakam olmalı.",
       "pinMismatch": "PIN'ler eşleşmiyor.",
-      "scheduleOnly": "{{role}} için PIN yok ve giriş yapmaz. Yalnızca haftalık vardiya planında görünür.",
+      "scheduleOnly": "{{role}} için oturum açma PIN'i yok, oturum açamaz; mesai PIN'iyle giriş ve çıkış yapabilir.",
       "tablesHint": "Kesik çizgili masalar başka bir garsona ait. Dokunursanız {{name}} adlı kişiye geçer.",
-      "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır."
+      "inactiveHint": "Bu kişi pasif ve giriş yapamaz. Geçmiş hesapları ve onayları saklanır.",
+      "rate": "Saatlik ücret (₺)",
+      "rateHint": "Kaydettiğiniz andan itibaren geçerlidir. Geçmiş kayıtlar kendi ücretini korur.",
+      "rateInvalid": "150 veya 150,50 gibi bir tutar girin.",
+      "clockPin": "Mesai PIN'i",
+      "clockPinHint": "Mesai ekranında kullanılır. {{role}} oturum açmaz, bu PIN yalnızca giriş ve çıkış içindir.",
+      "clockPinSet": "Mesai PIN'i tanımlı. Değiştirmek için yenisini girin.",
+      "clockPinUnset": "Henüz mesai PIN'i yok, giriş yapamaz.",
+      "clockPinConfirm": "Mesai PIN'ini doğrulayın",
+      "createdPartial": "{{name}} eklendi, ancak saatlik ücret veya mesai PIN'i kaydedilemedi. Yeniden denemek için tekrar kaydedin."
     },
     "chip": {
       "mine": "{{table}}, {{name}} kişisinin masası",
@@ -1317,6 +1348,457 @@
       "body_other": "{{count}} kaydedilmemiş değişiklik kaybolacak.",
       "stay": "Kal",
       "go": "Çık"
+    }
+  },
+  "timeclock": {
+    "title": "Mesai saati",
+    "toSignIn": "Personel girişi",
+    "pickName": "Kim giriş/çıkış yapıyor?",
+    "pickHint": "Adınıza dokunun, sonra PIN'inizi girin.",
+    "demoHint": "Demo: mutfak ve bar ekibinin saat PIN'i 1111",
+    "loadError": "Liste yüklenemedi.",
+    "noPeople": "Programda henüz kimse yok.",
+    "clockedIn": "İçeride",
+    "clockedOut": "Giriş yapılmadı",
+    "punch": "Giriş / çıkış",
+    "punching": "Kaydediliyor…",
+    "resultIn": "Giriş yapıldı {{time}}",
+    "resultOut": "Çıkış yapıldı, bugün {{duration}}",
+    "forgotOut": "Çıkış yapmamışsınız. Son vardiyanızı düzeltmesi için yöneticinize söyleyin.",
+    "backSoon": "Birkaç saniye içinde listeye dönülecek.",
+    "duration": "{{h}} sa {{m}} dk",
+    "durationMin": "{{m}} dk",
+    "sheets": {
+      "title": "Mesai kayıtları",
+      "loadError": "Mesai kayıtları yüklenemedi.",
+      "empty": "Bu hafta vardiya veya mesai kaydı yok.",
+      "caption": "{{name}}: güne göre planlanan vardiya ve kayıtlı süre",
+      "totals": "{{hours}} çalışıldı · fazla mesai {{overtime}} · {{cost}}",
+      "col": {
+        "day": "Gün",
+        "planned": "Planlanan",
+        "clocked": "Kayıt",
+        "hours": "Süre",
+        "overtime": "Fazla mesai",
+        "cost": "Maliyet",
+        "actions": "İşlemler"
+      },
+      "open": "açık",
+      "noEntry": "Giriş yok",
+      "edited": "düzenlendi",
+      "forgot": "çıkış unutuldu mu?",
+      "add": "Kayıt ekle",
+      "addFor": "{{name}} için kayıt ekle",
+      "edit": "Düzenle",
+      "editFor": "{{name}} düzenle, {{day}}",
+      "addTitle": "Mesai kaydı ekle",
+      "editTitle": "{{name}} kaydını düzenle",
+      "person": "Kişi",
+      "pickPerson": "Kişi seçin",
+      "in": "Giriş",
+      "out": "Çıkış",
+      "timeHint": "İstanbul saati.",
+      "unchanged": "Kaydetmek için bir saati değiştirin.",
+      "reason": "Neden (zorunlu)",
+      "save": "Kaydı kaydet",
+      "saved": "{{name}} kaydı güncellendi.",
+      "added": "{{name}} için kayıt eklendi.",
+      "errors": {
+        "person": "Bir kişi seçin.",
+        "time": "Tarih ve saat girin.",
+        "order": "Çıkış, girişten sonra olmalı.",
+        "reason": "Bir neden girin."
+      }
+    }
+  },
+  "expenses": {
+    "title": "Giderler",
+    "loadError": "Giderler yüklenemedi.",
+    "retry": "Tekrar dene",
+    "add": "Gider ekle",
+    "categories": "Kategoriler",
+    "export": "CSV indir",
+    "month": {
+      "label": "Ay",
+      "prev": "Önceki ay",
+      "next": "Sonraki ay",
+      "this": "Bu ay"
+    },
+    "budget": {
+      "title": "Bütçeye karşı harcama",
+      "total": "{{spent}} harcandı",
+      "of": "{{spent}} / {{budget}}",
+      "over": "Bütçe aşıldı: {{amount}}",
+      "under": "{{amount}} altında",
+      "none": "Bütçe yok",
+      "empty": "Henüz kategori yok.",
+      "kind": {
+        "food_drink": "Yiyecek ve içecek",
+        "other": "Diğer"
+      },
+      "summary": "{{budget}} bütçenin {{spent}} kadarı harcandı"
+    },
+    "list": {
+      "title": "Giderler",
+      "filter": "Kategori",
+      "all": "Tüm kategoriler",
+      "empty": "Bu ay gider yok.",
+      "date": "Tarih",
+      "category": "Kategori",
+      "payee": "Alıcı",
+      "note": "Not",
+      "amount": "Tutar",
+      "actions": "İşlemler",
+      "edit": "Gideri düzenle: {{category}}, {{date}}",
+      "count_one": "{{count}} gider",
+      "count_other": "{{count}} gider"
+    },
+    "form": {
+      "addTitle": "Gider ekle",
+      "editTitle": "Gideri düzenle",
+      "amount": "Tutar (₺)",
+      "category": "Kategori",
+      "pick": "Kategori seçin",
+      "date": "Tarih",
+      "payee": "Alıcı",
+      "note": "Not",
+      "save": "Gideri kaydet",
+      "cancel": "Vazgeç",
+      "delete": "Gideri sil",
+      "confirm": "Bu gider silinsin mi?",
+      "yes": "Evet, sil",
+      "keep": "Vazgeç",
+      "errors": {
+        "amount": "Sıfırdan büyük bir tutar girin.",
+        "category": "Bir kategori seçin.",
+        "date": "Bir tarih girin."
+      }
+    },
+    "cats": {
+      "title": "Kategoriler",
+      "new": "Yeni kategori",
+      "edit": "{{name}} kategorisini düzenle",
+      "editTitle": "Kategoriyi düzenle",
+      "newTitle": "Yeni kategori",
+      "nameEn": "Ad (İngilizce)",
+      "nameTr": "Ad (Türkçe)",
+      "kind": "Tür",
+      "budget": "Aylık bütçe (₺)",
+      "budgetHint": "0 bütçe yok demektir. Her ay için geçerlidir.",
+      "archived": "Arşivlendi",
+      "archivedBadge": "arşivde",
+      "save": "Kategoriyi kaydet",
+      "cancel": "Vazgeç",
+      "close": "Kapat",
+      "back": "Listeye dön",
+      "empty": "Henüz kategori yok.",
+      "kindLocked": "Bu kategoride zaten gider var, bu yüzden türü değiştirilemez. Arşivleyip yenisini oluşturun.",
+      "errors": {
+        "name": "Her iki dilde de bir ad girin.",
+        "budget": "Lira cinsinden bir bütçe girin ya da 0."
+      }
+    }
+  },
+  "performance": {
+    "title": "Performans",
+    "myTitle": "Performansım",
+    "loadError": "Performans verileri yüklenemedi.",
+    "summary": "Özet",
+    "back": "Sıralamaya dön",
+    "empty": "Bu grupta henüz kimse yok.",
+    "rankingOf": "{{group}} sıralaması",
+    "notEnough": "Henüz yeterli veri yok",
+    "week": "Hafta",
+    "hours": "Saat",
+    "lateness": "Gecikme",
+    "hoursOf": "{{actual}} (planlanan {{planned}})",
+    "late_one": "{{count}} geç vardiya",
+    "late_other": "{{count}} geç vardiya",
+    "stars": "5 üzerinden {{n}}",
+    "group": {
+      "label": "Grup",
+      "floor": "Salon",
+      "kitchen": "Mutfak",
+      "bar": "Bar"
+    },
+    "period": {
+      "label": "Dönem",
+      "week": "Hafta",
+      "month": "Ay",
+      "range_week": "Hafta",
+      "range_month": "Ay",
+      "prev_week": "Önceki hafta",
+      "next_week": "Sonraki hafta",
+      "prev_month": "Önceki ay",
+      "next_month": "Sonraki ay",
+      "this_week": "Bu hafta",
+      "this_month": "Bu ay"
+    },
+    "col": {
+      "rank": "Sıra",
+      "name": "Ad",
+      "score": "Puan",
+      "rating": "Değerlendirme",
+      "hours": "Saat",
+      "late": "Geç vardiya"
+    },
+    "parts": {
+      "rating": "Misafir puanı",
+      "dishRating": "Yemek puanı",
+      "workload": "İş yükü",
+      "reliability": "Güvenilirlik",
+      "throughput": "Hız",
+      "onTime": "Zamanında"
+    },
+    "breakdown": {
+      "title": "Puan dökümü",
+      "bar": "100 üzerinden {{score}} puan",
+      "component": "Bileşen",
+      "points": "Puan",
+      "max": "Üst sınır",
+      "total": "Toplam"
+    },
+    "rank": {
+      "waiter_one": "{{count}} garsondan {{position}}.",
+      "waiter_other": "{{count}} garsondan {{position}}.",
+      "cook_one": "{{count}} aşçıdan {{position}}.",
+      "cook_other": "{{count}} aşçıdan {{position}}.",
+      "bartender_one": "{{count}} barmenden {{position}}.",
+      "bartender_other": "{{count}} barmenden {{position}}."
+    },
+    "trend": {
+      "title": "Puan eğilimi",
+      "avg": "Ortalama puan",
+      "count": "Değerlendirme"
+    },
+    "history": {
+      "title": "Puan geçmişi"
+    },
+    "comments": {
+      "title": "Misafir yorumları",
+      "none": "Son sekiz haftada yorum yok.",
+      "hide": "Gizle",
+      "unhide": "Göster",
+      "hidden": "Gizli",
+      "error": "Yorum değiştirilemedi. Tekrar deneyin."
+    }
+  },
+  "business": {
+    "title": "İşletme",
+    "loadError": "Aylık rakamlar yüklenemedi.",
+    "retry": "Tekrar dene",
+    "pdf": "PDF indir",
+    "csv": "CSV indir",
+    "csvOf": "CSV indir: {{section}}",
+    "soFar": "Şimdiye kadar: {{month}} ayının {{days}} günü, geçen ayın aynı günleriyle karşılaştırılır.",
+    "full": "{{month}} ayıyla karşılaştırılır.",
+    "vs": {
+      "1": "Ocak'a göre",
+      "2": "Şubat'a göre",
+      "3": "Mart'a göre",
+      "4": "Nisan'a göre",
+      "5": "Mayıs'a göre",
+      "6": "Haziran'a göre",
+      "7": "Temmuz'a göre",
+      "8": "Ağustos'a göre",
+      "9": "Eylül'e göre",
+      "10": "Ekim'e göre",
+      "11": "Kasım'a göre",
+      "12": "Aralık'a göre"
+    },
+    "change": {
+      "pct": {
+        "up": "{{vs}} ↑ %{{n}}",
+        "down": "{{vs}} ↓ %{{n}}",
+        "flat": "{{vs}} değişim yok"
+      },
+      "pts": {
+        "up": "{{vs}} ↑ {{n}} puan",
+        "down": "{{vs}} ↓ {{n}} puan",
+        "flat": "{{vs}} değişim yok"
+      }
+    },
+    "none": "—",
+    "notEnough": "Henüz yeterli veri yok",
+    "hours": "{{n}} sa",
+    "ofSales": "satışa oranı %{{n}}",
+    "perHour": "saatte {{amount}}",
+    "margin": "Marj %{{n}}",
+    "pnl": {
+      "title": "Kâr ve zarar",
+      "sales": "Satış",
+      "foodDrink": "Yiyecek ve içecek maliyeti",
+      "labour": "İşçilik",
+      "other": "Diğer giderler",
+      "profit": "Kâr",
+      "otherBy": "Diğer giderler, kategoriye göre",
+      "noSales": "Bu dönemde satış yok."
+    },
+    "sales": {
+      "title": "Satış örüntüleri",
+      "byDay": "Güne göre satış",
+      "byWeekday": "Haftanın gününe göre satış",
+      "day": "Gün",
+      "revenue": "Ciro",
+      "bar": "{{day}}: {{amount}}",
+      "weekday": "Gün",
+      "nights": "Açık akşam",
+      "avg": "Akşam başına",
+      "empty": "Bu dönemde satış yok.",
+      "avgCheck": "Ortalama adisyon",
+      "avgCover": "Kişi başı ortalama",
+      "covers": "Kişi sayısı",
+      "perLabour": "İşçilik saati başına satış",
+      "turns": "Akşam başına masa devri",
+      "days": {
+        "1": "Pzt",
+        "2": "Sal",
+        "3": "Çar",
+        "4": "Per",
+        "5": "Cum",
+        "6": "Cmt",
+        "7": "Paz"
+      }
+    },
+    "menu": {
+      "title": "Menü: popülerlik × puan",
+      "groups": "Menü grupları",
+      "hint": {
+        "stars": "çok satar, yüksek puanlı",
+        "hidden_gems": "yüksek puanlı, az satar",
+        "fix": "çok satar, düşük puanlı",
+        "rethink": "az satar, düşük puanlı"
+      },
+      "none": "Yok",
+      "dish": "Yemek",
+      "group": "Grup",
+      "sold": "Satılan",
+      "rating": "Puan",
+      "revenue": "Ciro",
+      "empty": "Bu dönemde satılan yemek yok.",
+      "unrated": "Puanlanmamış"
+    },
+    "staff": {
+      "title": "Personel",
+      "name": "Ad",
+      "role": "Rol",
+      "hours": "Saat (planlanan)",
+      "late": "Geç",
+      "rating": "Puan",
+      "points": "Skor",
+      "labour": "İşçilik maliyeti",
+      "empty": "Bu dönem için personel verisi yok.",
+      "labourByRole": "Role göre işçilik maliyeti",
+      "overtime": "Fazla mesai saati",
+      "groups": {
+        "floor": "Salon",
+        "kitchen": "Mutfak",
+        "bar": "Bar",
+        "managers": "Yöneticiler"
+      }
+    },
+    "ratings": {
+      "title": "Misafirler ve değerlendirmeler",
+      "restaurant": "Restoran",
+      "food": "Yemek",
+      "cleanliness": "Temizlik",
+      "atmosphere": "Atmosfer",
+      "spread": "Puan dağılımı",
+      "spreadOf": "Puan dağılımı: {{what}}",
+      "forRestaurant": "Restoran kategorileri",
+      "forWaiter": "Garsonlar",
+      "forDish": "Yemekler",
+      "stars": "{{n}}★",
+      "count": "{{count}} değerlendirme",
+      "trend": "Haftaya göre restoran puanı",
+      "week": "Hafta başı",
+      "ratings": "Değerlendirme",
+      "comments": "Son yorumlar",
+      "noComments": "Bu dönemde yorum yok.",
+      "hide": "Gizle",
+      "hideComment": "Bu yorumu gizle",
+      "error": "Yorum gizlenemedi. Tekrar dene.",
+      "noData": "Bu dönemde değerlendirme yok."
+    },
+    "expenses": {
+      "title": "Giderler",
+      "category": "Kategori",
+      "spent": "Harcanan",
+      "budget": "Bütçe",
+      "status": "Durum",
+      "noBudget": "Bütçe yok",
+      "over": "{{amount}} aşıldı",
+      "under": "{{amount}} altında",
+      "total": "Toplam",
+      "biggest": "En büyük tekil giderler",
+      "date": "Tarih",
+      "payee": "Alıcı",
+      "amount": "Tutar",
+      "empty": "Bu dönemde gider yok."
+    }
+  },
+  "overview": {
+    "title": "Genel bakış",
+    "loadError": "Genel bakış yüklenemedi.",
+    "delta": {
+      "pct": {
+        "up": "↑ %{{n}} geçen haftanın aynı saatine göre",
+        "down": "↓ %{{n}} geçen haftanın aynı saatine göre",
+        "flat": "Geçen haftanın aynı saatine göre değişim yok"
+      },
+      "abs": {
+        "up": "↑ {{n}} önceki 7 güne göre",
+        "down": "↓ {{n}} önceki 7 güne göre",
+        "flat": "Önceki 7 güne göre değişim yok"
+      }
+    },
+    "tiles": {
+      "sales": "Bugünkü satış",
+      "covers": "Kişi sayısı",
+      "rating": "Misafir puanı (7 gün)",
+      "profit": "Bu ayın kârı"
+    },
+    "working": {
+      "title": "Şu an kim çalışıyor",
+      "empty": "Bugün kimse planlı değil veya giriş yapmadı.",
+      "person": "Kişi",
+      "time": "Saat",
+      "status": "Durum",
+      "in": "giriş {{time}}",
+      "from": "{{time}} itibarıyla",
+      "due": "beklenen {{time}}"
+    },
+    "status": {
+      "on_shift": "vardiyada",
+      "late": "{{n}} dk geç",
+      "missing": "henüz gelmedi",
+      "later": "bugün sonra",
+      "finished": "bitti",
+      "unscheduled": "planlı değil",
+      "forgot_out": "çıkışı unuttu mu?"
+    },
+    "top": {
+      "title": "En iyiler · son 7 gün",
+      "pts": "{{n}} puan"
+    },
+    "expenses": {
+      "title": "Bu ayın giderleri",
+      "of": "{{budget}} bütçenin {{spent}} kadarı",
+      "none": "Henüz gider yok.",
+      "latest": "Son giderler",
+      "open": "Tüm giderler"
+    },
+    "dishes": {
+      "title": "Yemek puanları (7 gün)",
+      "none": "Henüz yeterli puan yok.",
+      "needsWork": "{{name}} (geliştirilmeli)"
+    },
+    "month": {
+      "title": "Bu ay bir bakışta",
+      "soFar": "Şimdiye kadar, geçen ayın aynı günleriyle karşılaştırılır",
+      "expenses": "Giderler ve bütçe",
+      "ofBudget": "{{budget}} bütçenin {{spent}} kadarı",
+      "noMargin": "Marj —"
     }
   }
 }

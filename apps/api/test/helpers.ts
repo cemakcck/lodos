@@ -53,7 +53,7 @@ export async function makeTestApp(
 export type TestApp = Awaited<ReturnType<typeof makeTestApp>>;
 
 /**
- * Live service without the 60 days of generated sales history: for files that never read sales or the comp log,
+ * Live service without the 120 days of generated history (and the phase 3 demo): for files that never read sales or the comp log,
  * where the history would only cost seeding time (about a second per tenant).
  */
 export const LIVE_NO_HISTORY = { liveService: true, history: false } as const;

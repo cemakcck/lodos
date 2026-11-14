@@ -14,7 +14,7 @@ const REDIRECT = {
   waiter: "/staff/floor",
   kitchen: "/staff/kitchen",
   bar: "/staff/bar",
-  manager: "/staff/menu",
+  manager: "/staff/overview",
 } as const;
 
 /** Registers /api/demo/*. Call only in demo mode. */

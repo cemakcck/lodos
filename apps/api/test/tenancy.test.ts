@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { TENANT_SCOPED_MODELS } from "../src/db/models";
 import { currentTenant, runWithTenant, unscoped } from "../src/db/tenancy";
 import { makeTestApp, newTenant } from "./helpers";
 
@@ -189,5 +190,46 @@ describe("open-check partial unique index", () => {
     });
     // Same table id in another tenant is unaffected.
     await expect(runWithTenant(b, () => Check.create({ tableId, status: "open", openedAt }))).resolves.toBeDefined();
+  });
+});
+
+describe("phase 3 models", () => {
+  it("are tenant scoped and reject queries without a tenant context", async () => {
+    for (const name of ["Rating", "ClockEntry", "Expense", "ExpenseCategory"] as const) {
+      expect(TENANT_SCOPED_MODELS).toContain(name);
+      await expect((t.models[name] as unknown as { find(): PromiseLike<unknown> }).find()).rejects.toThrow(
+        "tenant context missing",
+      );
+    }
+  });
+
+  it("Rating: one per check, but any number without a check", async () => {
+    const { Rating } = t.models;
+    const tenant = newTenant();
+    const base = { serviceDay: "2026-11-10", paidAt: t.clock.now(), submittedAt: t.clock.now() };
+    await runWithTenant(tenant, async () => {
+      const checkId = new Types.ObjectId();
+      await Rating.create({ ...base, checkId, food: 4 });
+      await Rating.init();
+      await expect(Rating.create({ ...base, checkId, food: 5 })).rejects.toMatchObject({ code: 11000 });
+      await expect(Rating.create({ ...base, checkId: null })).resolves.toBeDefined();
+      await expect(Rating.create({ ...base, checkId: null })).resolves.toBeDefined();
+    });
+  });
+
+  it("ClockEntry: a person can't have two open entries", async () => {
+    const { ClockEntry } = t.models;
+    const tenant = newTenant();
+    const staffId = new Types.ObjectId();
+    const entry = { staffId, serviceDay: "2026-11-10", in: t.clock.now(), rate: 15000 };
+    await runWithTenant(tenant, async () => {
+      await ClockEntry.init();
+      const first = await ClockEntry.create(entry);
+      await expect(ClockEntry.create(entry)).rejects.toMatchObject({ code: 11000 });
+      first.out = t.clock.now();
+      await first.save();
+      await expect(ClockEntry.create(entry)).resolves.toBeDefined();
+      await expect(ClockEntry.create({ ...entry, staffId: new Types.ObjectId() })).resolves.toBeDefined();
+    });
   });
 });

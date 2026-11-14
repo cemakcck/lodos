@@ -12,6 +12,7 @@ test("an 86 from the manager reaches an open guest menu live", async ({ browser 
   const managerCtx = await browser.newContext();
   const manager = await managerCtx.newPage();
   await demoAs(manager, "manager");
+  await manager.goto("/staff/menu");
   await expect(manager.getByRole("heading", { level: 1, name: "Menu" })).toBeVisible();
 
   // A guest at T7 on another device of the same restaurant, menu open.

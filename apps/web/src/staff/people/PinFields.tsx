@@ -12,12 +12,14 @@ interface Props {
   confirmError?: string;
   /** Label of the first field ("PIN", or "New PIN" when resetting). */
   label?: string;
+  /** Label of the second field; default "Confirm PIN". */
+  confirmLabel?: string;
   pinRef?: Ref<HTMLInputElement>;
   confirmRef?: Ref<HTMLInputElement>;
 }
 
 /** PIN + confirm: password fields with the numeric keypad, visible labels, errors tied by aria-describedby. */
-export function PinFields({ pin, confirm, onPin, onConfirm, pinError, confirmError, label, pinRef, confirmRef }: Props) {
+export function PinFields({ pin, confirm, onPin, onConfirm, pinError, confirmError, label, confirmLabel, pinRef, confirmRef }: Props) {
   const { t } = useTranslation();
   const base = useId();
   const field = (id: string, text: string, value: string, set: (v: string) => void, err: string | undefined, ref?: Ref<HTMLInputElement>) => (
@@ -42,7 +44,7 @@ export function PinFields({ pin, confirm, onPin, onConfirm, pinError, confirmErr
   return (
     <div className="mg-grid2">
       {field("pin", label ?? t("people.pin"), pin, onPin, pinError, pinRef)}
-      {field("confirm", t("people.pinConfirm"), confirm, onConfirm, confirmError, confirmRef)}
+      {field("confirm", confirmLabel ?? t("people.pinConfirm"), confirm, onConfirm, confirmError, confirmRef)}
       <p id={`${base}-hint`} className="mg-hint" style={{ gridColumn: "1 / -1" }}>{t("people.pinHint")}</p>
     </div>
   );

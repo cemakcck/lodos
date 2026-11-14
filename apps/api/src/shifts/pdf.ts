@@ -71,12 +71,12 @@ const T = {
   },
 } as const;
 
-const REGULAR = "Inter";
-const BOLD = "Inter-SemiBold";
-const INK = "#1f2937";
-const MUTED = "#6b7280";
-const LINE = "#d1d5db";
-const BAND = "#f3f4f6";
+export const REGULAR = "Inter";
+export const BOLD = "Inter-SemiBold";
+export const INK = "#1f2937";
+export const MUTED = "#6b7280";
+export const LINE = "#d1d5db";
+export const BAND = "#f3f4f6";
 const AMBER = "#d97706";
 
 const utc = (day: string): Date => new Date(`${day}T00:00:00Z`);
@@ -114,14 +114,16 @@ export function hoursLabel(minutes: number, lang: PdfLang): string {
   return `${lang === "tr" ? n.replace(".", ",") : n} ${T[lang].h}`;
 }
 
-function newDoc(opts: { layout: "portrait" | "landscape" }): PDFKit.PDFDocument {
+/** An A4 document with Inter (Turkish glyphs) registered as REGULAR and BOLD. */
+export function newDoc(opts: { layout: "portrait" | "landscape" }): PDFKit.PDFDocument {
   const doc = new PDFDocument({ size: "A4", layout: opts.layout, margin: 36, font: fontPath("Inter-Regular.ttf"), info: { Producer: "Lodos" } });
   doc.registerFont(REGULAR, fontPath("Inter-Regular.ttf"));
   doc.registerFont(BOLD, fontPath("Inter-SemiBold.ttf"));
   return doc;
 }
 
-function finish(doc: PDFKit.PDFDocument): Promise<Buffer> {
+/** Ends `doc` and resolves with its bytes. */
+export function finish(doc: PDFKit.PDFDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     doc.on("data", (c: Buffer) => chunks.push(c));

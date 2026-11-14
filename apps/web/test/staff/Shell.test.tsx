@@ -31,16 +31,25 @@ describe("Shell", () => {
     expect(screen.getByRole("link", { name: "Kitchen" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("the manager sees every rail item", async () => {
+  it("the manager sees every rail item but My performance (a waiter's page; they have Performance)", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("manager") });
     renderApp("/staff/menu");
-    expect(await railNames()).toEqual(["Kitchen", "Bar", "Floor", "Menu", "Tables", "Floor plan", "Sales", "Staff", "Schedule", "My shifts"]);
+    expect(await railNames()).toEqual(["Overview", "Kitchen", "Bar", "Floor", "Menu", "Tables", "Floor plan", "Sales", "Business", "Staff", "Schedule", "Timesheets", "Expenses", "Performance", "My shifts"]);
   });
 
-  it("the waiter sees the Floor and My shifts", async () => {
+  it("the manager can still open /staff/my-performance without harm", async () => {
+    mockFetch({
+      "GET /api/auth/me": staffOf("manager"),
+      "GET /api/me/performance?period=week": { score: null, breakdown: [], ratingAvg: null, ratingCount: 0, minutes: 0, plannedMinutes: 0, lateShifts: 0, rank: null, comments: [], range: { first: "2026-11", last: "2026-11" } },
+    });
+    renderApp("/staff/my-performance");
+    expect(await screen.findByText("Not enough data yet")).toBeTruthy();
+  });
+
+  it("the waiter sees the Floor, My shifts and My performance", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("waiter", "Deniz") });
     renderApp("/staff/floor");
-    expect(await railNames()).toEqual(["Floor", "My shifts"]);
+    expect(await railNames()).toEqual(["Floor", "My shifts", "My performance"]);
   });
 
   it("rail items and the avatar menu follow the language", async () => {
@@ -52,7 +61,7 @@ describe("Shell", () => {
     expect(avatar.textContent).toBe("SK");
     await user.click(avatar);
     await user.click(screen.getByRole("button", { name: "Türkçe" }));
-    expect(await railNames("Personel")).toEqual(["Mutfak", "Bar", "Salon", "Menü", "Masalar", "Kat planı", "Satış", "Personel", "Vardiya planı", "Vardiyalarım"]);
+    expect(await railNames("Personel")).toEqual(["Genel bakış", "Mutfak", "Bar", "Salon", "Menü", "Masalar", "Kat planı", "Satış", "İşletme", "Personel", "Vardiya planı", "Mesai kayıtları", "Giderler", "Performans", "Vardiyalarım"]);
   });
 
   it("sends a role to its own screen when it opens another role's page", async () => {

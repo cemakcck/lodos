@@ -9,7 +9,7 @@ import { lastSeen } from "../../src/staff/people/lib";
 import { mockFetch, renderApp, sockets, staffOf } from "./harness";
 
 const row = (o: Record<string, unknown>) => ({
-  active: true, lastSignInAt: null, tables: [], tableRanges: "", demoProtected: false, canDeactivate: true, whyNot: null, ...o,
+  active: true, lastSignInAt: null, tables: [], tableRanges: "", demoProtected: false, canDeactivate: true, whyNot: null, hourlyRate: 0, hasClockPin: false, ...o,
 });
 const tb = (id: string, name: string, roomId = "salon") => ({ id, name, roomId });
 const PEOPLE = [
@@ -110,6 +110,68 @@ describe("StaffForm", () => {
     await user.click(within(form).getByRole("radio", { name: "Cook" }));
     expect(within(form).queryByLabelText("PIN")).toBeNull();
     expect(within(form).queryByLabelText("Confirm PIN")).toBeNull();
+  });
+
+  it("a clock PIN is offered only to schedule-only roles", async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(await screen.findByRole("button", { name: "Add staff" }));
+    const form = screen.getByRole("form", { name: "New staff member" });
+    // Waiter (default): signs in with the PIN, so no separate clock PIN.
+    expect(within(form).queryByLabelText("Clock PIN")).toBeNull();
+    await user.click(within(form).getByRole("radio", { name: "Cook" }));
+    expect(within(form).getByLabelText("Clock PIN")).toHaveProperty("type", "password");
+    await user.click(within(form).getByRole("radio", { name: "Manager" }));
+    expect(within(form).queryByLabelText("Clock PIN")).toBeNull();
+  });
+
+  it("saves the hourly rate in kuruş and the clock PIN on their own endpoints", async () => {
+    const user = userEvent.setup();
+    const { calls } = setup({
+      "PUT /api/staff/id-ayse/rate": { staff: PEOPLE[3] },
+      "POST /api/staff/id-ayse/clock-pin": { ok: true },
+    });
+    await user.click(await screen.findByRole("button", { name: "Ayşe Demir" }));
+    const form = screen.getByRole("form", { name: "Ayşe Demir" });
+    await user.type(within(form).getByLabelText("Hourly rate (₺)"), "150,50");
+    await user.type(within(form).getByLabelText("Clock PIN"), "2468");
+    await user.type(within(form).getByLabelText("Confirm clock PIN"), "2468");
+    await user.click(within(form).getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(body(calls, "POST", "/api/staff/id-ayse/clock-pin")).toEqual({ pin: "2468" }));
+    expect(body(calls, "PUT", "/api/staff/id-ayse/rate")).toEqual({ kurusPerHour: 15050 });
+    // Nothing else about the person changed, so no PATCH.
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("a failed clock PIN after creating someone keeps them created: the retry only re-sends the PIN", async () => {
+    const user = userEvent.setup();
+    let pinCalls = 0;
+    const { calls } = setup({
+      "POST /api/staff": () => ({ status: 201, body: { staff: row({ id: "id-new", name: "Naz Ak", role: "cook" }) } }),
+      "POST /api/staff/id-new/clock-pin": () => (++pinCalls === 1 ? { status: 500, body: { error: { code: "internal", message: "boom" } } } : { status: 200, body: { ok: true } }),
+    });
+    await user.click(await screen.findByRole("button", { name: "Add staff" }));
+    const form = screen.getByRole("form", { name: "New staff member" });
+    await user.type(within(form).getByLabelText("Name"), "Naz Ak");
+    await user.click(within(form).getByRole("radio", { name: "Cook" }));
+    await user.type(within(form).getByLabelText("Clock PIN"), "2468");
+    await user.type(within(form).getByLabelText("Confirm clock PIN"), "2468");
+    await user.click(within(form).getByRole("button", { name: "Add staff" }));
+    expect((await within(form).findByRole("alert")).textContent).toContain("Naz Ak was added, but the hourly rate or clock PIN wasn't saved");
+    await user.click(within(form).getByRole("button", { name: "Add staff" }));
+    await waitFor(() => expect(pinCalls).toBe(2));
+    expect(calls.filter((c) => c.method === "POST" && c.path === "/api/staff")).toHaveLength(1);
+  });
+
+  it("refuses a rate that isn't an amount", async () => {
+    const user = userEvent.setup();
+    const { calls } = setup();
+    await user.click(await screen.findByRole("button", { name: "Ayşe Demir" }));
+    const form = screen.getByRole("form", { name: "Ayşe Demir" });
+    await user.type(within(form).getByLabelText("Hourly rate (₺)"), "abc");
+    await user.click(within(form).getByRole("button", { name: "Save changes" }));
+    expect(within(form).getByText(/Enter an amount/)).toBeTruthy();
+    expect(calls.some((c) => c.method === "PUT")).toBe(false);
   });
 
   it("role control is a radiogroup with all six roles", async () => {

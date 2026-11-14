@@ -1,0 +1,90 @@
+<h2>Monthly business dashboard (draft)</h2>
+<p class="subtitle">The separate deep page. Pick any month; every number compares with the month before. Sections top to bottom. Made-up numbers. Tell me in the terminal what's missing or unnecessary.</p>
+
+<style>
+  .md{font-family:Inter,system-ui,sans-serif;font-size:12.5px;color:#1f2937;background:#f7f7f8;padding:14px;border-radius:8px}
+  .md h4{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#7c2d5a}
+  .md .row{display:grid;gap:10px;margin-bottom:10px}
+  .md .tile{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px}
+  .md .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280}
+  .md .big{font-size:19px;font-weight:600}
+  .md .up{color:#15803d;font-size:11.5px}.md .down{color:#b91c1c;font-size:11.5px}
+  .md table{width:100%;border-collapse:collapse}
+  .md td,.md th{padding:3px 4px;border-bottom:1px solid #f1f1f3;text-align:left}
+  .md th{font-weight:500;color:#6b7280;font-size:11px}
+  .md .bars{display:flex;align-items:flex-end;gap:2px;height:60px}
+  .md .bars i{flex:1;background:#c9a3b8;border-radius:2px 2px 0 0}
+  .md .hb{height:8px;background:#7c2d5a;border-radius:4px;display:inline-block}
+  .md .quad{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11.5px}
+  .md .quad div{border-radius:6px;padding:6px 8px}
+  .md .stars{color:#b45309}
+  .md .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .md .sel{border:1px solid #d1d5db;border-radius:6px;padding:3px 10px;background:#fff}
+</style>
+
+<div class="mockup"><div class="mockup-header">Manager → Business → Monthly</div><div class="mockup-body"><div class="md">
+  <div class="top"><span class="sel">◀ October 2026 ▶</span><span class="sel">Export PDF · CSV</span></div>
+
+  <h4>1 · Profit and loss</h4>
+  <div class="row" style="grid-template-columns:repeat(5,1fr)">
+    <div class="tile"><div class="k">Sales</div><div class="big">₺1.92M</div><div class="up">↑ 6%</div></div>
+    <div class="tile"><div class="k">Food &amp; drink cost</div><div class="big">₺612k</div><div class="down">32% of sales · ↑ 1 pt</div></div>
+    <div class="tile"><div class="k">Labour</div><div class="big">₺538k</div><div class="up">28% · ↓ 2 pts</div></div>
+    <div class="tile"><div class="k">Other costs</div><div class="big">₺486k</div><div class="k" style="text-transform:none">rent, bills, repairs…</div></div>
+    <div class="tile"><div class="k">Profit</div><div class="big" style="color:#15803d">₺284k</div><div class="up">margin 14.8% · ↑ 1.1 pts</div></div>
+  </div>
+
+  <h4>2 · Sales patterns</h4>
+  <div class="row" style="grid-template-columns:2fr 1fr 1fr">
+    <div class="tile"><div class="k">Sales by day</div><div class="bars">
+      <i style="height:40%"></i><i style="height:45%"></i><i style="height:52%"></i><i style="height:60%"></i><i style="height:90%"></i><i style="height:98%"></i><i style="height:70%"></i>
+      <i style="height:42%"></i><i style="height:47%"></i><i style="height:55%"></i><i style="height:63%"></i><i style="height:92%"></i><i style="height:100%"></i><i style="height:68%"></i>
+      <i style="height:38%"></i><i style="height:44%"></i><i style="height:50%"></i><i style="height:61%"></i><i style="height:88%"></i><i style="height:96%"></i><i style="height:72%"></i>
+      <i style="height:41%"></i><i style="height:46%"></i><i style="height:57%"></i><i style="height:66%"></i><i style="height:94%"></i><i style="height:99%"></i><i style="height:74%"></i></div></div>
+    <div class="tile"><div class="k">Average check</div><div class="big">₺1,140</div><div class="up">↑ ₺60</div><div class="k" style="margin-top:6px">Covers</div><div class="big">1,684</div></div>
+    <div class="tile"><div class="k">Sales per labour hour</div><div class="big">₺1,310</div><div class="k" style="margin-top:6px">Table turns / night</div><div class="big">2.3</div></div>
+  </div>
+
+  <h4>3 · Menu: popularity × rating</h4>
+  <div class="row" style="grid-template-columns:1.3fr 1fr">
+    <div class="tile"><div class="quad">
+      <div style="background:#dcfce7"><b>Stars</b> · sell a lot, rated high<br>Levrek marine, Kuzu incik</div>
+      <div style="background:#fef9c3"><b>Hidden gems</b> · rated high, sell little<br>Enginar dolma</div>
+      <div style="background:#ffedd5"><b>Fix</b> · sell a lot, rated low<br>Mantı (★ 3.4)</div>
+      <div style="background:#fee2e2"><b>Rethink</b> · sell little, rated low<br>Fıstıklı tart</div>
+    </div></div>
+    <div class="tile"><table><tr><th>Dish</th><th>Sold</th><th>Rating</th><th>Revenue</th></tr>
+      <tr><td>Levrek marine</td><td>264</td><td><span class="stars">★</span> 4.9</td><td>₺166k</td></tr>
+      <tr><td>Kuzu incik</td><td>231</td><td><span class="stars">★</span> 4.8</td><td>₺196k</td></tr>
+      <tr><td>Mantı</td><td>248</td><td><span class="stars">★</span> 3.4</td><td>₺97k</td></tr></table></div>
+  </div>
+
+  <h4>4 · Staff</h4>
+  <div class="row" style="grid-template-columns:1.4fr 1fr">
+    <div class="tile"><table><tr><th>Name</th><th>Role</th><th>Hours (plan)</th><th>Late</th><th>Rating</th><th>Points</th></tr>
+      <tr><td>Deniz K.</td><td>Waiter</td><td>168 (160)</td><td>0</td><td><span class="stars">★</span> 4.9</td><td>86</td></tr>
+      <tr><td>Can Y.</td><td>Waiter</td><td>152 (160)</td><td>2</td><td><span class="stars">★</span> 4.7</td><td>79</td></tr>
+      <tr><td>Murat Ö.</td><td>Kitchen</td><td>176 (168)</td><td>1</td><td>dishes <span class="stars">★</span> 4.6</td><td>81</td></tr></table></div>
+    <div class="tile"><div class="k">Labour cost by role</div>
+      <div style="margin-top:6px">Kitchen <span class="hb" style="width:44%"></span><br>Floor <span class="hb" style="width:36%"></span><br>Bar <span class="hb" style="width:20%"></span></div>
+      <div class="k" style="margin-top:8px">Overtime hours</div><div class="big">46</div></div>
+  </div>
+
+  <h4>5 · Guests and ratings</h4>
+  <div class="row" style="grid-template-columns:1fr 1.5fr">
+    <div class="tile"><div class="k">Rating spread</div>
+      <div>5★ <span class="hb" style="width:62%"></span><br>4★ <span class="hb" style="width:24%"></span><br>3★ <span class="hb" style="width:8%"></span><br>2★ <span class="hb" style="width:4%"></span><br>1★ <span class="hb" style="width:2%"></span></div></div>
+    <div class="tile"><div class="k">Latest comments</div>
+      <div style="line-height:1.6">"Deniz made our anniversary special" · ★★★★★<br>"Mantı was a bit dry" · ★★★<br>"Best levrek in Karaköy" · ★★★★★</div></div>
+  </div>
+
+  <h4>6 · Expenses</h4>
+  <div class="row" style="grid-template-columns:1fr 1fr">
+    <div class="tile"><table><tr><th>Category</th><th>Spent</th><th>Budget</th></tr>
+      <tr><td>Suppliers (food &amp; drink)</td><td>₺612k</td><td>₺600k</td></tr>
+      <tr><td>Rent</td><td>₺220k</td><td>₺220k</td></tr>
+      <tr><td>Utilities</td><td>₺84k</td><td>₺90k</td></tr>
+      <tr><td>Repairs &amp; other</td><td>₺182k</td><td>₺150k</td></tr></table></div>
+    <div class="tile"><div class="k">Biggest single costs</div><div style="line-height:1.6">Fish supplier · ₺18,400 · 3 Oct<br>Fridge repair · ₺14,900 · 17 Oct<br>Wine order · ₺12,750 · 22 Oct</div></div>
+  </div>
+</div></div></div>

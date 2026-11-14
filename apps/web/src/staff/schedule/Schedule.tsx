@@ -2,8 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addDays } from "@lodos/shared";
-import { ChevronLeft, ChevronRight, Copy, FileDown, LayoutTemplate, TriangleAlert, X } from "lucide-react";
+import { Copy, FileDown, LayoutTemplate, TriangleAlert, X } from "lucide-react";
 import { api } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
@@ -12,7 +11,8 @@ import { Shell } from "../Shell";
 import { Grid, type Moving } from "./Grid";
 import { ShiftSheet } from "./ShiftSheet";
 import { Templates } from "./Templates";
-import { dayLong, pdfHref, shiftError, span, warningText, weekRange } from "./lib";
+import { dayLong, pdfHref, shiftError, span, warningText } from "./lib";
+import { WeekPicker } from "./WeekPicker";
 import { refreshShifts, useTemplates, useWeek } from "./queries";
 import { weekKey, type Cell, type SchedulePerson, type ShiftRow, type WeekView } from "./types";
 
@@ -166,18 +166,7 @@ export function Schedule() {
     </>
   );
 
-  const toolbar = view && (
-    <div className="sc-week" role="group" aria-label={t("schedule.week.label")}>
-      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("schedule.week.prev")} onClick={() => go(addDays(view.week, -7))}>
-        <ChevronLeft size={16} strokeWidth={1.75} aria-hidden="true" />
-      </button>
-      <span className="sc-range font-mono" aria-live="polite">{weekRange(view.week, lang)}</span>
-      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("schedule.week.next")} onClick={() => go(addDays(view.week, 7))}>
-        <ChevronRight size={16} strokeWidth={1.75} aria-hidden="true" />
-      </button>
-      <button type="button" className="staff-btn" disabled={week === null} onClick={() => go(null)}>{t("schedule.week.this")}</button>
-    </div>
-  );
+  const toolbar = view && <WeekPicker week={view.week} isCurrent={week === null} onGo={go} />;
 
   return (
     <Shell title={t("schedule.title")} toolbar={toolbar} actions={actions} clock={false}>
