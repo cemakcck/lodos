@@ -1398,6 +1398,7 @@
       "in": "Clock in",
       "out": "Clock out",
       "timeHint": "Istanbul time.",
+      "unchanged": "Change a time to save the entry.",
       "reason": "Reason (required)",
       "save": "Save entry",
       "saved": "Entry for {{name}} saved.",

@@ -179,8 +179,13 @@ function EntryDialog({ editing, onClose, onDone }: { editing: Editing; onClose: 
   const people = useClockPeople();
   const entry = editing.kind === "edit" ? editing.entry : null;
   const [staffId, setStaffId] = useState(editing.kind === "add" ? (editing.staffId ?? "") : editing.person.staffId);
-  const [inAt, setInAt] = useState(entry ? toLocalInput(entry.in) : "");
-  const [outAt, setOutAt] = useState(entry?.out ? toLocalInput(entry.out) : "");
+  const initialIn = entry ? toLocalInput(entry.in) : "";
+  const initialOut = entry?.out ? toLocalInput(entry.out) : "";
+  const [inAt, setInAt] = useState(initialIn);
+  const [outAt, setOutAt] = useState(initialOut);
+  // The inputs show minutes only: an untouched time keeps its stored value (seconds and all), and with both
+  // untouched there is nothing to save; saving would rewrite the entry and mark it edited.
+  const unchanged = entry !== null && inAt === initialIn && outAt === initialOut;
   const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<{ staff?: string; inAt?: string; outAt?: string; reason?: string }>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -202,8 +207,8 @@ function EntryDialog({ editing, onClose, onDone }: { editing: Editing; onClose: 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setFailure(null);
-    const inIso = fromLocalInput(inAt);
-    const outIso = fromLocalInput(outAt);
+    const inIso = entry && inAt === initialIn ? entry.in : fromLocalInput(inAt);
+    const outIso = entry?.out && outAt === initialOut ? entry.out : fromLocalInput(outAt);
     const errs: typeof errors = {};
     if (editing.kind === "add" && !staffId) errs.staff = t("timeclock.sheets.errors.person");
     if (!inIso) errs.inAt = t("timeclock.sheets.errors.time");
@@ -239,7 +244,15 @@ function EntryDialog({ editing, onClose, onDone }: { editing: Editing; onClose: 
       footer={
         <>
           <button type="button" className="staff-btn" onClick={onClose}>{t("people.form.cancel")}</button>
-          <button type="submit" form={`${id}-form`} className="staff-btn primary" disabled={save.isPending}>{t("timeclock.sheets.save")}</button>
+          <button
+            type="submit"
+            form={`${id}-form`}
+            className="staff-btn primary"
+            disabled={save.isPending || unchanged}
+            aria-describedby={unchanged ? `${id}-unchanged` : undefined}
+          >
+            {t("timeclock.sheets.save")}
+          </button>
         </>
       }
     >
@@ -269,6 +282,7 @@ function EntryDialog({ editing, onClose, onDone }: { editing: Editing; onClose: 
           {field("outAt", t("timeclock.sheets.out"), outAt, setOutAt)}
         </div>
         <p className="mg-hint">{t("timeclock.sheets.timeHint")}</p>
+        {unchanged && <p id={`${id}-unchanged`} className="mg-hint">{t("timeclock.sheets.unchanged")}</p>}
         <div className="mg-field">
           <label htmlFor={`${id}-reason`}>{t("timeclock.sheets.reason")}</label>
           <input

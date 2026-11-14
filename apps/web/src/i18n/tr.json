@@ -1398,6 +1398,7 @@
       "in": "Giriş",
       "out": "Çıkış",
       "timeHint": "İstanbul saati.",
+      "unchanged": "Kaydetmek için bir saati değiştirin.",
       "reason": "Neden (zorunlu)",
       "save": "Kaydı kaydet",
       "saved": "{{name}} kaydı güncellendi.",

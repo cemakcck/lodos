@@ -81,6 +81,12 @@ describe("Timesheets", () => {
     await user.click(await screen.findByRole("button", { name: /Edit Ayşe Demir/ }));
     const dialog = screen.getByRole("dialog", { name: /Edit entry for Ayşe Demir/ });
     expect((within(dialog).getByLabelText("Clock in") as HTMLInputElement).value).toBe("2026-11-10T18:05");
+    // Unchanged times: nothing to save (saving would rewrite the entry and mark it edited).
+    expect((within(dialog).getByRole("button", { name: "Save entry" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(within(dialog).getByText("Change a time to save the entry.")).toBeTruthy();
+    const out = within(dialog).getByLabelText("Clock out");
+    await user.clear(out);
+    await user.type(out, "2026-11-11T02:30");
     await user.click(within(dialog).getByRole("button", { name: "Save entry" }));
     expect(within(dialog).getByText("Enter a reason.")).toBeTruthy();
     expect(calls.some((c) => c.method === "PUT")).toBe(false);
@@ -90,11 +96,27 @@ describe("Timesheets", () => {
     await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
     expect(calls.find((c) => c.method === "PUT")!.body).toEqual({
       in: "2026-11-10T15:05:00.000Z",
-      out: "2026-11-10T23:10:00.000Z",
+      out: "2026-11-10T23:30:00.000Z",
       reason: "Forgot to clock out",
     });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(await screen.findByText("Entry for Ayşe Demir saved.")).toBeTruthy();
+  });
+
+  it("an unchanged time keeps its seconds when the other one is edited", async () => {
+    const withSeconds = { ...VIEW, people: [{ ...VIEW.people[0]!, entries: [{ ...VIEW.people[0]!.entries[0]!, in: "2026-11-10T15:05:42.000Z", out: "2026-11-10T23:10:17.000Z" }] }] };
+    const { calls } = setup({ "GET /api/timesheets": withSeconds, "PUT /api/timesheets/entries/e1": { ok: true } });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /Edit Ayşe Demir/ }));
+    const dialog = screen.getByRole("dialog", { name: /Edit entry for Ayşe Demir/ });
+    expect((within(dialog).getByRole("button", { name: "Save entry" }) as HTMLButtonElement).disabled).toBe(true);
+    const out = within(dialog).getByLabelText("Clock out");
+    await user.clear(out);
+    await user.type(out, "2026-11-11T02:30");
+    await user.type(within(dialog).getByLabelText(/Reason/), "Stayed to close");
+    await user.click(within(dialog).getByRole("button", { name: "Save entry" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PUT")).toBe(true));
+    expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ in: "2026-11-10T15:05:42.000Z", out: "2026-11-10T23:30:00.000Z", reason: "Stayed to close" });
   });
 
   it("Add entry posts the person, the Istanbul times and the reason", async () => {
