@@ -11,7 +11,6 @@ export const staffSchema = new Schema({
   active: { type: Boolean, required: true, default: true },
   /** Set on each successful PIN login (not on manager approvals). */
   lastSignInAt: { type: Date, default: null },
-  /** Seeded role-button accounts: in demo mode they can be edited but not deactivated. */
   /** Hourly rate history in kuruş; a rate applies from `from` (the moment it was saved). */
   rates: {
     type: [new Schema({ from: { type: Date, required: true }, kurusPerHour: { type: Number, required: true, min: 0 } }, { _id: false })],
@@ -19,6 +18,7 @@ export const staffSchema = new Schema({
   },
   /** Separate PIN for the time clock. */
   clockPinHash: { type: String },
+  /** Seeded role-button accounts: in demo mode they can be edited but not deactivated. */
   demoProtected: { type: Boolean, required: true, default: false },
 });
 staffSchema.plugin(tenantPlugin);
