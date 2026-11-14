@@ -64,6 +64,18 @@ describe("RateVisit", () => {
     expect(within(food).getByRole("radio", { name: "2 of 5 stars" }).getAttribute("aria-checked")).toBe("true");
   });
 
+  it("with no star chosen, ArrowRight from the focused first star selects the second", async () => {
+    mockFetch({ "GET /api/guest/rating?checkId=c1": rating });
+    renderRate();
+    const user = userEvent.setup();
+    const food = await screen.findByRole("radiogroup", { name: "Food" });
+    const star = (n: number) => within(food).getByRole("radio", { name: `${n} of 5 stars` });
+    star(1).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(star(2).getAttribute("aria-checked")).toBe("true");
+    expect(document.activeElement).toBe(star(2));
+  });
+
   it("posts the selected values only, then thanks the guest", async () => {
     const { calls } = mockFetch({
       "GET /api/guest/rating?checkId=c1": rating,

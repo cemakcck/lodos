@@ -27,9 +27,10 @@ function StarInput({ label, value, onChange }: { label: string; value: number; o
     refs.current[n - 1]?.focus();
   };
   const onKey = (e: KeyboardEvent) => {
-    const cur = value || 0;
+    // Move from the focused star (star 1 while none is chosen), so ArrowRight from it picks 2.
+    const cur = refs.current.indexOf(e.target as HTMLButtonElement) + 1 || value || 1;
     if (e.key === "ArrowRight" || e.key === "ArrowUp") move(cur + 1);
-    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") move(cur === 0 ? 1 : cur - 1);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") move(cur - 1);
     else if (e.key === "Home") move(1);
     else if (e.key === "End") move(5);
     else return;
