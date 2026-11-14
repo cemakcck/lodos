@@ -172,12 +172,40 @@ export type TimesheetPerson = {
   cost: number;
 };
 
+/**
+ * The first week the timesheets picker reaches: the week of the earliest raw clock entry, or the tenant's first
+ * week when that is earlier (or there are none). Older days are summarised history (hours only on the reports), so
+ * a week whose days before the first entry hold generated hours starts a week later: it would read as no-shows.
+ */
+async function firstWeek(models: Models, now: Date): Promise<string> {
+  const [earliest, tenant] = await Promise.all([
+    models.ClockEntry.findOne({}, { serviceDay: 1 }).sort({ serviceDay: 1 }).lean(),
+    models.Tenant.findOne({}, { createdAt: 1 }).lean(),
+  ]);
+  const today = serviceDayOf(now);
+  const created = tenant ? serviceDayOf(tenant.createdAt) : today;
+  let week = mondayOf(created < today ? created : today);
+  if (earliest) {
+    let raw = mondayOf(earliest.serviceDay);
+    const summarised = raw < earliest.serviceDay
+      && (await models.DailySummary.exists({ generated: true, serviceDay: { $gte: raw, $lt: earliest.serviceDay }, "people.0": { $exists: true } }));
+    if (summarised) raw = addDays(raw, 7);
+    if (raw < week) week = raw;
+  }
+  return week;
+}
+
 /** GET /api/timesheets?week=: per person with entries or shifts in the week, entries with their minutes, overtime and cost. */
-export async function timesheets(models: Models, week: string, now: Date): Promise<{ week: string; days: string[]; people: TimesheetPerson[] }> {
+export async function timesheets(
+  models: Models,
+  week: string,
+  now: Date,
+): Promise<{ week: string; firstWeek: string; days: string[]; people: TimesheetPerson[] }> {
   const days = weekDays(week);
-  const [entries, shifts] = await Promise.all([
+  const [entries, shifts, first] = await Promise.all([
     models.ClockEntry.find({ serviceDay: { $in: days } }).sort({ in: 1 }).lean(),
     models.Shift.find({ serviceDay: { $in: days } }).sort({ start: 1 }).lean(),
+    firstWeek(models, now),
   ]);
   const ids = [...new Set([...entries.map((e) => String(e.staffId)), ...shifts.map((s) => String(s.staffId))])];
   const staff = await models.Staff.find({ _id: { $in: ids } }, { name: 1, role: 1 }).lean();
@@ -213,7 +241,7 @@ export async function timesheets(models: Models, week: string, now: Date): Promi
     };
   });
   people.sort((a, b) => a.name.localeCompare(b.name, "tr"));
-  return { week, days, people };
+  return { week, firstWeek: first, days, people };
 }
 
 const assertSpan = (inAt: Date, outAt: Date): void => {

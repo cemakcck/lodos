@@ -265,6 +265,30 @@ describe("labourForDays shifts and lateness", () => {
   });
 });
 
+describe("timesheets: the first week with raw clock data", () => {
+  it("is the week of the earliest entry, a week later when that week starts with summarised history, else the tenant's first week", async () => {
+    const tenantId = newTenant();
+    const seed = await seedRestaurant(t.models, tenantId, NOW, { liveService: false, history: false });
+    const sid = await createSession(t.models, seed.staff.manager, tenantId, "person", NOW);
+    const firstWeek = async () => (await t.inject({ method: "GET", url: "/api/timesheets", cookies: { lodos_sid: sid } })).json().firstWeek;
+    const inT = <T>(fn: () => PromiseLike<T>) => runWithTenant(tenantId, fn);
+    await inT(() => t.models.ClockEntry.deleteMany({}));
+    // No entries: the week the tenant was created in (10 Nov → Monday 9 Nov).
+    expect(await firstWeek()).toBe("2026-11-09");
+    // The earliest raw entry is Wednesday 7 Oct: its week starts Monday 5 Oct.
+    const waiter = seed.staff.waiter;
+    await inT(() => t.models.ClockEntry.create({ staffId: waiter, serviceDay: "2026-10-07", in: new Date("2026-10-07T14:00:00Z"), out: new Date("2026-10-07T22:00:00Z"), rate: 10_000 }));
+    expect(await firstWeek()).toBe("2026-10-05");
+    // 6 Oct is generated history with hours (people aggregates): that week would read as no-shows, so it starts on 12 Oct.
+    await inT(() => t.models.DailySummary.create({
+      serviceDay: "2026-10-06", revenue: 0, covers: 0, checks: 0, comps: { count: 0, amount: 0 }, voids: { count: 0, amount: 0 }, byHour: [],
+      ticketTimes: { kitchen: [], bar: [] }, items: [], payments: { card: 0, cash: 0 }, byServer: [], generated: true,
+      people: [{ staffId: waiter, minutes: 480, labourCost: 80_000, overtimeMinutes: 0, shifts: 1, lateShifts: 0 }],
+    }));
+    expect(await firstWeek()).toBe("2026-10-12");
+  });
+});
+
 describe("isolation", () => {
   it("another tenant's staff id and entry id are 404 for the manager; their data is unchanged", async () => {
     const a = await fresh();

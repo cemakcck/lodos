@@ -34,7 +34,7 @@ export function Timesheets() {
     setParams(w ? { week: w } : {});
   };
 
-  const toolbar = view && <WeekPicker week={view.week} isCurrent={week === null} onGo={go} />;
+  const toolbar = view && <WeekPicker week={view.week} isCurrent={week === null} onGo={go} min={view.firstWeek} />;
   const actions = view && (
     <button type="button" className="staff-btn" onClick={() => { setStatus(""); setEditing({ kind: "add", staffId: null }); }}>
       <Plus size={15} strokeWidth={1.75} aria-hidden="true" />

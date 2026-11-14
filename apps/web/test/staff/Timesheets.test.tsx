@@ -12,6 +12,7 @@ const DAYS = ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-1
 const shift = { id: "sh1", staffId: "p-ayse", serviceDay: "2026-11-10", start: "18:00", end: "02:00", startAt: "", endAt: "", area: "kitchen", note: null, minutes: 480 };
 const VIEW = {
   week: "2026-11-09",
+  firstWeek: "2026-11-02",
   days: DAYS,
   people: [
     {
@@ -73,6 +74,16 @@ describe("Timesheets", () => {
     await screen.findByRole("table", { name: /Ayşe/ });
     await user.click(screen.getByRole("button", { name: "Next week" }));
     await waitFor(() => expect(calls.some((c) => c.path === "/api/timesheets?week=2026-11-16")).toBe(true));
+  });
+
+  it("the week picker stops at the first week with clock data (older weeks are summarised history)", async () => {
+    setup({ "GET /api/timesheets?week=2026-11-02": { ...VIEW, week: "2026-11-02", people: [] } });
+    const user = userEvent.setup();
+    await screen.findByRole("table", { name: /Ayşe/ });
+    const prev = () => screen.getByRole("button", { name: "Previous week" }) as HTMLButtonElement;
+    expect(prev().disabled).toBe(false);
+    await user.click(prev());
+    await waitFor(() => expect(prev().disabled).toBe(true));
   });
 
   it("the edit dialog requires a reason, then PUTs the entry", async () => {

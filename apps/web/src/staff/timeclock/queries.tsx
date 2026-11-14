@@ -41,6 +41,8 @@ export interface TimesheetPerson {
 
 export interface TimesheetView {
   week: string;
+  /** The first week with raw clock data; older weeks are summarised history (hours only on the reports). */
+  firstWeek: string;
   days: string[];
   people: TimesheetPerson[];
 }
