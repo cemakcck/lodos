@@ -45,7 +45,6 @@ test("a rating reaches the manager's dashboards and a clock-in shows on the over
   const managerCtx = await joinSandbox(browser, guestCtx);
   const manager = await managerCtx.newPage();
   await demoAs(manager, "manager");
-  await manager.goto("/staff");
   await expect(manager).toHaveURL(/\/staff\/overview$/);
   const tile = manager.getByRole("group", { name: "Guest rating (7 days)" });
   await expect(tile).toBeVisible();

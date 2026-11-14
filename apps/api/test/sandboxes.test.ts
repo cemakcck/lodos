@@ -47,7 +47,7 @@ describe("demo sign-in and sandbox creation", () => {
       waiter: ["/staff/floor", "Deniz", "waiter"],
       kitchen: ["/staff/kitchen", "Kitchen", "kitchen"],
       bar: ["/staff/bar", "Bar", "bar"],
-      manager: ["/staff/menu", "Selin", "manager"],
+      manager: ["/staff/overview", "Selin", "manager"],
     } as const;
     for (const [role, [redirect, name]] of Object.entries(expected)) {
       const res = await signIn(t, role, { lodos_sb: sb });

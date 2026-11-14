@@ -445,8 +445,10 @@ const dow = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay();
 
 /**
  * Four calendar months of a Karaköy bistro's spending (this one so far): supplier deliveries spread over the month,
- * rent on the 1st, utilities around the 10th, and a broken cold room that puts Repairs over budget this month.
- * Past months stay within every budget. Nothing is dated after today.
+ * rent on the last day of each month (paid in advance for the next, so this month's is not in yet), utilities around
+ * the 20th, marketing every week, and a broken cold room in the last three days that puts Repairs over budget this
+ * month once it is the 4th (before that only the compressor is in). Past months stay within every budget. Nothing is
+ * dated after today.
  */
 function demoExpenses(today: string, catId: (en: string) => Types.ObjectId, createdBy: Types.ObjectId, rand: () => number, randInt: (lo: number, hi: number) => number) {
   const out: { categoryId: Types.ObjectId; amount: number; date: string; payee: string | null; note: string | null; createdBy: Types.ObjectId }[] = [];
@@ -474,21 +476,22 @@ function demoExpenses(today: string, catId: (en: string) => Types.ObjectId, crea
       ["Trakya Et", "Meat"], ["Bolu Süt Çiftliği", "Dairy and cheese"],
     ]);
     deliveries("Suppliers – drinks", [3, 6], [["Galata Şarap Evi", "Wine"], ["Boğaz İçecek Dağıtım", "Spirits and mixers"]]);
-    add("Rent", 1, DEMO_BUDGETS.Rent!, "Kemankeş Emlak", "Monthly rent");
-    add("Utilities", 8, lira(2_450), "Kuzey Fiber", "Internet");
-    add("Utilities", 10, lira(randInt(42_000, 50_000)), "Haliç Enerji", "Electricity");
-    add("Utilities", 11, lira(randInt(16_000, 24_000)), "Marmara Doğalgaz", "Gas");
-    add("Utilities", 12, lira(randInt(6_500, 9_000)), "İstanbul Su", "Water");
+    add("Rent", monthLength(month), DEMO_BUDGETS.Rent!, "Kemankeş Emlak", "Monthly rent");
+    add("Utilities", 18, lira(2_450), "Kuzey Fiber", "Internet");
+    add("Utilities", 20, lira(randInt(42_000, 50_000)), "Haliç Enerji", "Electricity");
+    add("Utilities", 21, lira(randInt(16_000, 24_000)), "Marmara Doğalgaz", "Gas");
+    add("Utilities", 22, lira(randInt(6_500, 9_000)), "İstanbul Su", "Water");
     if (month === thisMonth) {
       const d = Number(today.slice(8));
-      add("Repairs and maintenance", Math.min(d, 3), lira(48_600), "Soğuk Oda Teknik", "Cold room compressor replaced");
-      add("Repairs and maintenance", Math.min(d, 5), lira(14_750), "Usta Tesisat", "Kitchen tap and drain");
+      add("Repairs and maintenance", Math.max(1, d - 3), lira(48_600), "Soğuk Oda Teknik", "Cold room compressor replaced");
+      if (d >= 4) add("Repairs and maintenance", d - 1, lira(14_750), "Usta Tesisat", "Kitchen tap and drain");
     } else {
       add("Repairs and maintenance", 7, lira(randInt(14_000, 22_000)), "Soğuk Oda Teknik", "Cold room service");
       add("Repairs and maintenance", 21, lira(randInt(18_000, 24_000)), "Usta Tesisat", "Plumbing");
     }
-    add("Marketing", 5, lira(randInt(14_000, 18_000)), null, "Social media ads");
-    add("Marketing", 18, lira(randInt(8_000, 14_000)), "Tophane Matbaa", "Printed menus and cards");
+    for (let d = 3; d <= monthLength(month); d += 7) {
+      add("Marketing", d, lira(randInt(5_500, 6_500)), d % 2 ? null : "Tophane Matbaa", d % 2 ? "Social media ads" : "Printed menus and cards");
+    }
     add("Other", 7, lira(randInt(6_000, 9_000)), "Parlak Temizlik", "Cleaning supplies");
     add("Other", 15, lira(randInt(4_000, 6_000)), "Beyaz Çamaşırhane", "Linen laundry");
     add("Other", 25, lira(12_000), "Aylin Kaya", "Accountant");

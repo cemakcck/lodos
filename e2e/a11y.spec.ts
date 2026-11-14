@@ -134,6 +134,7 @@ test.describe("staff", () => {
 
   test("menu editor", async ({ page }) => {
     await demoAs(page, "manager");
+    await page.goto("/staff/menu");
     await expect(page.getByRole("heading", { level: 1, name: "Menu" })).toBeVisible();
     await expect(page.getByRole("switch").first()).toBeVisible();
     await expectAccessible(page, "menu editor");

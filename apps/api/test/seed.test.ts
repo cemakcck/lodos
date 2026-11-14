@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { addDays, mondayOf, rateAt, serviceDayOf, serviceDayStartOf, splitByStation, TABLE_NAME_RE, ticketAgeState } from "@lodos/shared";
+import { addDays, monthLength, mondayOf, rateAt, serviceDayOf, serviceDayStartOf, splitByStation, TABLE_NAME_RE, ticketAgeState } from "@lodos/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { verifyPin } from "../src/auth/pin";
 import { createSession } from "../src/auth/sessions";
@@ -650,7 +650,7 @@ describe("demo ops seed (phase 3)", () => {
     }
   });
 
-  it("seeds four months of expenses: budgets, rent on the 1st, utilities around the 10th, Repairs over budget this month, none in the future", async () => {
+  it("seeds four months of expenses: budgets, rent on the last day, utilities around the 20th, weekly marketing, Repairs over budget this month, none in the future", async () => {
     const m = t.models;
     const [cats, expenses] = await inTenant(A, () => Promise.all([m.ExpenseCategory.find().sort({ sort: 1 }).lean(), m.Expense.find().lean()]));
     expect(cats.map((c) => [c.name.en, c.monthlyBudget / 100_000])).toEqual([
@@ -664,9 +664,12 @@ describe("demo ops seed (phase 3)", () => {
     for (const month of months) {
       const mine = expenses.filter((e) => e.date.startsWith(month));
       const rent = mine.filter((e) => catOf.get(String(e.categoryId)) === "Rent");
-      expect(rent.map((e) => [e.date.slice(8), e.amount])).toEqual([["01", 220_000_00]]);
+      // Paid on the month's last day, so the current month's is not in yet.
+      expect(rent.map((e) => [e.date, e.amount])).toEqual(month === "2026-11" ? [] : [[`${month}-${String(monthLength(month))}`, 220_000_00]]);
       const utilities = mine.filter((e) => catOf.get(String(e.categoryId)) === "Utilities");
-      for (const u of utilities) expect(Math.abs(Number(u.date.slice(8)) - 10)).toBeLessThanOrEqual(3);
+      for (const u of utilities) expect(Math.abs(Number(u.date.slice(8)) - 20)).toBeLessThanOrEqual(3);
+      const marketing = mine.filter((e) => catOf.get(String(e.categoryId)) === "Marketing").map((e) => Number(e.date.slice(8)));
+      marketing.forEach((d, i) => i > 0 && expect(d - marketing[i - 1]!).toBe(7));
       const food = mine.filter((e) => catOf.get(String(e.categoryId)) === "Suppliers – food");
       expect(new Set(food.map((e) => e.date)).size).toBe(food.length);
     }
@@ -679,13 +682,39 @@ describe("demo ops seed (phase 3)", () => {
       }
     }
     expect(spent("2026-11", "Repairs and maintenance")).toBeGreaterThan(60_000_00);
-    // On the 1st of a month too, Repairs is already over budget and nothing is dated after today.
-    const first = new Date("2026-12-01T09:00:00Z");
-    const id = newTenant();
-    await seedRestaurant(t.models, id, first, { liveService: true });
-    const [c2, e2] = await inTenant(id, () => Promise.all([m.ExpenseCategory.find().lean(), m.Expense.find().lean()]));
-    const repairs = String(c2.find((c) => c.name.en.startsWith("Repairs"))!._id);
-    expect(e2.every((e) => e.date <= serviceDayOf(first))).toBe(true);
-    expect(e2.filter((e) => e.date.startsWith("2026-12") && String(e.categoryId) === repairs).reduce((n, e) => n + e.amount, 0)).toBeGreaterThan(60_000_00);
+    // The spike is dated in the last three days; before the 4th only the compressor is in (under budget), and
+    // nothing is ever dated after today.
+    const repairsOn = async (now: Date) => {
+      const id = newTenant();
+      await seedRestaurant(t.models, id, now, { liveService: true });
+      const [c2, e2] = await inTenant(id, () => Promise.all([m.ExpenseCategory.find().lean(), m.Expense.find().lean()]));
+      const repairs = String(c2.find((c) => c.name.en.startsWith("Repairs"))!._id);
+      expect(e2.every((e) => e.date <= serviceDayOf(now))).toBe(true);
+      const month = serviceDayOf(now).slice(0, 7);
+      return e2.filter((e) => e.date.startsWith(month) && String(e.categoryId) === repairs);
+    };
+    const total = (rows: { amount: number }[]) => rows.reduce((n, e) => n + e.amount, 0);
+    const first = await repairsOn(new Date("2026-12-01T09:00:00Z"));
+    expect(first.map((e) => e.date)).toEqual(["2026-12-01"]);
+    expect(total(first)).toBeLessThan(60_000_00);
+    const fifth = await repairsOn(new Date("2026-12-05T09:00:00Z"));
+    expect(total(fifth)).toBeGreaterThan(60_000_00);
+    expect(fifth.every((e) => e.date >= "2026-12-02")).toBe(true);
   });
+
+  for (const iso of ["2026-11-14T18:00:00Z", "2026-11-05T18:00:00Z"]) {
+    it(`a fresh demo's overview shows a profit this month at ${iso}`, async () => {
+      const now = new Date(iso);
+      const id = newTenant();
+      await seedRestaurant(t.models, id, now, { liveService: true });
+      t.clock.set(now);
+      try {
+        const res = await managerGet(id, "/api/business/overview");
+        expect(res.statusCode, res.body).toBe(200);
+        expect(res.json().month.profit).toBeGreaterThan(0);
+      } finally {
+        t.clock.set(NOW);
+      }
+    });
+  }
 });

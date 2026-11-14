@@ -21,7 +21,7 @@ Lodos is a portfolio project by [Cem Akçiçek](https://cemakcicek.com). The res
   <img src="docs/screenshots/schedule.png" alt="The weekly schedule grid with shifts per person, weekly totals and a warning for 47 hours" width="270">
 </p>
 <p>
-  <img src="docs/screenshots/overview.png" alt="The manager's overview: sales, covers, guest rating and profit tiles, who is working now with on shift and late statuses, top staff, expenses against budget and dish ratings" width="400">
+  <img src="docs/screenshots/overview.png" alt="The manager's overview: tiles for sales, covers, guest rating and profit, then who is working now, top staff, expenses against budget and dish ratings" width="400">
   <img src="docs/screenshots/monthly.png" alt="The monthly business dashboard for October: sales, food and drink cost, labour, other costs and profit, other costs by category and sales by day" width="400">
 </p>
 
