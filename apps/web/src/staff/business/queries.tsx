@@ -73,8 +73,15 @@ export interface BigExpense {
   category: Name;
 }
 
+/** The months with data, "YYYY-MM": the pickers go no further (the API answers 400 outside it). */
+export interface DataRange {
+  first: string;
+  last: string;
+}
+
 export interface MonthlyView {
   month: string;
+  range: DataRange;
   /** True when `month` is the current month. */
   soFar: boolean;
   current: Period;
@@ -110,7 +117,5 @@ export const useMonthly = (month: string | null) =>
 export const csvHref = (month: string, section: "menu" | "staff" | "expenses" | "days") => `/api/business/monthly.csv?month=${month}&section=${section}`;
 export const pdfHref = (month: string, lang: "en" | "tr") => `/api/business/monthly.pdf?month=${month}&lang=${lang}`;
 
-/** How many months before the current one the picker may go: the demo history is about 120 days. */
-export const MONTHS_BACK = 4;
 
 export { monthLabel, shiftMonth } from "../expenses/queries";

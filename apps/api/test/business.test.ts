@@ -163,6 +163,25 @@ describe("GET /api/business/monthly", () => {
     }
     expect((await f.get("/api/business/monthly.csv?section=nope")).statusCode).toBe(400);
   });
+
+  it("bounds the month to the data range: 400 outside, nothing stored; the range is on the response", async () => {
+    const f = await businessFixture(t);
+    const count = () => f.inT(() => t.models.DailySummary.countDocuments({}));
+    const before = await count();
+    for (const month of ["0001-01", "2026-09", "2026-12"]) {
+      for (const url of [`/api/business/monthly?month=${month}`, `/api/business/monthly.pdf?month=${month}`, `/api/business/monthly.csv?month=${month}&section=menu`]) {
+        expect((await f.get(url)).statusCode, url).toBe(400);
+      }
+    }
+    expect(await count()).toBe(before);
+    // The earliest data is the generated summary of 3 Oct; the current month is November.
+    const res = await f.get("/api/business/monthly?month=2026-10");
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().range).toEqual({ first: "2026-10", last: "2026-11" });
+    // Opening October stored empty September comparison days; they do not move the range back.
+    expect((await f.get("/api/business/monthly")).json().range).toEqual({ first: "2026-10", last: "2026-11" });
+    expect((await f.get("/api/business/monthly?month=2026-09")).statusCode).toBe(400);
+  });
 });
 
 describe("GET /api/business/monthly.csv", () => {

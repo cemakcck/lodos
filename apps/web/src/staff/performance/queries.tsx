@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { api } from "../../lib/api";
 import type { Lang } from "../../lib/format";
 import type { StaffRole } from "../auth";
+import type { DataRange } from "../business/queries";
 
 export type PerfPeriod = "week" | "month";
 export type PartKey = "rating" | "workload" | "reliability" | "throughput" | "onTime";
@@ -30,6 +31,7 @@ export interface PerfComment {
   hidden: boolean;
 }
 export interface PersonView extends PerfRow {
+  range: DataRange;
   history: { week: string; score: number | null }[];
   trend: { week: string; avg: number | null; count: number }[];
   comments: PerfComment[];
@@ -44,6 +46,7 @@ export interface MyView {
   lateShifts: number;
   rank: { position: number; of: number } | null;
   comments: { comment: string; stars: number | null; at: string }[];
+  range: DataRange;
 }
 
 export const performanceKey = ["performance"] as const;
@@ -67,7 +70,7 @@ export function usePeriod() {
 export const useRanking = (period: PerfPeriod, key: string | null) =>
   useQuery({
     queryKey: [...performanceKey, "ranking", period, key ?? "current"],
-    queryFn: () => api<{ groups: Record<Group, PerfRow[]> }>(`/api/performance/ranking${periodQuery(period, key)}`),
+    queryFn: () => api<{ groups: Record<Group, PerfRow[]>; range: DataRange }>(`/api/performance/ranking${periodQuery(period, key)}`),
     placeholderData: (prev) => prev,
   });
 

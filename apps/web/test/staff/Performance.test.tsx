@@ -119,6 +119,28 @@ describe("Ranking", () => {
     await waitFor(() => expect(calls.some((c) => c.path.endsWith("period=month&key=2026-10"))).toBe(true));
   });
 
+  it("bounds the period picker to the server's data range", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-13T12:00:00Z") });
+    const ranged = { ...RANKING, range: { first: "2026-11", last: "2026-11" } };
+    mockFetch({
+      "GET /api/auth/me": staffOf("manager"),
+      "GET /api/performance/ranking?period=week": ranged,
+      "GET /api/performance/ranking?period=week&key=2026-11-02": ranged,
+      "GET /api/performance/ranking?period=week&key=2026-10-26": ranged,
+      "GET /api/performance/ranking?period=month": ranged,
+    });
+    const user = userEvent.setup({ advanceTimers: () => {} });
+    renderApp("/staff/performance");
+    await screen.findByRole("table", { name: "Floor ranking" });
+    const prevWeek = () => screen.getByRole("button", { name: "Previous week" }) as HTMLButtonElement;
+    await user.click(prevWeek());
+    await user.click(prevWeek());
+    // The week of 1 November starts on 26 October: the first week with data.
+    await waitFor(() => expect(prevWeek().disabled).toBe(true));
+    await user.click(screen.getByRole("button", { name: "Month" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Previous month" }) as HTMLButtonElement).disabled).toBe(true));
+  });
+
   it("is manager only", async () => {
     mockFetch({ "GET /api/auth/me": staffOf("waiter", "Deniz Kaya"), "GET /api/me/shifts": { weeks: [] } });
     renderApp("/staff/performance");

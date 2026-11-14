@@ -20,7 +20,7 @@ export function MyPerformance() {
   const noun = rankNoun(me?.role);
 
   return (
-    <Shell title={t("performance.myTitle")} toolbar={<PeriodPicker period={p.period} periodKey={p.key} onChange={p.set} />} clock={false}>
+    <Shell title={t("performance.myTitle")} toolbar={<PeriodPicker period={p.period} periodKey={p.key} range={v?.range} onChange={p.set} />} clock={false}>
       {!v ? (
         <div className="mg-blocking" role={q.isError ? "alert" : "status"}>
           {q.isError ? (

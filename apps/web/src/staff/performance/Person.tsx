@@ -93,7 +93,7 @@ export function Person() {
   );
 
   return (
-    <Shell leading={back} title={v?.name ?? t("performance.title")} subtitle={v ? t(`staff.roles.${v.role}`) : undefined} toolbar={<PeriodPicker period={p.period} periodKey={p.key} onChange={p.set} />} clock={false}>
+    <Shell leading={back} title={v?.name ?? t("performance.title")} subtitle={v ? t(`staff.roles.${v.role}`) : undefined} toolbar={<PeriodPicker period={p.period} periodKey={p.key} range={v?.range} onChange={p.set} />} clock={false}>
       {!v ? (
         <div className="mg-blocking" role={q.isError ? "alert" : "status"}>
           {q.isError ? (

@@ -27,7 +27,7 @@ export function Ranking() {
           <button key={g} type="button" aria-pressed={group === g} onClick={() => setGroup(g)}>{t(`performance.group.${g}`)}</button>
         ))}
       </div>
-      <PeriodPicker period={p.period} periodKey={p.key} onChange={p.set} />
+      <PeriodPicker period={p.period} periodKey={p.key} range={q.data?.range} onChange={p.set} />
     </>
   );
 

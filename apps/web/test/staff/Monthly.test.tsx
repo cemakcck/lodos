@@ -26,6 +26,7 @@ const VIEW = {
   soFar: true,
   current: { month: "2026-11", from: "2026-11-01", to: "2026-11-13", days: 13 },
   previous: { month: "2026-10", from: "2026-10-01", to: "2026-10-13", days: 13 },
+  range: { first: "2026-09", last: "2026-11" },
   pnl: pair(pnl(19_200_000, 6_120_000, 5_380_000, 4_860_000), pnl(18_113_200, 5_900_000, 5_500_000, 4_700_000)),
   sales: {
     byDay: pair([day(1, 1_000_000), day(2, 1_500_000)], []),
@@ -171,9 +172,8 @@ describe("Monthly business dashboard", () => {
     expect(screen.getByRole("table", { name: "Biggest single costs" }).textContent).toContain("Fish supplier");
   });
 
-  it("navigates months with ◀ ▶, never past the current month or more than 4 months back", async () => {
-    const m = (n: string) => ({ ...OCT, month: `2026-${n}`, soFar: false });
-    setup({ "GET /api/business/monthly?month=2026-10": OCT, "GET /api/business/monthly?month=2026-09": m("09"), "GET /api/business/monthly?month=2026-08": m("08"), "GET /api/business/monthly?month=2026-07": m("07") });
+  it("navigates months with ◀ ▶ inside the server's data range only", async () => {
+    setup({ "GET /api/business/monthly?month=2026-10": OCT, "GET /api/business/monthly?month=2026-09": { ...OCT, month: "2026-09" } });
     const user = userEvent.setup();
     const next = await screen.findByRole("button", { name: "Next month" });
     const prev = screen.getByRole("button", { name: "Previous month" });
@@ -183,13 +183,12 @@ describe("Monthly business dashboard", () => {
     expect(calls.some((c) => c.path === "/api/business/monthly?month=2026-10")).toBe(true);
     expect((screen.getByRole("button", { name: "Next month" }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.queryByText(/So far/)).toBeNull();
-    for (const label of ["September 2026", "August 2026", "July 2026"]) {
-      await user.click(screen.getByRole("button", { name: "Previous month" }));
-      await screen.findByText(label);
-    }
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
+    await screen.findByText("September 2026");
+    // September is the range's first month: no further back.
     expect((screen.getByRole("button", { name: "Previous month" }) as HTMLButtonElement).disabled).toBe(true);
     await user.click(screen.getByRole("button", { name: "Next month" }));
-    await screen.findByText("August 2026");
+    await screen.findByText("October 2026");
   });
 
   it("links the PDF in the UI language and a CSV per table", async () => {

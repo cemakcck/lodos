@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { useFormat } from "../../lib/format";
 import { Shell } from "../Shell";
-import { MONTHS_BACK, monthLabel, pdfHref, shiftMonth, useMonthly } from "./queries";
+import { monthLabel, pdfHref, shiftMonth, useMonthly } from "./queries";
 import { ExpensesSection } from "./sections/ExpensesSection";
 import { MenuQuadrant } from "./sections/MenuQuadrant";
 import { Pnl } from "./sections/Pnl";
@@ -13,27 +13,21 @@ import { StaffTable } from "./sections/StaffTable";
 
 /**
  * `/staff/business` (manager): the monthly business dashboard, six sections top to bottom, a month at a time.
- * The current month is learned from the server's first answer (the one with `soFar`), not the browser clock.
+ * The months the picker reaches are the server's data range (`range`), not the browser clock.
  */
 export function Monthly() {
   const { t } = useTranslation();
   const { lang } = useFormat();
   const [month, setMonth] = useState<string | null>(null);
-  const [current, setCurrent] = useState<string | null>(null);
   const q = useMonthly(month);
   const view = q.data;
-  // Remember the server's current month the moment it answers (state adjusted during render, not in an effect).
-  if (view?.soFar && current !== view.month) setCurrent(view.month);
-
-  const newest = current ?? view?.month ?? "";
-  const oldest = shiftMonth(newest, -MONTHS_BACK);
   const toolbar = view && (
     <div className="sc-week" role="group" aria-label={t("expenses.month.label")}>
-      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("expenses.month.prev")} disabled={view.month <= oldest} onClick={() => setMonth(shiftMonth(view.month, -1))}>
+      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("expenses.month.prev")} disabled={view.month <= view.range.first} onClick={() => setMonth(shiftMonth(view.month, -1))}>
         <ChevronLeft size={16} strokeWidth={1.75} aria-hidden="true" />
       </button>
       <span className="sc-range font-mono" aria-live="polite">{monthLabel(view.month, lang)}</span>
-      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("expenses.month.next")} disabled={view.month >= newest} onClick={() => setMonth(shiftMonth(view.month, 1))}>
+      <button type="button" className="staff-icon-btn sc-nav" aria-label={t("expenses.month.next")} disabled={view.month >= view.range.last} onClick={() => setMonth(shiftMonth(view.month, 1))}>
         <ChevronRight size={16} strokeWidth={1.75} aria-hidden="true" />
       </button>
     </div>

@@ -92,6 +92,25 @@ describe("performance API", () => {
     expect(earlier.json().groups.floor.every((r: { score: number | null }) => r.score === null)).toBe(true);
   });
 
+  it("bounds the period to the data range (400 outside, nothing stored) and carries the range", async () => {
+    const f = await fresh();
+    const m = f.seed.staff.manager;
+    const count = () => runWithTenant(f.tenantId, () => t.models.DailySummary.countDocuments({}));
+    const before = await count();
+    // The tenant was created on 10 Nov with no history: November only, weeks from 2026-10-26 to 2026-11-09.
+    for (const q of ["period=month&key=0001-01", "period=month&key=2026-10", "period=month&key=2026-12", "period=week&key=2026-10-19", "period=week&key=2026-11-16"]) {
+      for (const url of [`/api/performance/ranking?${q}`, `/api/performance/${f.seed.staff.waiter}?${q}`]) expect((await f.call(m, url)).statusCode, url).toBe(400);
+      expect((await f.call(f.seed.staff.waiter, `/api/me/performance?${q}`)).statusCode, q).toBe(400);
+    }
+    expect(await count()).toBe(before);
+    const range = { first: "2026-11", last: "2026-11" };
+    const week = await f.call(m, "/api/performance/ranking?period=week&key=2026-10-26");
+    expect(week.statusCode, week.body).toBe(200);
+    expect(week.json().range).toEqual(range);
+    expect((await f.call(m, `/api/performance/${f.seed.staff.waiter}`)).json().range).toEqual(range);
+    expect((await f.call(f.seed.staff.waiter, "/api/me/performance?period=month&key=2026-11")).json().range).toEqual(range);
+  });
+
   it("Review Focus 4: a waiter's /api/me/performance holds only their own data; the ranking is forbidden", async () => {
     const f = await fresh();
     const res = await f.call(f.seed.staff.waiter, "/api/me/performance");
@@ -99,7 +118,7 @@ describe("performance API", () => {
     const me = res.json();
     expect(me).toMatchObject({ ratingCount: 5, rank: { position: 1, of: 1 } });
     expect(me.score).not.toBeNull();
-    expect(Object.keys(me).sort()).toEqual(["breakdown", "comments", "lateShifts", "minutes", "plannedMinutes", "ratingAvg", "ratingCount", "rank", "score"].sort());
+    expect(Object.keys(me).sort()).toEqual(["breakdown", "comments", "lateShifts", "minutes", "plannedMinutes", "range", "ratingAvg", "ratingCount", "rank", "score"].sort());
     for (const b of me.breakdown as { key: string }[]) expect("value" in b, b.key).toBe(b.key !== "workload");
     expect(me.comments.map((c: { comment: string }) => c.comment)).toEqual(["Lovely service"]);
     const names = await runWithTenant(f.tenantId, () => t.models.Staff.find({ _id: { $ne: f.seed.staff.waiter } }).lean());
