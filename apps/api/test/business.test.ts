@@ -186,6 +186,12 @@ describe("GET /api/business/monthly.csv", () => {
     const staff = await csv("staff");
     expect(staff[0]).toBe("name,role,group,score,rating_avg,rating_count,hours,planned_hours,late_shifts,labour_cost_lira");
     expect(staff.find((l) => l.startsWith('"Deniz"'))).toBe('"Deniz","waiter","floor",,4.50,2,18.0,0.0,0,1800.00');
+    // A cook's dish ratings are shares (one rating split between the cooks on shift): exported whole, half up.
+    await f.inT(() => t.models.DailySummary.updateOne({ serviceDay: "2026-10-20" }, { $push: { people: {
+      staffId: f.ids.cook, minutes: 0, labourCost: 0, overtimeMinutes: 0, shifts: 0, lateShifts: 0, stationTickets: 12.5, stationOnTime: 10, dishRatingSum: 150, dishRatingCount: 37.5,
+    } } }));
+    const cook = (await csv("staff")).find((l) => l.startsWith('"Emre Yıldız"'))!;
+    expect(cook.split(",")[5]).toBe("38");
     const expenses = await csv("expenses");
     expect(expenses[0]).toBe("category_en,category_tr,kind,spent_lira,budget_lira");
     expect(expenses[4]).toBe('"Utilities","Faturalar","other",500.01,400.00');

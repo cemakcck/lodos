@@ -11,6 +11,13 @@ export type StationInput = { dishAvg: number | null; dishCount: number; tickets:
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
+/**
+ * A count shown or exported as a whole number, half up. Station figures are shares (a dish rating or a ticket is
+ * split between the cooks or bartenders on shift), so a cook's count can be 37.5; scoring keeps the shares.
+ * The epsilon keeps thirds that add to a half (… + 1/6 + 1/6 + 1/6) rounding up.
+ */
+export const wholeCount = (n: number): number => Math.floor(n + 0.5 + 1e-9);
+
 /** Per-hour rate of `count` over `minutes`; 0 when nothing was worked. */
 export const perHour = (count: number, minutes: number): number => (minutes > 0 ? (count * 60) / minutes : 0);
 

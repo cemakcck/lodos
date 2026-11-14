@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import { wholeCount } from "@lodos/shared";
 import { ChevronLeft } from "lucide-react";
 import { useFormat } from "../../lib/format";
 import { Shell } from "../Shell";
@@ -114,7 +115,7 @@ export function Person() {
             <dl className="pf-facts">
               <div><dt>{t("performance.hours")}</dt><dd className="font-mono">{t("performance.hoursOf", { actual: hoursText(t, v.minutes, lang), planned: hoursText(t, v.plannedMinutes, lang) })}</dd></div>
               <div><dt>{t("performance.lateness")}</dt><dd className="font-mono">{t("performance.late", { count: v.lateShifts })}</dd></div>
-              <div><dt>{t("performance.col.rating")}</dt><dd className="font-mono">{v.ratingAvg === null ? "—" : `${v.ratingAvg.toFixed(1)} (${v.ratingCount})`}</dd></div>
+              <div><dt>{t("performance.col.rating")}</dt><dd className="font-mono">{v.ratingAvg === null ? "—" : `${v.ratingAvg.toFixed(1)} (${wholeCount(v.ratingCount)})`}</dd></div>
             </dl>
             {v.score !== null && <Breakdown breakdown={v.breakdown} score={v.score} station={v.role !== "waiter"} />}
           </section>

@@ -87,6 +87,18 @@ describe("Ranking", () => {
     expect(screen.getByText("Nobody in this group yet.")).toBeTruthy();
   });
 
+  it("shows a cook's shared rating count as a whole number", async () => {
+    const shared = { ...RANKING, groups: { ...RANKING.groups, kitchen: [row({ staffId: "k1", name: "Ali Usta", role: "cook", score: 60, ratingCount: 37.5 })] } };
+    mockFetch({ "GET /api/auth/me": staffOf("manager"), "GET /api/performance/ranking?period=week": shared });
+    const user = userEvent.setup();
+    renderApp("/staff/performance");
+    await screen.findByRole("table", { name: "Floor ranking" });
+    await user.click(screen.getByRole("button", { name: "Kitchen" }));
+    const table = screen.getByRole("table", { name: "Kitchen ranking" });
+    expect(table.textContent).toContain("4.2 (38)");
+    expect(table.textContent).not.toContain("37.5");
+  });
+
   it("asks for the month, and for a past week with a key", async () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-13T12:00:00Z") });
     const { calls } = mockFetch({
@@ -132,6 +144,12 @@ describe("Person page", () => {
       },
     });
   };
+
+  it("shows a cook's shared rating count as a whole number", async () => {
+    mockFetch({ "GET /api/auth/me": staffOf("manager"), "GET /api/performance/k1?period=week": { ...PERSON_BASE, staffId: "k1", name: "Ali Usta", role: "cook", ratingCount: 37.5, comments: [] } });
+    renderApp("/staff/performance/k1?period=week");
+    expect(await screen.findByText("4.2 (38)")).toBeTruthy();
+  });
 
   it("the breakdown table sums to the score shown", async () => {
     setup();
@@ -219,6 +237,12 @@ describe("My performance", () => {
     expect(await screen.findByText("3 aşçıdan 1.")).toBeTruthy();
     // Cooks have no comments section.
     expect(screen.queryByText("Misafir yorumları")).toBeNull();
+  });
+
+  it("shows a cook's shared rating count as a whole number", async () => {
+    setup("kitchen", { ...ME(1, 3), ratingCount: 37.5, comments: [] });
+    renderApp("/staff/my-performance");
+    expect(await screen.findByText("4.2 (38)")).toBeTruthy();
   });
 
   it("shows 'Not enough data yet' and no rank when unranked", async () => {

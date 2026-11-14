@@ -1,5 +1,5 @@
 import {
-  avgOf, comparisonDays, emptyAgg, MENU_GROUP_LABELS, menuQuadrant, mergeAgg, mergeRatingAgg, mondayOf, monthDays, previousMonth,
+  avgOf, comparisonDays, emptyAgg, MENU_GROUP_LABELS, menuQuadrant, mergeAgg, mergeRatingAgg, mondayOf, monthDays, previousMonth, wholeCount,
   restaurantRating, scheduleGroupOf, SCHEDULE_GROUPS, serviceDayOf, type Agg, type MenuGroup, type RatingAgg, type ScheduleGroup,
 } from "@lodos/shared";
 import type { Models } from "../db/models";
@@ -306,7 +306,7 @@ export function monthlyCsv(view: MonthlyView, section: CsvSection): { filename: 
   } else if (section === "staff") {
     lines.push("name,role,group,score,rating_avg,rating_count,hours,planned_hours,late_shifts,labour_cost_lira");
     for (const s of view.staff) {
-      lines.push([csvField(s.name), csvField(s.role), csvField(s.group), fixed(s.score, 1), fixed(s.ratingAvg, 2), s.ratingCount, fixed(s.minutes / 60, 1), fixed(s.plannedMinutes / 60, 1), s.lateShifts, lira(s.labourCost)].join(","));
+      lines.push([csvField(s.name), csvField(s.role), csvField(s.group), fixed(s.score, 1), fixed(s.ratingAvg, 2), wholeCount(s.ratingCount), fixed(s.minutes / 60, 1), fixed(s.plannedMinutes / 60, 1), s.lateShifts, lira(s.labourCost)].join(","));
     }
   } else if (section === "expenses") {
     lines.push("category_en,category_tr,kind,spent_lira,budget_lira");

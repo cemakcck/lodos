@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
+import { wholeCount } from "@lodos/shared";
 import { useFormat } from "../../lib/format";
 import { Shell } from "../Shell";
 import { hoursText } from "../schedule/lib";
@@ -66,7 +67,7 @@ export function Ranking() {
                       <td className="r font-mono">{r.score === null ? "—" : i + 1}</td>
                       <th scope="row"><Link to={`/staff/performance/${r.staffId}${p.search}`}>{r.name}</Link></th>
                       <td className="r font-mono">{r.score === null ? <span className="pf-na">{t("performance.notEnough")}</span> : score.format(r.score)}</td>
-                      <td className="r font-mono">{r.ratingAvg === null ? "—" : `${r.ratingAvg.toFixed(1)} (${r.ratingCount})`}</td>
+                      <td className="r font-mono">{r.ratingAvg === null ? "—" : `${r.ratingAvg.toFixed(1)} (${wholeCount(r.ratingCount)})`}</td>
                       <td className="r font-mono">{t("performance.hoursOf", { actual: hoursText(t, r.minutes, lang), planned: hoursText(t, r.plannedMinutes, lang) })}</td>
                       <td className="r font-mono">{r.lateShifts}</td>
                     </tr>

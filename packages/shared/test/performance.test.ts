@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankGroup, scoreStation, scoreWaiter } from "../src/index";
+import { rankGroup, scoreStation, scoreWaiter, wholeCount } from "../src/index";
 
 const waiter = { ratingAvg: 4.5, ratingCount: 10, covers: 80, minutes: 1200, shifts: 5, lateShifts: 1 };
 const station = { dishAvg: 4, dishCount: 12, tickets: 100, onTime: 90, minutes: 1200, shifts: 5, lateShifts: 0 };
@@ -53,5 +53,13 @@ describe("rankGroup", () => {
       { name: "Bora", score: null },
     ];
     expect(rankGroup(rows).map((r) => r.name)).toEqual(["Mert", "Can", "Zeynep", "Ali", "Bora"]);
+  });
+});
+
+describe("wholeCount", () => {
+  it("shows a shared count as a whole number, half up", () => {
+    expect([0, 2, 37.4, 37.5, 37.6, 1 / 3 + 1 / 3 + 1 / 3, 0.5 * 3].map(wholeCount)).toEqual([0, 2, 37, 38, 38, 1, 2]);
+    // Thirds that should make a half still round up.
+    expect(wholeCount(37 + 1 / 6 + 1 / 6 + 1 / 6)).toBe(38);
   });
 });
