@@ -58,7 +58,7 @@ Sandboxes are tied to the browser by a signed, httpOnly cookie, capped at 200 li
 
 ## Management data: rollups and one reader
 
-Phase 3 adds ratings, a time clock, wages, expenses and the dashboards over them. Five decisions keep the numbers consistent:
+Phase 3 adds ratings, a time clock, wages, expenses and the dashboards over them. Four decisions keep the numbers consistent:
 
 - **Raw documents for the recent past, generated aggregates for the rest.** Guest `Rating` and staff `ClockEntry` documents are the source of truth for recent days (ratings for the last 14 days, clock entries for the last 35 in the demo seed). Older days exist only as generated aggregates on `DailySummary`: `ratings` (per waiter, per dish and per restaurant category, with a star distribution), `people` (minutes, overtime, labour cost, late shifts, station tickets) and `byServer`. The seed gives each day either aggregates or raw documents (a raw rating with a comment is left out of its day's aggregate), because `opsForDays` sums both, and summaries stored before the feature read the new fields as empty.
 - **One reader, `opsForDays`** ([`apps/api/src/ops/daily.ts`](../apps/api/src/ops/daily.ts)). Given service days it returns each day's ratings, per-person figures and ticket times, merging the stored aggregate with whatever raw documents the day has. The overview, the monthly dashboard, the performance rankings, and My performance read through it, so a seeded day and a live day look the same to every screen and a rollup can be regenerated without touching a dashboard.
