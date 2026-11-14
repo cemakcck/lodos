@@ -1355,6 +1355,7 @@
     "toSignIn": "Staff sign-in",
     "pickName": "Who's clocking?",
     "pickHint": "Tap your name, then enter your PIN.",
+    "demoHint": "Demo: clock PIN for kitchen and bar staff is 1111",
     "loadError": "Couldn't load the list.",
     "noPeople": "Nobody is on the schedule yet.",
     "clockedIn": "Clocked in",

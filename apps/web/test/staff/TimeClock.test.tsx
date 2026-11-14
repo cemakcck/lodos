@@ -41,6 +41,23 @@ describe("Time clock", () => {
     expect(router.state.location.pathname).toBe("/staff/clock");
   });
 
+  it("tells a demo visitor the clock PIN of the kitchen and bar staff, in both languages; a real install says nothing", async () => {
+    mockFetch({ "GET /api/clock/people": PEOPLE, "GET /api/demo/info": err(401, "unauthorized") });
+    renderApp("/staff/clock");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /Ayşe/ }));
+    expect(await screen.findByText("Demo: clock PIN for kitchen and bar staff is 1111")).toBeTruthy();
+    await act(() => setLanguage("tr"));
+    expect(await screen.findByText("Demo: mutfak ve bar ekibinin saat PIN'i 1111")).toBeTruthy();
+    cleanup();
+    await setLanguage("en");
+    mockFetch({ "GET /api/clock/people": PEOPLE, "GET /api/demo/info": err(404, "not_found") });
+    renderApp("/staff/clock");
+    await userEvent.setup().click(await screen.findByRole("button", { name: /Ayşe/ }));
+    await screen.findByRole("heading", { name: /Enter your PIN/ });
+    expect(screen.queryByText(/clock PIN for kitchen/)).toBeNull();
+  });
+
   it("the login screen links to it", async () => {
     mockFetch({ "GET /api/auth/staff": [], "GET /api/auth/me": err(401, "unauthorized") });
     renderApp("/staff/login");

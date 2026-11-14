@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { useDemo } from "../../demo/useDemo";
 import { api, ApiClientError } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
 import { useFormat } from "../../lib/format";
@@ -108,6 +109,7 @@ function Picker({ people, onPick }: { people: ReturnType<typeof useClockPeople>;
 function PunchStep({ member, onBack, onDone }: { member: ClockPerson; onBack: () => void; onDone: (r: PunchResult) => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const demo = useDemo();
   const punch = useMutation({
     mutationFn: (pin: string) => api<PunchResult>("/api/clock/punch", { method: "POST", body: JSON.stringify({ staffId: member.id, pin }) }),
     onSuccess: (r) => {
@@ -139,6 +141,7 @@ function PunchStep({ member, onBack, onDone }: { member: ClockPerson; onBack: ()
       </div>
       <h1 ref={headingRef} tabIndex={-1} className="mt-5 text-[18px] font-semibold tracking-[-0.01em] outline-none">{t("staff.login.enterPin")}</h1>
       <p className="mt-1 text-[13px] text-staff-fg-3">{t("staff.login.pinHint")}</p>
+      {demo.isDemo && <p className="mt-1 text-[13px] text-staff-fg-3">{t("timeclock.demoHint")}</p>}
       <PinPad
         onSubmit={async (pin) => void (await punch.mutateAsync(pin))}
         describe={describe}

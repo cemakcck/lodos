@@ -314,7 +314,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
     const call = (method: "GET" | "POST" | "PATCH" | "DELETE", url: string, payload?: object) =>
       t.inject({ method, url, cookies, ...(payload ? { payload } : {}) });
-    for (const sh of before.shifts) {
+    // This week's and next week's shifts plus a few of the demo's past ones (all of them would be ~700 requests).
+    const probed = [...before.shifts.filter((s) => s.serviceDay < "2026-11-09").slice(0, 5), ...before.shifts.filter((s) => s.serviceDay >= "2026-11-09")];
+    for (const sh of probed) {
       const id = String(sh._id);
       expect((await call("PATCH", `/api/shifts/${id}`, { note: "Hacked" })).statusCode).toBe(404);
       expect((await call("DELETE", `/api/shifts/${id}`)).statusCode).toBe(404);
@@ -427,7 +429,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(rated.statusCode, rated.body).toBe(201);
     const bRatingId = rated.json().id as string;
     const before = await snapshot(b.tenantId);
-    expect(before.ratings).toHaveLength(1);
+    expect(before.ratings.filter((r) => !r.generated)).toHaveLength(1); // besides the demo's seeded ratings
 
     const aPaid = await paid(a);
     const headers = { "x-table-token": aPaid.token };
@@ -481,13 +483,18 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     const before = await snapshot(b.tenantId);
     const own = { lodos_sid: a.sid, lodos_sb: a.sb };
     const view = (await t.inject({ method: "GET", url: "/api/expenses?month=2026-11", cookies: own })).json();
-    expect(view.expenses.map((e: { id: string }) => e.id)).toEqual([aIds.exp]);
-    expect(view.total).toBe(1_111);
+    // Next to the demo's seeded expenses of the month.
+    const ids = view.expenses.map((e: { id: string }) => e.id);
+    expect(ids).toContain(aIds.exp);
+    expect(ids).not.toContain(bIds.exp);
+    const aMonth = await runWithTenant(a.tenantId, () => t.models.Expense.find({ date: { $gte: "2026-11-01", $lte: "2026-11-31" } }).lean());
+    expect(ids.sort()).toEqual(aMonth.map((e) => String(e._id)).sort());
+    expect(view.total).toBe(aMonth.reduce((n, e) => n + e.amount, 0));
     const cats = (await t.inject({ method: "GET", url: "/api/expense-categories", cookies: own })).json().categories as { id: string }[];
     expect(cats.map((c) => c.id)).toContain(aIds.cat);
     expect(cats.map((c) => c.id)).not.toContain(bIds.cat);
     const csv = (await t.inject({ method: "GET", url: "/api/expenses.csv?month=2026-11", cookies: own })).body;
-    expect(csv.split("\r\n").filter(Boolean)).toHaveLength(2);
+    expect(csv.split("\r\n").filter(Boolean)).toHaveLength(aMonth.length + 1);
     expect(csv).toContain("11.11");
     expect(csv).not.toContain("22.22");
 
@@ -540,8 +547,9 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
         await t.models.Expense.create({ categoryId: cat._id, amount, date: "2026-11-04", payee: comment, createdBy: cat._id });
         await t.models.Rating.create({ serviceDay: "2026-11-10", paidAt: NOW, submittedAt: NOW, comment });
       });
-    await mk(a, 7_777_777, "monthly-only-in-a");
-    await mk(b, 9_999_999, "monthly-only-in-b");
+    // Bigger than any of the demo's seeded expenses.
+    await mk(a, 77_777_777, "monthly-only-in-a");
+    await mk(b, 99_999_999, "monthly-only-in-b");
     const before = await snapshot(b.tenantId);
     const bSummaries = await runWithTenant(b.tenantId, () => t.models.DailySummary.countDocuments({}));
     const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
@@ -549,7 +557,7 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(view.statusCode, view.body).toBe(200);
     expect(view.body).toContain("monthly-only-in-a");
     expect(view.body).not.toContain("monthly-only-in-b");
-    expect(view.json().expenses.biggest[0].amount).toBe(7_777_777);
+    expect(view.json().expenses.biggest[0].amount).toBe(77_777_777);
     const pdf = await t.inject({ method: "GET", url: "/api/business/monthly.pdf?month=2026-11", cookies });
     expect(pdf.statusCode).toBe(200);
     const text = await pdfText(pdf.rawPayload);

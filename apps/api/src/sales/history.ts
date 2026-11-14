@@ -1,11 +1,12 @@
-import { COMP_REASONS, istanbulHour, serviceDayOf, serviceDayStartOf, VOID_REASONS } from "@lodos/shared";
+import { COMP_REASONS, emptyAgg, istanbulHour, serviceDayOf, serviceDayStartOf, VOID_REASONS, type RatingAgg } from "@lodos/shared";
 import type { Types } from "mongoose";
 import type { Models } from "../db/models/index";
 import { runWithTenant } from "../db/tenancy";
-import type { HourSummary, ItemSummary, SummaryData, TicketHour } from "./summary";
+import type { PersonOps } from "../ops/daily";
+import type { HourSummary, ItemSummary, ServerSummary, SummaryData, TicketHour } from "./summary";
 
 /**
- * Demo history (spec §4, "Demo seed"): 60 believable service days of stored `DailySummary` documents plus a handful
+ * Demo history (spec §4, "Demo seed"; phase 3 §9): 120 believable service days of stored `DailySummary` documents plus a handful
  * of past comp/void log entries, so a fresh sandbox never shows an empty dashboard. Deterministic for a given `now`.
  * Generated days reconcile exactly: Σ byHour revenue = revenue = Σ item revenue, card + cash = revenue, and each
  * day's comps/voids are exactly the generated log entries dated that day.
@@ -21,7 +22,17 @@ export type HistoryItem = {
 };
 export type HistoryStaff = { id: string | Types.ObjectId; name: string };
 
-export const HISTORY_DAYS = 60;
+/**
+ * The phase 3 demo seed's hooks (src/seed/ops-seed.ts). `servers` names the waiters on duty that day, who share its
+ * checks, covers and sales in `byServer`; `extend` adds the day's `ratings` and `people` aggregates outside the raw
+ * windows. Without them, `byServer` is shared by Deniz and Mert and the aggregates stay empty.
+ */
+export type HistoryOps = {
+  servers(serviceDay: string): string[];
+  extend(day: SummaryData): { ratings?: RatingAgg; people?: PersonOps[] };
+};
+
+export const HISTORY_DAYS = 120;
 const DAY_MS = 24 * 3_600_000;
 const HOUR_MS = 3_600_000;
 
@@ -42,11 +53,14 @@ const HOUR_SHARE: [number, number][] = [[17, 0.06], [18, 0.1], [19, 0.16], [20, 
 /** Typical ticket minutes per hour (same order): at most 14.4 for the kitchen, 7 for the bar. */
 const KITCHEN_MIN = [9.4, 10.2, 11.6, 13.4, 13.6, 11.6, 9.8];
 const BAR_MIN = [4.3, 4.8, 5.4, 6.4, 6.5, 5.6, 4.6];
-/** Signature dishes sell most; the rest share the remainder. */
+/** Signature dishes sell most; the rest share the remainder, and two dishes sell clearly less than the median. */
 const SIGNATURE_WEIGHT: Record<string, number> = {
   "dry-aged-ribeye": 6, burrata: 6, "lodos-negroni": 6,
   "lamb-chops": 3, "grilled-octopus": 3, spritz: 3, "red-wine-glass": 3, "truffle-fries": 3,
+  "pistachio-baklava": 0.5, "beef-carpaccio": 0.5,
 };
+/** Late threshold of the ticket times (the seeded `Setting.lateMin`). */
+const LATE_MIN = 15;
 
 /** Splits `total` into integer parts proportional to `weights`, summing exactly (largest remainder). */
 function apportion(total: number, weights: number[]): number[] {
@@ -70,13 +84,21 @@ function coversFor(dow: number, rand: () => number): number {
   return lo + Math.floor(rand() * (hi - lo + 1));
 }
 
+const emptyRatings = (): RatingAgg => ({ waiter: [], dishes: [], food: emptyAgg(), cleanliness: emptyAgg(), atmosphere: emptyAgg() });
+
 const dowOf = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay();
+
+/** Tickets ready within the late threshold, from the hour's average: all of them well under it, fewer near it. */
+function onTimeOf(count: number, avgMin: number): number {
+  const share = Math.min(1, Math.max(0.6, 1 - Math.max(0, avgMin - (LATE_MIN - 7)) * 0.04));
+  return Math.min(count, Math.round(count * share));
+}
 
 export async function generateHistory(
   models: Models,
-  args: { tenantId: string; now: Date; items: HistoryItem[]; tables: string[]; staff: HistoryStaff[] },
+  args: { tenantId: string; now: Date; items: HistoryItem[]; tables: string[]; staff: HistoryStaff[]; ops?: HistoryOps },
 ): Promise<void> {
-  const { tenantId, now, items, tables, staff } = args;
+  const { tenantId, now, items, tables, staff, ops } = args;
   const rand = mulberry32(now.getTime() % 2 ** 32);
   const todayStart = serviceDayStartOf(serviceDayOf(now)).getTime();
   const days = Array.from({ length: HISTORY_DAYS }, (_, k) => serviceDayOf(new Date(todayStart - (HISTORY_DAYS - k) * DAY_MS)));
@@ -134,6 +156,14 @@ export async function generateHistory(
   };
   const minPrice = Math.min(...items.map((i) => i.price));
 
+  /** The day's checks, covers and sales shared among its waiters, each total exactly (sections differ a little in size). */
+  const byServerOf = (ids: string[], day: { checks: number; covers: number; revenue: number }): ServerSummary[] => {
+    if (ids.length === 0 || day.checks === 0) return [];
+    const w = ids.map(() => 0.85 + rand() * 0.3);
+    const [checks, covers, sales] = [apportion(day.checks, w), apportion(day.covers, w), apportion(day.revenue, w)];
+    return ids.map((staffId, i) => ({ staffId, checks: checks[i]!, covers: covers[i]!, sales: sales[i]! }));
+  };
+
   const summaries: SummaryData[] = days.map((serviceDay) => {
     const dow = dowOf(serviceDay);
     const dayAdjustments = adjustments.filter((a) => a.serviceDay === serviceDay);
@@ -183,30 +213,34 @@ export async function generateHistory(
       byHour.map((b, i) => {
         const count = Math.max(1, Math.round(b.checks * perCheck));
         const avg = Math.min(hi, Math.max(lo, (minutes[i] as number) + (rand() - 0.5) * 1.2));
-        return { hour: b.hour, count, totalMs: Math.round(count * avg * 60_000), onTime: 0 };
+        return { hour: b.hour, count, totalMs: Math.round(count * avg * 60_000), onTime: onTimeOf(count, avg) };
       });
     const card = Math.round(revenue * (0.76 + rand() * 0.08));
     const sum = (kind: "comp" | "void") => {
       const xs = dayAdjustments.filter((a) => a.kind === kind);
       return { count: xs.length, amount: xs.reduce((s, a) => s + a.amount, 0) };
     };
+    const checks = byHour.reduce((s, b) => s + b.checks, 0);
     return {
       serviceDay,
       revenue,
       covers,
-      checks: byHour.reduce((s, b) => s + b.checks, 0),
+      checks,
       comps: sum("comp"),
       voids: sum("void"),
       byHour,
       ticketTimes: { kitchen: ticketHours(2.1, KITCHEN_MIN, 9, 14.4), bar: ticketHours(1.9, BAR_MIN, 4, 7) },
       items: rows,
       payments: { card, cash: revenue - card },
-      byServer: [],
+      byServer: byServerOf(ops ? ops.servers(serviceDay) : requesters.map((r) => String(r.id)), { checks, covers, revenue }),
       generated: true,
     };
   });
+  // Complete documents (the aggregates empty unless the demo fills them), inserted lean: casting 120 days of nested
+  // rating and people rows through Mongoose would cost most of a sandbox's seed time.
+  const docs = summaries.map((d) => ({ ...d, ratings: emptyRatings(), people: [] as PersonOps[], ...ops?.extend(d) }));
 
   await runWithTenant(tenantId, async () => {
-    await Promise.all([models.DailySummary.insertMany(summaries), models.Adjustment.insertMany(adjustments)]);
+    await Promise.all([models.DailySummary.insertMany(docs, { lean: true }), models.Adjustment.insertMany(adjustments)]);
   });
 }

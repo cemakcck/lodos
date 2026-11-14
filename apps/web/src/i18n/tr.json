@@ -1355,6 +1355,7 @@
     "toSignIn": "Personel girişi",
     "pickName": "Kim giriş/çıkış yapıyor?",
     "pickHint": "Adınıza dokunun, sonra PIN'inizi girin.",
+    "demoHint": "Demo: mutfak ve bar ekibinin saat PIN'i 1111",
     "loadError": "Liste yüklenemedi.",
     "noPeople": "Programda henüz kimse yok.",
     "clockedIn": "İçeride",

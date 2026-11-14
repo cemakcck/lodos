@@ -125,6 +125,15 @@ describe("demo sign-in and sandbox creation", () => {
     expect((await t.inject({ method: "GET", url: "/api/demo/info" })).statusCode).toBe(401);
   });
 
+  it("keeps a fresh sandbox under 6,000 documents", async () => {
+    const res = await signIn(t, "manager");
+    const val = decodeURIComponent(cookie(res, "lodos_sb")!);
+    const tenantId = val.slice(0, val.lastIndexOf(".")).replace(/^s:/, "");
+    const n = await countAll(t, tenantId);
+    expect(n).toBeGreaterThan(1_000); // four months of demo history
+    expect(n).toBeLessThan(6_000);
+  });
+
   it("rejects an unknown role", async () => {
     expect((await signIn(t, "chef")).statusCode).toBe(400);
   });

@@ -4,7 +4,7 @@ import { DEFAULT_MAX_SANDBOXES, DEFAULT_SANDBOXES_PER_IP_HOUR } from "../src/dem
 import { makeTestApp } from "./helpers";
 import { countAll, H, MIN, NOW, sandboxIds, signIn } from "./sandbox-helpers";
 
-// Each test creates 4-7 demo sandboxes through the production path (full seed with 60 days of history), on purpose,
+// Each test creates 4-7 demo sandboxes through the production path (full seed with 120 days of history and the phase 3 demo), on purpose,
 // so they get more than the project's 15 s. Measured worst case in the full parallel `npm test` on 8 cores at load
 // average ~5: 11.2 s (2026-11-11). 20 s leaves headroom and still fails a hang.
 describe("cap and per-IP limit", { timeout: 20_000 }, () => {

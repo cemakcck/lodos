@@ -24,10 +24,18 @@ const SEED_CATEGORIES: { name: Name; kind: Kind }[] = [
   { name: { en: "Other", tr: "Diğer" }, kind: "other" },
 ];
 
+/**
+ * The starting categories as documents, in order, each with its own id and its budget (kuruş) from `budgets` by
+ * English name, 0 otherwise. A new tenant's seed inserts them in its own batch; `seedExpenseCategories` fills gaps.
+ */
+export function startingCategories(budgets: Record<string, number> = {}) {
+  return SEED_CATEGORIES.map((c, sort) => ({ _id: new Types.ObjectId(), ...c, sort, monthlyBudget: budgets[c.name.en] ?? 0 }));
+}
+
 /** Creates the starting categories the tenant does not have yet (matched by English name), so calling it twice adds nothing. */
 export async function seedExpenseCategories(models: Models): Promise<void> {
   const have = new Set((await models.ExpenseCategory.find({}, { name: 1 }).lean()).map((c) => c.name.en));
-  const todo = SEED_CATEGORIES.map((c, sort) => ({ ...c, sort, monthlyBudget: 0 })).filter((c) => !have.has(c.name.en));
+  const todo = startingCategories().filter((c) => !have.has(c.name.en));
   if (todo.length > 0) await models.ExpenseCategory.insertMany(todo);
 }
 
