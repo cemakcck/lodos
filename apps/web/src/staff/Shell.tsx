@@ -21,6 +21,8 @@ interface RailItem {
   roles: readonly StaffRole[];
   /** Path prefixes that light the item up. */
   match: readonly string[];
+  /** Not in the manager's rail (the route still lets them in). */
+  notForManager?: true;
 }
 
 export const RAIL: readonly RailItem[] = [
@@ -40,10 +42,12 @@ export const RAIL: readonly RailItem[] = [
   { key: "performance", to: "/staff/performance", icon: Trophy, roles: [], match: ["/staff/performance"] },
   // Station accounts (kitchen, bar) are never on the schedule, so the KDS rail stays clean; the route still lets them in.
   { key: "myShifts", to: "/staff/my-shifts", icon: CalendarClock, roles: ["waiter"], match: ["/staff/my-shifts"] },
-  { key: "myPerformance", to: "/staff/my-performance", icon: Gauge, roles: ["waiter"], match: ["/staff/my-performance"] },
+  // A waiter's page (waiter wording, rank among waiters): the manager has Performance instead.
+  { key: "myPerformance", to: "/staff/my-performance", icon: Gauge, roles: ["waiter"], match: ["/staff/my-performance"], notForManager: true },
 ];
 
-export const railFor = (role: StaffRole | undefined) => (role ? RAIL.filter((i) => canAccess(role, i.roles)) : []);
+export const railFor = (role: StaffRole | undefined) =>
+  role ? RAIL.filter((i) => canAccess(role, i.roles) && !(role === "manager" && i.notForManager)) : [];
 
 export interface ShellProps {
   /** Toolbar content before the title, e.g. a back link. */
