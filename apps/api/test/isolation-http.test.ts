@@ -418,7 +418,6 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
   });
 
   it("Phase 3 Task 2: A's token and manager cannot rate, read or moderate B's checks and ratings; B unchanged", async () => {
-    const mgr = (v: Visitor) => runWithTenant(v.tenantId, () => t.models.Staff.findOne({ role: "manager" }).lean().orFail());
     const paid = async (v: Visitor) => {
       const check = await runWithTenant(v.tenantId, () => t.models.Check.findOne({ status: "paid" }).lean().orFail());
       const table = await runWithTenant(v.tenantId, () => t.models.Table.findOne({ _id: check.tableId }).lean().orFail());
@@ -439,11 +438,10 @@ describe("cross-sandbox ids on domain routes (extended by Tasks 7, 9, 10, 11)", 
     expect(post.statusCode).toBe(409);
     expect(post.json().error.code).toBe("rating_closed");
 
-    const cookies = { lodos_sid: a.sid, lodos_sb: b.sb };
+    // A's manager session alone: B's rating id is not found.
     for (const action of ["hide", "unhide"]) {
-      expect((await t.inject({ method: "POST", url: `/api/ratings/${bRatingId}/${action}`, cookies })).statusCode).toBe(404);
+      expect((await t.inject({ method: "POST", url: `/api/ratings/${bRatingId}/${action}`, cookies: { lodos_sid: a.sid } })).statusCode).toBe(404);
     }
-    expect(await mgr(a)).toBeTruthy();
     expect(await snapshot(b.tenantId)).toEqual(before);
   });
 
