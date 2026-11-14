@@ -54,7 +54,8 @@ describe("GET /api/business/overview", () => {
     expect(expensesTotal).toBe(500_000 + 120_000);
     expect(budgetTotal).toBe(350_000 + 0 + 500_000 + 40_000);
     expect(o.expenses).toMatchObject({ total: expensesTotal, budget: budgetTotal });
-    expect(o.expenses.latest.map((e: { amount: number; date: string }) => [e.date, e.amount])).toEqual([["2026-11-03", 120_000], ["2026-11-01", 500_000], ["2026-10-25", 50_001]]);
+    // This month's only: October's utilities bill is not among the latest.
+    expect(o.expenses.latest.map((e: { amount: number; date: string }) => [e.date, e.amount])).toEqual([["2026-11-03", 120_000], ["2026-11-01", 500_000]]);
     expect(o.expenses.latest[0].category.en).toBe("Suppliers – food");
   });
 

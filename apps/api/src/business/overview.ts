@@ -86,9 +86,10 @@ function dishesOf(r: RatingAgg): Overview["dishes"] {
   };
 }
 
-async function latestExpenses(models: Models): Promise<LatestExpense[]> {
+/** The latest expenses dated in `month` (the card is "Expenses this month"). */
+async function latestExpenses(models: Models, month: string): Promise<LatestExpense[]> {
   const [rows, cats] = await Promise.all([
-    models.Expense.find({}).sort({ date: -1, _id: -1 }).limit(LATEST).lean(),
+    models.Expense.find({ date: { $gte: `${month}-01`, $lte: `${month}-31` } }).sort({ date: -1, _id: -1 }).limit(LATEST).lean(),
     models.ExpenseCategory.find({}, { name: 1 }).lean(),
   ]);
   const nameOf = new Map(cats.map((c) => [String(c._id), { en: c.name.en, tr: c.name.tr }]));
@@ -111,7 +112,7 @@ export async function overviewView(models: Models, now: Date): Promise<Overview>
     // Top staff over the rolling last 7 service days (today included), so a Monday isn't empty.
     rankingForDays(models, last7, now),
     workingNow(models, today, now),
-    latestExpenses(models),
+    latestExpenses(models, month),
   ]);
   const ratingsOf = (days: string[]) => days.reduce((a, d) => mergeRatingAgg(a, ops.get(d)!.ratings), emptyRatings());
   const cur = ratingsOf(last7);
