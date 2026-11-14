@@ -1793,8 +1793,7 @@
       "needsWork": "{{name}} (needs work)"
     },
     "month": {
-      "title": "This month at a glance",
-      "aria": "This month at a glance, open the monthly business page"
+      "title": "This month at a glance"
     }
   }
 }

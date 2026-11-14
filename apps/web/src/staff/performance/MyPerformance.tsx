@@ -32,7 +32,7 @@ export function MyPerformance() {
           )}
         </div>
       ) : (
-        <div className="ms-page pf-me">
+        <div className="ms-page pf-me" role="region" aria-label={t("performance.myTitle")} tabIndex={0}>
           <section className="sa-card pf-head" aria-label={t("performance.summary")}>
             <div>
               <p className="staff-label">{t("performance.col.score")}</p>

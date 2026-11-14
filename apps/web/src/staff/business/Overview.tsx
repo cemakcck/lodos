@@ -222,7 +222,7 @@ export function Overview() {
             <Dishes view={view} />
           </div>
 
-          <Link to="/staff/business" className="sa-card ov-month" aria-label={t("overview.month.aria")}>
+          <Link to="/staff/business" className="sa-card ov-month">
             <h2>{t("overview.month.title")}</h2>
             <dl>
               <div><dt>{t("business.pnl.sales")}</dt><dd className="font-mono">{money(view.month.sales)}</dd></div>

@@ -1793,8 +1793,7 @@
       "needsWork": "{{name}} (geliştirilmeli)"
     },
     "month": {
-      "title": "Bu ay bir bakışta",
-      "aria": "Bu ay bir bakışta, aylık işletme sayfasını aç"
+      "title": "Bu ay bir bakışta"
     }
   }
 }
